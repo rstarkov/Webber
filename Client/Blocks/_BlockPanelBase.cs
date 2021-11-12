@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
-using Webber.Shared.Blocks;
+using Webber.Client.Models;
 
 namespace Webber.Client.Blocks;
 

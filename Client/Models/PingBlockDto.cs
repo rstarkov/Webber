@@ -1,4 +1,4 @@
-﻿namespace Webber.Shared.Blocks;
+﻿namespace Webber.Client.Models;
 
 public class PingBlockDto : BaseDto
 {

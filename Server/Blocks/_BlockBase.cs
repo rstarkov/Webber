@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.Sqlite;
-using Webber.Shared.Blocks;
+using Webber.Client.Models;
 
 namespace Webber.Server.Blocks;
 

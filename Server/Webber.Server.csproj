@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Client\Webber.Client.csproj" />
-    <ProjectReference Include="..\Shared\Webber.Shared.csproj" />
   </ItemGroup>
 
 

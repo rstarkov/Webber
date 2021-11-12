@@ -2,7 +2,7 @@
 using Dapper;
 using Dapper.Contrib.Extensions;
 using Microsoft.Data.Sqlite;
-using Webber.Shared.Blocks;
+using Webber.Client.Models;
 
 namespace Webber.Server.Blocks;
 
