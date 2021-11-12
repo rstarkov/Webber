@@ -1,0 +1,33 @@
+﻿div.BlockPanelContainer {
+    padding: 1.5vw;
+    border: 0.5vw solid #444;
+    background: #111;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+    div.BlockPanelContainer.Invalid {
+        background: repeating-linear-gradient(45deg, #000, #000 3vw, #a21 3vw, #a21 6vw);
+        background-attachment: fixed;
+    }
+
+div.JustUpdated {
+    background: yellow;
+    width: 0.5vw;
+    height: 0.5vw;
+    position: absolute;
+    top: 0.5vw;
+    left: 0.5vw;
+    box-shadow: 0 0 0.25vw 0.25vw #000;
+}
+
+div.Disconnected {
+    background: red;
+    width: 0.5vw;
+    height: 0.5vw;
+    position: absolute;
+    top: 0.5vw;
+    left: 0.5vw;
+    box-shadow: 0 0 0.25vw 0.25vw #000;
+}
