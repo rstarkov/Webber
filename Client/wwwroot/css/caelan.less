@@ -1,0 +1,121 @@
+﻿@blocksize: 90px;
+
+.genh(@n, @w, @h: 1) when (@h =< @n) {
+    .w@{w}h@{h} {
+        width: (@w * @blocksize);
+        height: (@h * @blocksize);
+    }
+
+    .genh(@n, @w, (@h + 1));
+}
+
+.genw(@n, @i: 1) when (@i =< @n) {
+    .genh(@n, @i);
+    .genw(@n, (@i + 1));
+}
+
+.genw(4);
+
+.posh(@n, @w, @h: 1) when (@h =< @n) {
+    .l@{w}t@{h} {
+        position: absolute;
+        left: ((@w - 1) * @blocksize);
+        top: ((@h - 1) * @blocksize);
+    }
+
+    .posh(@n, @w, (@h + 1));
+}
+
+.posw(@n, @i: 1) when (@i =< @n) {
+    .posh(@n, @i);
+    .posw(@n, (@i + 1));
+}
+
+.posw(8);
+
+body, html {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: 'Courier New', Courier, monospace;
+    background-color: darkslategray;
+}
+
+.box {
+    background-color: black;
+    width: 720px;
+    height: 720px;
+}
+
+section {
+    .w4h4;
+    position: absolute;
+}
+
+section.tr {
+    left: 360px;
+}
+
+section.bl {
+    top: 360px;
+}
+
+section.br {
+    top: 360px;
+    left: 360px;
+}
+
+.cpu-heatmap {
+    font-size: 0;
+    // .l1t3;
+    // .w4h2;
+}
+
+@cpu-block-bordersize: 2px;
+
+.cpu-block {
+    width: @blocksize - (@cpu-block-bordersize * 2);
+    height: @blocksize - (@cpu-block-bordersize * 2);
+    line-height: @blocksize - (@cpu-block-bordersize * 2);
+    border: solid black @cpu-block-bordersize;
+    font-size: 30px;
+    text-align: center;
+    color: white;
+    display: inline-block;
+    background-color: #0095ff;
+    font-weight: bold;
+    transition: opacity linear 300ms;
+}
+
+// .cpu-heatmap {
+//     font-size: 0px;
+//     position: absolute;
+//     width: 100%;
+//     top: 180px;
+//     float: left;
+// }
+
+// .cpu-heatblock {
+//     width: 90px;
+//     height: 90px;
+//     padding: 2px;
+//     display: inline-block;
+// }
+
+// .cpu-heatbg {
+//     display: block;
+//     height: 100%;
+//     width: 100%;
+//     background-color: #0095ff;
+// }
+
+// .cpu-heatoverlay {
+//     color: white;
+//     font-size: 30px;
+//     text-align: center;
+//     font-weight: bolder;
+//     display: block;
+//     height: 100%;
+//     width: 100%;
+//     line-height: 88px;
+// }

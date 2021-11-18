@@ -1,6 +1,6 @@
 ﻿@import url('https://fonts.googleapis.com/css?family=Roboto|Ubuntu|Open+Sans');
 
-* {
+/** {
     color: white;
     padding: 0;
     margin: 0;
@@ -21,8 +21,14 @@ body {
 div#app, div#page {
     width: 100vw;
     height: 100vh;
-}
+}*/
 
+body, html {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+}
 
 #blazor-error-ui {
     background: lightyellow;

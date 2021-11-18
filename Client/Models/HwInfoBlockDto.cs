@@ -1,6 +1,6 @@
 ﻿namespace Webber.Client.Models;
 
-public readonly record struct TimedMetric(DateTime TimeUtc, double Value);
+public record TimedMetric(DateTime TimeUtc, double Value);
 
 public class HwInfoBlockDto : BaseDto
 {

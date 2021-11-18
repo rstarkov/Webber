@@ -23,7 +23,6 @@ public class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
 
     public override void Start()
     {
-        base.Start();
         _computer = new Computer
         {
             IsCpuEnabled = true,
@@ -36,6 +35,7 @@ public class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         };
         _computer.Open();
         _computer.Accept(new UpdateVisitor());
+        base.Start();
     }
 
     public override HwInfoBlockDto Tick()

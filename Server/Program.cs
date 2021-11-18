@@ -33,6 +33,8 @@ app.MapRazorPages();
 app.MapControllers();
 app.MapFallbackToFile("index.html");
 
+app.UseCors(b => b.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+
 foreach (var service in app.Services.GetServices<IBlockServer>())
 {
     service.Init(app);
