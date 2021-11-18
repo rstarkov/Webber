@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using Webber.Client.Models;
 
-namespace Webber.Client.Blocks;
+namespace Webber.Client;
 
 public class BlockPanelBase<TDto> : ComponentBase, IAsyncDisposable
     where TDto : BaseDto
