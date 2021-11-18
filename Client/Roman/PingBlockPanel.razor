@@ -1,6 +1,6 @@
 ﻿@using Webber.Client.Models
 
-<BlockPanelBase TDto="PingBlockDto">
+<BlockPanel TDto="PingBlockDto">
     <div class="PingContent">
         @if (context.LastUpdate != null)
         {
@@ -13,7 +13,7 @@
             </div>
         }
     </div>
-</BlockPanelBase>
+</BlockPanel>
 
 @code {
     private BarChart.Pt GetPt(int? value)

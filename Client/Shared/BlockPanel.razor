@@ -17,7 +17,7 @@
 
 @code {
     [Parameter]
-    public RenderFragment<BlockPanelBase<TDto>> ChildContent { get; set; }
+    public RenderFragment<BlockPanel<TDto>> ChildContent { get; set; }
 
     private string cssClassValidity => LastUpdate == null || DateTime.UtcNow < LastUpdate.ValidUntilUtc ? "" : "Invalid"; // it's only null until first update; don't start the block with red stripes - typically blocks render blank content anyway
 
