@@ -1,0 +1,45 @@
+﻿<svg width="100%" height="100%">
+    <g>
+        @{
+            double barWidth = (100 - BarSpacing * (BarCount - 1)) / BarCount;
+            double x = 100 - barWidth;
+            @foreach (var pt in Data.Reverse())
+            {
+                var y = Downwards ? 0 : (100 - pt.Value * 100);
+                <rect x=@($"{x:0.000}%") y=@($"{y:0.000}%") width=@($"{barWidth:0.000}%") height=@($"{pt.Value * 100:0.000}%") stroke-width="0" fill=@pt.Color></rect>
+                x -= barWidth + BarSpacing;
+            }
+        }
+    </g>
+</svg>
+
+@code {
+    public class Pt
+    {
+        public string Color = "";
+        public double Value; // 0..1
+    }
+
+    [Parameter]
+    public IEnumerable<Pt> Data { get; set; } = new Pt[0];
+
+    [Parameter]
+    public int BarCount { get; set; } = 10;
+
+    [Parameter]
+    public double BarSpacing { get; set; } = 0.2;
+
+    [Parameter]
+    public bool Downwards { get; set; } = false;
+
+    public static double ModifiedLog(double value, double newBase)
+    {
+        return value >= newBase ? Math.Log(value, newBase) : value / newBase;
+    }
+
+    public static double ScaleY(double value, double min, double max, Func<double, double> transform)
+    {
+        if (transform == null) transform = x => x;
+        return (transform(value) - transform(min)) / (transform(max) - transform(min));
+    }
+}
