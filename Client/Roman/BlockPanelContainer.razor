@@ -1,4 +1,4 @@
-﻿<div class="BlockPanelContainer @cssClassValidity">
+<div class="BlockPanelContainer @cssClassValidity">
     @*<div class="JustUpdated"></div>*@
     @if (!IsConnected)
     {
@@ -9,7 +9,7 @@
 
 @code {
     [Parameter]
-    public RenderFragment? ChildContent { get; set; }
+    public RenderFragment ChildContent { get; set; }
 
     [Parameter, EditorRequired]
     public bool IsConnected { get; set; }

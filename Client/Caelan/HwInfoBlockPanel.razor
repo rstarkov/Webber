@@ -4,7 +4,6 @@
 @inherits BlockPanelBase<HwInfoBlockDto>
 
 <div class="HwInfoBlockPanel">
-    <BlockPanelContainer IsConnected=@IsConnected ValidUntilUtc=@LastUpdate?.ValidUntilUtc>
         @if (LastUpdate != null)
         {
             @foreach(var x in LastUpdate.CpuCoreHeatmap)
@@ -14,5 +13,4 @@
     @*        <div style="float: right">@(LastUpdate.Last?.ToString("#,0") ?? "∞") ms</div>
             <div>Ping</div>*@
         }
-    </BlockPanelContainer>
 </div>

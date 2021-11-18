@@ -7,14 +7,14 @@ namespace Webber.Client;
 public class BlockPanelBase<TDto> : ComponentBase, IAsyncDisposable
     where TDto : BaseDto
 {
-    private HubConnection? _hubConnection;
+    private HubConnection _hubConnection;
     private CancellationTokenSource _cts = new();
     [Inject]
-    private NavigationManager? _navigationManager { get; set; }
+    private NavigationManager _navigationManager { get; set; }
     private System.Timers.Timer _invalidTimer = new System.Timers.Timer { AutoReset = false };
 
     protected bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
-    protected TDto? LastUpdate { get; private set; }
+    protected TDto LastUpdate { get; private set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -37,7 +37,7 @@ public class BlockPanelBase<TDto> : ComponentBase, IAsyncDisposable
         StateHasChanged();
     }
 
-    private void OnInvalidTimer(object? sender, System.Timers.ElapsedEventArgs e)
+    private void OnInvalidTimer(object sender, System.Timers.ElapsedEventArgs e)
     {
         if (DateTime.UtcNow > LastUpdate!.ValidUntilUtc)
         {
@@ -52,7 +52,7 @@ public class BlockPanelBase<TDto> : ComponentBase, IAsyncDisposable
         }
     }
 
-    private async Task OnConnectionLost(Exception? e)
+    private async Task OnConnectionLost(Exception e)
     {
         StateHasChanged();
         await ConnectWithRetryAsync();
