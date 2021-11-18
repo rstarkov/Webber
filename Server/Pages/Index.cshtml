@@ -1,0 +1,41 @@
+﻿@page "/"
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Webber</title>
+    <link href="~/css/app.css" rel="stylesheet" asp-append-version="true" />
+    <style>
+        a {
+            text-decoration: none;
+        }
+
+        div {
+            background: #15172C;
+        }
+
+        .cd {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+        <div class=cd>
+            <div style="background: #0B0E29; border: 0.5vw solid #725DEE; padding: 2vw 7vw;"><b>Webber</b></div>
+        </div>
+        <div style="flex: 2; display: flex;">
+            <a href="/roman" class=cd><div>Roman</div></a>
+            <a href="/caelan" class=cd><div>Caelan</div></a>
+        </div>
+    </div>
+</body>
+
+</html>
