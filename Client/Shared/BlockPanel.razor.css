@@ -20,6 +20,7 @@ div.JustUpdated {
     top: 0.5vw;
     left: 0.5vw;
     box-shadow: 0 0 0.25vw 0.25vw #000;
+    animation: fadeout 1s linear 0s 1 normal forwards;
 }
 
 div.Disconnected {
@@ -30,4 +31,14 @@ div.Disconnected {
     top: 0.5vw;
     left: 0.5vw;
     box-shadow: 0 0 0.25vw 0.25vw #000;
+}
+
+@keyframes fadeout {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
 }

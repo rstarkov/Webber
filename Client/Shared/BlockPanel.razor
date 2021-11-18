@@ -5,7 +5,10 @@
 @implements IAsyncDisposable
 
 <div class="BlockPanelContainer @cssClassValidity">
-    <div class="JustUpdated"></div>
+    @if (_lastUpdateReceivedUtc > DateTime.UtcNow.AddSeconds(-1.5))
+    {
+        <div class="JustUpdated"></div>
+    }
 
     @if (!IsConnected)
     {
@@ -25,7 +28,9 @@
     private CancellationTokenSource _cts = new();
     [Inject]
     private NavigationManager _navigationManager { get; set; }
-    private System.Timers.Timer _invalidTimer = new System.Timers.Timer { AutoReset = false };
+    private DateTime _lastUpdateReceivedUtc;
+    private System.Timers.Timer _invalidTimer = new System.Timers.Timer { AutoReset = false, Enabled = false };
+    private System.Timers.Timer _justReceivedTimer = new System.Timers.Timer { AutoReset = false, Enabled = false, Interval = 2000 };
 
     public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
     public TDto LastUpdate { get; private set; }
@@ -33,7 +38,7 @@
     protected override async Task OnInitializedAsync()
     {
         _invalidTimer.Elapsed += OnInvalidTimer;
-        _invalidTimer.Enabled = false;
+        _justReceivedTimer.Elapsed += delegate { StateHasChanged(); };
         _hubConnection = new HubConnectionBuilder()
             .WithUrl(_navigationManager!.ToAbsoluteUri($"/hub/{typeof(TDto).Name.Replace("Dto", "")}"))
             .Build();
@@ -46,8 +51,10 @@
     private void OnUpdateReceived(TDto dto)
     {
         LastUpdate = dto;
+        _lastUpdateReceivedUtc = DateTime.UtcNow;
         _invalidTimer.Interval = Math.Max(1, (dto.ValidUntilUtc - DateTime.UtcNow).TotalMilliseconds);
         _invalidTimer.Enabled = true;
+        _justReceivedTimer.Enabled = true;
         StateHasChanged();
     }
 
