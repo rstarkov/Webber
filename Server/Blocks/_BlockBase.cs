@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using System.Collections.Concurrent;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.Sqlite;
 using Webber.Client.Models;
 
@@ -14,7 +15,7 @@ public interface IBlockServer
 public interface IBlockServer<TDto> : IBlockServer
     where TDto : BaseDto
 {
-    TDto? LastUpdate { get; }
+    TDto LastUpdate { get; }
 }
 
 public static class BlockServerExtensions
@@ -37,18 +38,32 @@ public abstract class BlockServerBase<TDto> : IBlockServer<TDto>
 
     public class BlockHub : Hub<IBlockHub>
     {
+        //public int NumberOfConnections => _service._connectedIds.Count;
+
         private readonly IBlockServer<TDto> _service;
+
         public BlockHub(IBlockServer<TDto> service) { _service = service; }
+
         public override async Task OnConnectedAsync()
         {
+            //_connectedIds.Add(Context.ConnectionId);
             if (_service.LastUpdate != null)
                 await Clients.Caller.Update(_service.LastUpdate);
+
+            await base.OnConnectedAsync();
+        }
+
+        public override Task OnDisconnectedAsync(Exception exception)
+        {
+            //_connectedIds.Remove(Context.ConnectionId);
+            return base.OnDisconnectedAsync(exception);
         }
     }
 
     private IHubContext<BlockHub, IBlockHub> _hub;
+    private ConcurrentBag<string> _connectedIds = new ConcurrentBag<string>();
 
-    public TDto? LastUpdate { get; private set; }
+    public TDto LastUpdate { get; private set; }
 
     public abstract bool MigrateSchema(SqliteConnection db, int curVersion);
     public abstract void Start();
@@ -67,5 +82,11 @@ public abstract class BlockServerBase<TDto> : IBlockServer<TDto>
     {
         LastUpdate = dto;
         _hub.Clients.All.Update(dto);
+    }
+
+    protected bool IsAnyClientConnected()
+    {
+        return true;
+        //return _hub.
     }
 }

@@ -50,9 +50,7 @@ class PingBlockServer : BlockServerBase<PingBlockDto>
                 //using (var db = Db.Open())
                 //    db.Insert(new TbPingHistoryEntry { Timestamp = utc.ToDbDateTime(), Ping = dto.Last });
 
-                _recentPings.Enqueue((dto.Last, utc));
-                while (_recentPings.Count > 24)
-                    _recentPings.Dequeue();
+                _recentPings.EnqueueWithMaxCapacity((dto.Last, utc), 24);
                 dto.Recent = _recentPings.Select(t => t.ms).ToArray();
 
                 SendUpdate(dto);

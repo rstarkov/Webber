@@ -1,4 +1,4 @@
-using Webber.Server.Blocks;
+﻿using Webber.Server.Blocks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +7,15 @@ builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton(new PingBlockConfig());
 builder.Services.AddBlockServer<PingBlockServer>();
+
+// add/remove manage HwInfoBlockServer conditionally
+var options = new Mono.Options.OptionSet()
+{
+    {"hw-enable", (_) => builder.Services.AddBlockServer<HwInfoBlockServer>() },
+    {"hw-delete", (_) => { HwInfoBlockServer.Unregister(); Environment.Exit(0); } }
+};
+
+options.Parse(args);
 
 var app = builder.Build();
 
