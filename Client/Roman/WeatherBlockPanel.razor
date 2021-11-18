@@ -1,4 +1,5 @@
-﻿<div class="WeatherBlockPanel">
-    <BlockPanelContainer IsConnected=false ValidUntilUtc=DateTime.MaxValue>
-    </BlockPanelContainer>
-</div>
+﻿@using Webber.Client.Models
+
+<BlockPanelBase TDto="WeatherBlockDto">
+    Weather
+</BlockPanelBase>

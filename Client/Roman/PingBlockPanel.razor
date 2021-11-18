@@ -1,24 +1,19 @@
-﻿@using Microsoft.AspNetCore.SignalR.Client
-@using Webber.Client.Models;
+﻿@using Webber.Client.Models
 
-@inherits BlockPanelBase<PingBlockDto>
-
-<div class="PingBlockPanel">
-    <BlockPanelContainer IsConnected=@IsConnected ValidUntilUtc=@LastUpdate?.ValidUntilUtc>
-        <div class="PingContent">
-            @if (LastUpdate != null)
-            {
-                <div>
-                    <div style="float: right">@(LastUpdate.Last?.ToString("#,0") ?? "∞") ms</div>
-                    <div>Ping</div>
-                </div>
-                <div class="RecentChart">
-                    <BarChart BarCount=24 Data=@LastUpdate.Recent.Select(GetPt) />
-                </div>
-            }
-        </div>
-    </BlockPanelContainer>
-</div>
+<BlockPanelBase TDto="PingBlockDto">
+    <div class="PingContent">
+        @if (context.LastUpdate != null)
+        {
+            <div>
+                <div style="float: right">@(context.LastUpdate.Last?.ToString("#,0") ?? "∞") ms</div>
+                <div>Ping</div>
+            </div>
+            <div class="RecentChart">
+                <BarChart BarCount=24 Data=@context.LastUpdate.Recent.Select(GetPt) />
+            </div>
+        }
+    </div>
+</BlockPanelBase>
 
 @code {
     private BarChart.Pt GetPt(int? value)

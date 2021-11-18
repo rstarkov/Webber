@@ -4,15 +4,31 @@
 @typeparam TDto where TDto : BaseDto
 @implements IAsyncDisposable
 
+<div class="BlockPanelContainer @cssClassValidity">
+    <div class="JustUpdated"></div>
+
+    @if (!IsConnected)
+    {
+        <div class="Disconnected"></div>
+    }
+
+    @ChildContent(this)
+</div>
+
 @code {
+    [Parameter]
+    public RenderFragment<BlockPanelBase<TDto>> ChildContent { get; set; }
+
+    private string cssClassValidity => LastUpdate == null || DateTime.UtcNow < LastUpdate.ValidUntilUtc ? "" : "Invalid"; // it's only null until first update; don't start the block with red stripes - typically blocks render blank content anyway
+
     private HubConnection _hubConnection;
     private CancellationTokenSource _cts = new();
     [Inject]
     private NavigationManager _navigationManager { get; set; }
     private System.Timers.Timer _invalidTimer = new System.Timers.Timer { AutoReset = false };
 
-    protected bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
-    protected TDto LastUpdate { get; private set; }
+    public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
+    public TDto LastUpdate { get; private set; }
 
     protected override async Task OnInitializedAsync()
     {
