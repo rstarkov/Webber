@@ -14,40 +14,23 @@ class TimeBlockConfig
     }
 }
 
-class TimeBlockServer : BlockServerBase<TimeBlockDto>
+class TimeBlockServer : SimpleBlockServerBase<TimeBlockDto>
 {
     private TimeBlockConfig _config;
 
     public TimeBlockServer(IServiceProvider sp, TimeBlockConfig config)
-        : base(sp)
+        : base(sp, TimeSpan.FromMinutes(1))
     {
         _config = config;
     }
 
-    public override void Start()
+    protected override TimeBlockDto Tick()
     {
-        new Thread(thread) { IsBackground = true }.Start();
-    }
-
-    private void thread()
-    {
-        while (true)
-        {
-            try
-            {
-                var dto = new TimeBlockDto();
-                dto.ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromHours(24);
-                dto.LocalOffsetHours = getUtcOffset(_config.LocalTimezoneName);
-                dto.TimeZones = _config.ExtraTimezones.Select(tz => new TimeBlockDto.TimeZoneDto { DisplayName = tz.DisplayName, OffsetHours = getUtcOffset(tz.TimezoneName) }).ToArray();
-
-                SendUpdate(dto);
-            }
-            catch
-            {
-            }
-
-            Thread.Sleep(TimeSpan.FromMinutes(1));
-        }
+        var dto = new TimeBlockDto();
+        dto.ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromHours(24);
+        dto.LocalOffsetHours = getUtcOffset(_config.LocalTimezoneName);
+        dto.TimeZones = _config.ExtraTimezones.Select(tz => new TimeBlockDto.TimeZoneDto { DisplayName = tz.DisplayName, OffsetHours = getUtcOffset(tz.TimezoneName) }).ToArray();
+        return dto;
     }
 
     private double getUtcOffset(string timezoneName)

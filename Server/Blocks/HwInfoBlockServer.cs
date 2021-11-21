@@ -44,7 +44,7 @@ public class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         base.Start();
     }
 
-    public override HwInfoBlockDto Tick()
+    protected override HwInfoBlockDto Tick()
     {
         _computer.Accept(new UpdateVisitor());
 

@@ -1,19 +1,25 @@
-﻿using Microsoft.Data.Sqlite;
-using Webber.Client.Models;
+﻿using Webber.Client.Models;
 
 namespace Webber.Server.Blocks;
 
 public abstract class SimpleBlockServerBase<TDto> : BlockServerBase<TDto>
     where TDto : BaseDto
 {
-    private readonly int _intervalMs;
+    private readonly TimeSpan _interval;
+
+    public SimpleBlockServerBase(IServiceProvider sp, TimeSpan interval) : base(sp)
+    {
+        _interval = interval;
+    }
 
     public SimpleBlockServerBase(IServiceProvider sp, int intervalMs) : base(sp)
     {
-        _intervalMs = intervalMs;
+        _interval = TimeSpan.FromMilliseconds(intervalMs);
     }
 
-    public abstract TDto Tick();
+    protected abstract TDto Tick();
+
+    protected virtual bool ShouldTick() => IsAnyClientConnected();
 
     public override void Start()
     {
@@ -27,7 +33,7 @@ public abstract class SimpleBlockServerBase<TDto> : BlockServerBase<TDto>
             var start = DateTime.UtcNow;
             try
             {
-                if (IsAnyClientConnected())
+                if (ShouldTick())
                 {
                     var update = Tick();
                     if (update != null)
@@ -39,7 +45,7 @@ public abstract class SimpleBlockServerBase<TDto> : BlockServerBase<TDto>
                 // todo: capture error? can we send to client if signalr is working? or log to console?
             }
 
-            Util.SleepUntil(start.AddMilliseconds(_intervalMs));
+            Util.SleepUntil(start + _interval);
         }
     }
 }
