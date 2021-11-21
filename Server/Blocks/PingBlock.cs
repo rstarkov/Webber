@@ -13,54 +13,39 @@ class PingBlockConfig
     public int MaxWaitMs = 2000;
 }
 
-class PingBlockServer : BlockServerBase<PingBlockDto>
+class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
 {
     private PingBlockConfig _settings;
     private Queue<(int? ms, DateTime utc)> _recentPings = new();
 
     public PingBlockServer(IServiceProvider sp, PingBlockConfig settings)
-        : base(sp)
+        : base(sp, settings.IntervalMs)
     {
         _settings = settings;
     }
 
-    public override void Start()
+    protected override bool ShouldTick() => true;
+
+    protected override PingBlockDto Tick()
     {
-        new Thread(thread) { IsBackground = true }.Start();
-    }
+        var ping = new Ping();
+        var response = ping.Send(_settings.Host, _settings.MaxWaitMs);
 
-    private void thread()
-    {
-        while (true)
-        {
-            var start = DateTime.UtcNow;
-            try
-            {
-                var ping = new Ping();
-                var response = ping.Send(_settings.Host, _settings.MaxWaitMs);
+        var dto = new PingBlockDto();
+        var utc = DateTime.UtcNow;
+        dto.ValidUntilUtc = utc + TimeSpan.FromSeconds(15);
+        if (response.Status == IPStatus.Success)
+            dto.Last = (int) Math.Min(response.RoundtripTime, _settings.MaxWaitMs);
+        else
+            dto.Last = null;
 
-                var dto = new PingBlockDto();
-                var utc = DateTime.UtcNow;
-                dto.ValidUntilUtc = utc + TimeSpan.FromSeconds(15);
-                if (response.Status == IPStatus.Success)
-                    dto.Last = (int) Math.Min(response.RoundtripTime, _settings.MaxWaitMs);
-                else
-                    dto.Last = null;
+        //using (var db = Db.Open())
+        //    db.Insert(new TbPingHistoryEntry { Timestamp = utc.ToDbDateTime(), Ping = dto.Last });
 
-                //using (var db = Db.Open())
-                //    db.Insert(new TbPingHistoryEntry { Timestamp = utc.ToDbDateTime(), Ping = dto.Last });
+        _recentPings.EnqueueWithMaxCapacity((dto.Last, utc), 24);
+        dto.Recent = _recentPings.Select(t => t.ms).ToArray();
 
-                _recentPings.EnqueueWithMaxCapacity((dto.Last, utc), 24);
-                dto.Recent = _recentPings.Select(t => t.ms).ToArray();
-
-                SendUpdate(dto);
-            }
-            catch
-            {
-            }
-
-            Util.SleepUntil(start.AddMilliseconds(_settings.IntervalMs));
-        }
+        return dto;
     }
 
     public override bool MigrateSchema(SqliteConnection db, int curVersion)
