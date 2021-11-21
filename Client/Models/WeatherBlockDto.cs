@@ -1,5 +1,5 @@
 ﻿namespace Webber.Client.Models;
 
-public class WeatherBlockDto : BaseDto
+public record WeatherBlockDto : BaseDto
 {
 }

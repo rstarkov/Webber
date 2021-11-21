@@ -40,9 +40,9 @@ public abstract class SimpleBlockServerBase<TDto> : BlockServerBase<TDto>
                         SendUpdate(update);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // todo: capture error? can we send to client if signalr is working? or log to console?
+                SendUpdate(LastUpdate with { ErrorMessage = ex.Message });
             }
 
             Util.SleepUntil(start + _interval);

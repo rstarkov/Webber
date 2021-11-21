@@ -2,7 +2,7 @@
 
 public readonly record struct TimedMetric(DateTime TimeUtc, double Value);
 
-public class HwInfoBlockDto : BaseDto
+public record HwInfoBlockDto : BaseDto
 {
     public double[] CpuCoreHeatmap { get; set; } = new double[0];
     public double CpuTotalLoad { get; set; }
