@@ -89,7 +89,8 @@ public class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         // NETWORK
         var netquery = hardware
             .Where(h => h.HardwareType == HardwareType.Network)
-            .SelectMany(h => h.Sensors)
+            .Where(h => h.Name == "ASUS STRIX")
+            .Single().Sensors
             .Where(s => s.SensorType == SensorType.Throughput);
 
         var netup = netquery.Where(s => s.Name.Contains("Upload")).Sum(s => (double) (s.Value ?? 0d));
