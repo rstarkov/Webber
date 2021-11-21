@@ -6,6 +6,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton(new PingBlockConfig());
+builder.Services.AddSingleton(new TimeBlockConfig());
 builder.Services.AddBlockServer<PingBlockServer>();
 
 // add/remove manage HwInfoBlockServer conditionally
