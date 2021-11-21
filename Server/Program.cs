@@ -1,18 +1,31 @@
-﻿using Webber.Server.Blocks;
+﻿using System.Reflection;
+using Webber.Server.Blocks;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
-builder.Services.AddSingleton(new PingBlockConfig());
-builder.Services.AddSingleton(new TimeBlockConfig());
-builder.Services.AddBlockServer<PingBlockServer>();
 
-// add/remove manage HwInfoBlockServer conditionally
+var blockServerTypes = Assembly.GetExecutingAssembly().GetTypes().Where(t => !t.IsAbstract && t.IsAssignableTo(typeof(IBlockServer))).ToList();
+foreach (var blockServerType in blockServerTypes)
+{
+    var config = builder.Configuration.GetSection(blockServerType.Name.Replace("BlockServer", "Block"));
+    if (!config.Exists())
+        continue;
+    // Register the block server
+    var IBlockServer_TDto = blockServerType.GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IBlockServer<>));
+    builder.Services.Add(new ServiceDescriptor(IBlockServer_TDto, blockServerType, ServiceLifetime.Singleton));
+    builder.Services.AddSingleton(sp => (IBlockServer) sp.GetRequiredService(IBlockServer_TDto));
+    // Register its configuration
+    var configTypeName = blockServerType.FullName.Replace("BlockServer", "BlockConfig");
+    var configType = Assembly.GetExecutingAssembly().GetType(configTypeName);
+    if (configType != null)
+        builder.Services.Add(new ServiceDescriptor(configType, config.Get(configType)));
+}
+
 var options = new Mono.Options.OptionSet()
 {
-    {"hw-enable", (_) => builder.Services.AddBlockServer<HwInfoBlockServer>() },
     {"hw-delete", (_) => { HwInfoBlockServer.Unregister(); Environment.Exit(0); } }
 };
 

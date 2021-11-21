@@ -4,13 +4,13 @@ namespace Webber.Server.Blocks;
 
 class TimeBlockConfig
 {
-    public string LocalTimezoneName = "GMT Standard Time";
-    public List<Zone> ExtraTimezones = new List<Zone>();
+    public string LocalTimezoneName { get; set; } = "GMT Standard Time";
+    public List<Zone> ExtraTimezones { get; set; } = new List<Zone>();
 
     public class Zone
     {
-        public string DisplayName = null;
-        public string TimezoneName = null;
+        public string DisplayName { get; set; }
+        public string TimezoneName { get; set; }
     }
 }
 

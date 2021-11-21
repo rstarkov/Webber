@@ -8,20 +8,20 @@ namespace Webber.Server.Blocks;
 
 class PingBlockConfig
 {
-    public string Host = "8.8.8.8";
-    public int IntervalMs = 5000;
-    public int MaxWaitMs = 2000;
+    public string Host { get; set; } = "8.8.8.8";
+    public int IntervalMs { get; set; } = 5000;
+    public int MaxWaitMs { get; set; } = 2000;
 }
 
 class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
 {
-    private PingBlockConfig _settings;
+    private PingBlockConfig _config;
     private Queue<(int? ms, DateTime utc)> _recentPings = new();
 
-    public PingBlockServer(IServiceProvider sp, PingBlockConfig settings)
-        : base(sp, settings.IntervalMs)
+    public PingBlockServer(IServiceProvider sp, PingBlockConfig config)
+        : base(sp, config.IntervalMs)
     {
-        _settings = settings;
+        _config = config;
     }
 
     protected override bool ShouldTick() => true;
@@ -30,11 +30,11 @@ class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
     {
         var ping = new Ping();
         var sentUtc = DateTime.UtcNow;
-        var response = ping.Send(_settings.Host, _settings.MaxWaitMs);
+        var response = ping.Send(_config.Host, _config.MaxWaitMs);
 
         var dto = new PingBlockDto { ValidUntilUtc = sentUtc + TimeSpan.FromSeconds(15) };
         if (response.Status == IPStatus.Success)
-            dto.Last = (int) Math.Min(response.RoundtripTime, _settings.MaxWaitMs);
+            dto.Last = (int) Math.Min(response.RoundtripTime, _config.MaxWaitMs);
         else
             dto.Last = null;
 
