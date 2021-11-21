@@ -2,5 +2,6 @@
 
 public abstract class BaseDto
 {
-    public DateTime ValidUntilUtc { get; set; }
+    public DateTime SentUtc { get; set; }
+    public TimeSpan ValidDuration { get; set; }
 }

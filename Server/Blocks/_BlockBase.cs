@@ -80,6 +80,7 @@ public abstract class BlockServerBase<TDto> : IBlockServer<TDto>
 
     protected void SendUpdate(TDto dto)
     {
+        dto.SentUtc = DateTime.UtcNow;
         LastUpdate = dto;
         _hub.Clients.All.Update(dto);
     }

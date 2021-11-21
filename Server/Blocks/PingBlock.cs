@@ -29,11 +29,10 @@ class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
     protected override PingBlockDto Tick()
     {
         var ping = new Ping();
+        var sentUtc = DateTime.UtcNow;
         var response = ping.Send(_settings.Host, _settings.MaxWaitMs);
 
         var dto = new PingBlockDto();
-        var utc = DateTime.UtcNow;
-        dto.ValidUntilUtc = utc + TimeSpan.FromSeconds(15);
         if (response.Status == IPStatus.Success)
             dto.Last = (int) Math.Min(response.RoundtripTime, _settings.MaxWaitMs);
         else
@@ -42,9 +41,10 @@ class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
         //using (var db = Db.Open())
         //    db.Insert(new TbPingHistoryEntry { Timestamp = utc.ToDbDateTime(), Ping = dto.Last });
 
-        _recentPings.EnqueueWithMaxCapacity((dto.Last, utc), 24);
+        _recentPings.EnqueueWithMaxCapacity((dto.Last, sentUtc), 24);
         dto.Recent = _recentPings.Select(t => t.ms).ToArray();
 
+        dto.ValidDuration = sentUtc + TimeSpan.FromSeconds(15) - DateTime.UtcNow;
         return dto;
     }
 
