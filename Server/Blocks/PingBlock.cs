@@ -32,7 +32,7 @@ class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
         var sentUtc = DateTime.UtcNow;
         var response = ping.Send(_settings.Host, _settings.MaxWaitMs);
 
-        var dto = new PingBlockDto();
+        var dto = new PingBlockDto { ValidUntilUtc = sentUtc + TimeSpan.FromSeconds(15) };
         if (response.Status == IPStatus.Success)
             dto.Last = (int) Math.Min(response.RoundtripTime, _settings.MaxWaitMs);
         else
@@ -44,7 +44,6 @@ class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
         _recentPings.EnqueueWithMaxCapacity((dto.Last, sentUtc), 24);
         dto.Recent = _recentPings.Select(t => t.ms).ToArray();
 
-        dto.ValidDuration = sentUtc + TimeSpan.FromSeconds(15) - DateTime.UtcNow;
         return dto;
     }
 

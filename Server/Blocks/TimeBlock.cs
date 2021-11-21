@@ -26,8 +26,7 @@ class TimeBlockServer : SimpleBlockServerBase<TimeBlockDto>
 
     protected override TimeBlockDto Tick()
     {
-        var dto = new TimeBlockDto();
-        dto.ValidDuration = TimeSpan.FromHours(24);
+        var dto = new TimeBlockDto { ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromHours(24) };
         dto.LocalOffsetHours = getUtcOffset(_config.LocalTimezoneName);
         dto.TimeZones = _config.ExtraTimezones.Select(tz => new TimeBlockDto.TimeZoneDto { DisplayName = tz.DisplayName, OffsetHours = getUtcOffset(tz.TimezoneName) }).ToArray();
         return dto;
