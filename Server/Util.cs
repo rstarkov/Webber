@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
+using Webber.Client.Models;
 
 namespace Webber.Server;
 
@@ -13,10 +14,11 @@ static class Util
             Thread.Sleep(duration);
     }
 
-    public static void EnqueueWithMaxCapacity<T>(this Queue<T> q, T newItem, int maxCapacity)
+    public static T[] EnqueueWithMaxCapacity<T>(this Queue<T> q, T newItem, int maxCapacity)
     {
         q.Enqueue(newItem);
         while (q.Count > maxCapacity)
             q.Dequeue();
+        return q.ToArray();
     }
 }

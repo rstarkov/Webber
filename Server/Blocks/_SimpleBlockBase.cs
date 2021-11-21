@@ -28,7 +28,11 @@ public abstract class SimpleBlockServerBase<TDto> : BlockServerBase<TDto>
             try
             {
                 if (IsAnyClientConnected())
-                    SendUpdate(Tick());
+                {
+                    var update = Tick();
+                    if (update != null)
+                        SendUpdate(update);
+                }
             }
             catch
             {

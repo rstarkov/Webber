@@ -7,23 +7,28 @@ namespace Webber.Server.Blocks;
 public class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
 {
     private Computer _computer;
+    private Queue<double[]> _historyCpuCoreHeatmap = new();
     private Queue<TimedMetric> _historyCpuTotalLoad = new();
     private Queue<TimedMetric> _historyCpuPackageTemp = new();
+    private Queue<TimedMetric> _historyGpuLoad = new();
+    private Queue<TimedMetric> _historyGpuTemp = new();
+    private Queue<TimedMetric> _historyNetworkUp = new();
+    private Queue<TimedMetric> _historyNetworkDown = new();
 
-    public HwInfoBlockServer(IServiceProvider sp) : base(sp, 1000)
+    static readonly int METRIC_REFRESH_INTERVAL = 400;
+    static readonly int METRIC_CAPACITY = (int) Math.Ceiling((1000d / METRIC_REFRESH_INTERVAL) * 40d);
+
+    public HwInfoBlockServer(IServiceProvider sp) : base(sp, METRIC_REFRESH_INTERVAL)
     {
-
     }
 
     public override bool MigrateSchema(SqliteConnection db, int curVersion)
     {
-        _computer = null;
         throw new NotImplementedException();
     }
 
     public override void Start()
     {
-        base.Start();
         _computer = new Computer
         {
             IsCpuEnabled = true,
@@ -31,11 +36,12 @@ public class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
             IsMemoryEnabled = false,
             IsMotherboardEnabled = false,
             IsControllerEnabled = false,
-            IsNetworkEnabled = false,
+            IsNetworkEnabled = true,
             IsStorageEnabled = false,
         };
         _computer.Open();
         _computer.Accept(new UpdateVisitor());
+        base.Start();
     }
 
     public override HwInfoBlockDto Tick()
@@ -45,45 +51,81 @@ public class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         var time = DateTime.UtcNow;
         var hardware = _computer.Hardware;
 
-        var cores = hardware
-            .First(s => s.HardwareType == HardwareType.Cpu).Sensors
-            .Where(s => s.SensorType == SensorType.Load)
-            .Where(s => s.Name.Contains("Core"))
-            .Select(s => s.Value)
-            .Where(s => s.HasValue)
-            .Select(s => (double) s.Value)
+        var cpuSensors = hardware.First(s => s.HardwareType == HardwareType.Cpu).Sensors;
+        var gpuSensors = hardware.First(s => s.HardwareType == HardwareType.GpuNvidia).Sensors;
+
+        // CPU
+        var cores = cpuSensors
+            .Where(s => s.SensorType == SensorType.Load && s.Name.Contains("Core"))
+            .Select(s => (double) (s.Value ?? 0d))
             .ToArray();
+        var cpuHeat = _historyCpuCoreHeatmap.EnqueueWithMaxCapacity(cores, METRIC_CAPACITY);
 
-        var cputotal = hardware
-            .First(s => s.HardwareType == HardwareType.Cpu).Sensors
-            .Where(s => s.SensorType == SensorType.Load)
-            .Where(s => s.Name.Contains("Total"))
-            .Select(s => s.Value)
-            .Where(s => s.HasValue)
-            .Select(s => (double) s.Value)
+        var cputotal = cpuSensors
+            .Where(s => s.SensorType == SensorType.Load && s.Name.Contains("Total"))
+            .Select(s => (double) (s.Value ?? 0d))
             .First();
+        var cpuLoad = _historyCpuTotalLoad.EnqueueWithMaxCapacity(new TimedMetric(time, cputotal), METRIC_CAPACITY);
 
-        //var cpupackagetemp = hardware
-        //    .First(s => s.HardwareType == HardwareType.Cpu).Sensors
-        //    .Where(s => s.SensorType == SensorType.Temperature)
-        //    .Where(s => s.Name.Contains("Package"))
-        //    .Select(s => s.Value)
-        //    .Where(s => s.HasValue)
-        //    .Select(s => (double) s.Value)
-        //    .First();
+        var cpupackagetemp = cpuSensors
+            .Where(s => s.SensorType == SensorType.Temperature && s.Name.Contains("Package"))
+            .Select(s => (double) (s.Value ?? 0d))
+            .First();
+        var cpuTemp = _historyCpuPackageTemp.EnqueueWithMaxCapacity(new TimedMetric(time, cpupackagetemp), METRIC_CAPACITY);
 
-        _historyCpuTotalLoad.EnqueueWithMaxCapacity(new TimedMetric(time, cputotal), 100);
-        //_historyCpuPackageTemp.EnqueueWithMaxCapacity(new TimedMetric(time, cpupackagetemp), 100);
+        // GPU
+        var gputotal = gpuSensors
+            .Where(s => s.SensorType == SensorType.Load)
+            .Select(s => (double) (s.Value ?? 0d))
+            .Max();
+        var gpuLoad = _historyGpuLoad.EnqueueWithMaxCapacity(new TimedMetric(time, gputotal), METRIC_CAPACITY);
+
+        var gpupackagetemp = gpuSensors
+            .Where(s => s.SensorType == SensorType.Temperature)
+            .Select(s => (double) (s.Value ?? 0d))
+            .Max();
+        var gpuTemp = _historyGpuTemp.EnqueueWithMaxCapacity(new TimedMetric(time, gpupackagetemp), METRIC_CAPACITY);
+
+        // NETWORK
+        var netquery = hardware
+            .Where(h => h.HardwareType == HardwareType.Network)
+            .SelectMany(h => h.Sensors)
+            .Where(s => s.SensorType == SensorType.Throughput);
+
+        var netup = netquery.Where(s => s.Name.Contains("Upload")).Sum(s => (double) (s.Value ?? 0d));
+        var netdown = netquery.Where(s => s.Name.Contains("Download")).Sum(s => (double) (s.Value ?? 0d));
+        var networkUp = _historyNetworkUp.EnqueueWithMaxCapacity(new TimedMetric(time, netup), METRIC_CAPACITY);
+        var networkDown = _historyNetworkDown.EnqueueWithMaxCapacity(new TimedMetric(time, netdown), METRIC_CAPACITY);
+
+        double GetLastAverage<T>(T[] queue, Func<T, double> selector)
+        {
+            if (queue.Length == 0) return 0d;
+            int numberToAvg = Math.Min(queue.Length - 1, (int) Math.Ceiling(4000d / METRIC_REFRESH_INTERVAL));
+            var slice = queue[^numberToAvg..];
+            var avg = slice.Select(selector).Sum() / numberToAvg;
+            return avg;
+        }
+
+        double[] coresAvg = new double[cores.Length];
+        for (int i = 0; i < cores.Length; i++)
+            coresAvg[i] = GetLastAverage(cpuHeat, a => a[i]);
 
         return new HwInfoBlockDto
         {
-            CpuCoreHeatmap = cores,
-            CpuTotalLoadHistory = _historyCpuTotalLoad.ToArray(),
-        };
+            CpuCoreHeatmap = coresAvg,
+            CpuTotalLoad = GetLastAverage(cpuLoad, m => m.Value),
+            CpuTotalLoadHistory = cpuLoad,
+            CpuPackageTemp = GetLastAverage(cpuTemp, m => m.Value),
+            CpuPackageTempHistory = cpuTemp,
 
-        // hub number?
-        // timed db metric
-        // valid until?
+            GpuLoad = GetLastAverage(gpuLoad, m => m.Value),
+            GpuLoadHistory = gpuLoad,
+            GpuTemp = GetLastAverage(gpuTemp, m => m.Value),
+            GpuTempHistory = gpuTemp,
+
+            NetworkDown = GetLastAverage(networkDown, m => m.Value),
+            NetworkUp = GetLastAverage(networkUp, m => m.Value),
+        };
     }
 
     public class UpdateVisitor : IVisitor
