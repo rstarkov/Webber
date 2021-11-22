@@ -3,6 +3,14 @@ using Webber.Server.Blocks;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var options = new Mono.Options.OptionSet()
+{
+    {"hw-delete", (_) => { HwInfoBlockServer.Unregister(); Environment.Exit(0); } },
+    {"config=", "Full path to a specific appsettings file to load.", (string path) => { builder.Configuration.AddJsonFile(path, optional: false); } },
+};
+
+options.Parse(args);
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
@@ -23,13 +31,6 @@ foreach (var blockServerType in blockServerTypes)
     if (configType != null)
         builder.Services.Add(new ServiceDescriptor(configType, config.Get(configType)));
 }
-
-var options = new Mono.Options.OptionSet()
-{
-    {"hw-delete", (_) => { HwInfoBlockServer.Unregister(); Environment.Exit(0); } }
-};
-
-options.Parse(args);
 
 var app = builder.Build();
 
