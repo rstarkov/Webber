@@ -12,6 +12,8 @@
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.8.9" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="6.0.0" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="6.0.0" />
+    <PackageReference Include="RT.Util.Core" Version="2.0.1702" />
+    <PackageReference Include="SolarCalculator" Version="3.0.6" />
   </ItemGroup>
 
   <ItemGroup>
