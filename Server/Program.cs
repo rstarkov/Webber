@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using Webber.Server.Blocks;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args, EnvironmentName = "Development" }); // blazor static files are broken for any other value of EnvironmentName. Use --config to load a custom appsettings.json instead.
 
 bool help = false;
 var options = new Mono.Options.OptionSet()
@@ -53,10 +53,8 @@ foreach (var blockServerType in blockServerTypes)
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-    app.UseWebAssemblyDebugging();
-else
-    app.UseExceptionHandler("/Error");
+//app.UseWebAssemblyDebugging();
+app.UseExceptionHandler("/Error");
 
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
