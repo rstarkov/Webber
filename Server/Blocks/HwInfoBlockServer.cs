@@ -4,7 +4,7 @@ using LibreHardwareMonitor.Hardware;
 
 namespace Webber.Server.Blocks;
 
-public class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
+internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
 {
     private Computer _computer;
     private Queue<double[]> _historyCpuCoreHeatmap = new();
@@ -14,12 +14,16 @@ public class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
     private Queue<TimedMetric> _historyGpuTemp = new();
     private Queue<TimedMetric> _historyNetworkUp = new();
     private Queue<TimedMetric> _historyNetworkDown = new();
+    private Queue<TimedMetric> _historyNetworkPing = new();
 
-    static readonly int METRIC_REFRESH_INTERVAL = 400;
+    static readonly int METRIC_REFRESH_INTERVAL = 500;
     static readonly int METRIC_CAPACITY = (int) Math.Ceiling((1000d / METRIC_REFRESH_INTERVAL) * 40d);
 
-    public HwInfoBlockServer(IServiceProvider sp) : base(sp, METRIC_REFRESH_INTERVAL)
+    private readonly PingBlockServer _pingProvider;
+
+    public HwInfoBlockServer(IServiceProvider sp, PingBlockServer pingProvider) : base(sp, METRIC_REFRESH_INTERVAL)
     {
+        this._pingProvider = pingProvider;
     }
 
     public override bool MigrateSchema(SqliteConnection db, int curVersion)
@@ -111,6 +115,11 @@ public class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         for (int i = 0; i < cores.Length; i++)
             coresAvg[i] = GetLastAverage(cpuHeat, a => a[i]);
 
+        var rping = _pingProvider.LastUpdate.Last ?? 99;
+        var hping = _historyNetworkPing.Count == 0 || DateTime.UtcNow - _historyNetworkPing.Last().TimeUtc > TimeSpan.FromSeconds(5)
+            ? _historyNetworkPing.EnqueueWithMaxCapacity(new TimedMetric(time, rping), METRIC_CAPACITY)
+            : _historyNetworkPing.ToArray();
+
         return new HwInfoBlockDto
         {
             CpuCoreHeatmap = coresAvg,
@@ -125,7 +134,11 @@ public class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
             GpuTempHistory = gpuTemp,
 
             NetworkDown = GetLastAverage(networkDown, m => m.Value),
+            NetworkDownHistory = networkDown,
             NetworkUp = GetLastAverage(networkUp, m => m.Value),
+            NetworkUpHistory = networkUp,
+            NetworkPing = GetLastAverage(hping, m => m.Value),
+            NetworkPingHistory = hping,
         };
     }
 

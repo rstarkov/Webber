@@ -6,8 +6,19 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton(new PingBlockConfig());
-builder.Services.AddSingleton(new TimeBlockConfig());
+builder.Services.AddSingleton(new TimeBlockConfig()
+{
+    ExtraTimezones = new List<TimeBlockConfig.Zone>
+    {
+        new TimeBlockConfig.Zone()
+        {
+            DisplayName = "CANADA",
+            TimezoneName = "Mountain Standard Time"
+        }
+    }
+});
 builder.Services.AddBlockServer<PingBlockServer>();
+builder.Services.AddBlockServer<TimeBlockServer>();
 
 // add/remove manage HwInfoBlockServer conditionally
 var options = new Mono.Options.OptionSet()

@@ -14,5 +14,9 @@ public record HwInfoBlockDto : BaseDto
     public double GpuTemp { get; set; }
     public TimedMetric[] GpuTempHistory { get; set; } = new TimedMetric[0];
     public double NetworkUp { get; set; }
+    public TimedMetric[] NetworkUpHistory { get; set; } = new TimedMetric[0];
     public double NetworkDown { get; set; }
+    public TimedMetric[] NetworkDownHistory { get; set; } = new TimedMetric[0];
+    public double NetworkPing { get; set; }
+    public TimedMetric[] NetworkPingHistory { get; set; } = new TimedMetric[0];
 }
