@@ -18,17 +18,6 @@ public interface IBlockServer<TDto> : IBlockServer
     TDto LastUpdate { get; }
 }
 
-public static class BlockServerExtensions
-{
-    public static void AddBlockServer<T>(this IServiceCollection services) where T : class, IBlockServer
-    {
-        var typeIServiceWithDto = typeof(T).GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IBlockServer<>));
-        services.Add(new ServiceDescriptor(typeIServiceWithDto, typeof(T), ServiceLifetime.Singleton));
-        services.AddSingleton(sp => (IBlockServer) sp.GetRequiredService(typeIServiceWithDto));
-        services.AddSingleton(sp => (T) sp.GetRequiredService(typeIServiceWithDto));
-    }
-}
-
 public abstract class BlockServerBase<TDto> : IBlockServer<TDto>
     where TDto : BaseDto
 {

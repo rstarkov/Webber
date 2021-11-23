@@ -22,8 +22,7 @@
     [Parameter]
     public RenderFragment<BlockPanel<TDto>> ChildContent { get; set; }
 
-    private DateTime _lastUpdateValidUntilUtc => LastUpdate.SentUtc + LastUpdate.ValidDuration;
-    private string cssClassValidity => LastUpdate == null || DateTime.UtcNow < _lastUpdateValidUntilUtc ? "" : "Invalid"; // it's only null until first update; don't start the block with red stripes - typically blocks render blank content anyway
+    private string cssClassValidity => LastUpdate == null || DateTime.UtcNow < LastUpdate.ValidUntilUtc ? "" : "Invalid"; // it's only null until first update; don't start the block with red stripes - typically blocks render blank content anyway
 
     private HubConnection _hubConnection;
     private CancellationTokenSource _cts = new();
@@ -53,7 +52,7 @@
     {
         LastUpdate = dto;
         _lastUpdateReceivedUtc = DateTime.UtcNow;
-        _invalidTimer.Interval = Math.Max(1, (_lastUpdateValidUntilUtc - DateTime.UtcNow).TotalMilliseconds);
+        _invalidTimer.Interval = Math.Max(1, (dto.ValidUntilUtc - DateTime.UtcNow).TotalMilliseconds);
         _invalidTimer.Enabled = true;
         _justReceivedTimer.Enabled = true;
         StateHasChanged();
@@ -61,7 +60,7 @@
 
     private void OnInvalidTimer(object sender, System.Timers.ElapsedEventArgs e)
     {
-        if (DateTime.UtcNow > _lastUpdateValidUntilUtc)
+        if (DateTime.UtcNow > LastUpdate.ValidUntilUtc)
         {
             _invalidTimer.Enabled = false;
             StateHasChanged();
@@ -69,7 +68,7 @@
         else
         {
             // It has fired before the validity interval has expired, in which case postpone it instead of disabling
-            _invalidTimer.Interval = Math.Max(1, (_lastUpdateValidUntilUtc - DateTime.UtcNow).TotalMilliseconds) + 100;
+            _invalidTimer.Interval = Math.Max(1, (LastUpdate.ValidUntilUtc - DateTime.UtcNow).TotalMilliseconds) + 100;
             _invalidTimer.Enabled = true;
         }
     }
