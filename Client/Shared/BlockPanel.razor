@@ -100,6 +100,7 @@
         _cts.Cancel();
         _cts.Dispose();
         _invalidTimer.Dispose();
+        _justReceivedTimer.Dispose();
         await _hubConnection!.DisposeAsync();
     }
 }
