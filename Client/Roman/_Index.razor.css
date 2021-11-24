@@ -21,3 +21,11 @@ div.PingBlockPanel {
     width: 39vw;
     height: 26vw;
 }
+
+div.RouterBlockPanel {
+    position: absolute;
+    top: 28vw;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}

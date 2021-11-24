@@ -1,0 +1,39 @@
+﻿.Grid {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    gap: 2vw;
+    grid-template-columns: min-content 1fr min-content 1fr min-content;
+    grid-template-rows: min-content 1fr 1fr;
+    align-items: center;
+    justify-items: center;
+}
+
+.Label {
+}
+
+    .Label.KB {
+        color: #777;
+    }
+
+    .Label.Up {
+        color: #1985f3;
+    }
+
+    .Label.Dn {
+        color: #ed980d;
+    }
+
+div.Chart {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    padding: 0 0.5vw;
+    border-bottom: 1px solid #999;
+}
+
+    div.Chart.Downwards {
+        border-bottom: none;
+        border-top: 1px solid #999;
+    }
