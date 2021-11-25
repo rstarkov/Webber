@@ -82,8 +82,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
 
         return new TimeUntilBlockDto()
         {
-            NextEvent = candidates.First(),
-            SecondEvent = candidates.Skip(1).First(),
+            Events = candidates.Take(2).ToArray(),
         };
     }
 }

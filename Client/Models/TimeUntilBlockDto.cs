@@ -9,6 +9,5 @@ public record CalendarEvent
 
 public record TimeUntilBlockDto : BaseDto
 {
-    public CalendarEvent NextEvent { get; set; }
-    public CalendarEvent SecondEvent { get; set; }
+    public CalendarEvent[] Events { get; set; }
 }
