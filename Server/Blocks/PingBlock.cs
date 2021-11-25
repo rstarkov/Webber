@@ -1,6 +1,7 @@
 ﻿using System.Net.NetworkInformation;
 using Dapper;
 using Dapper.Contrib.Extensions;
+using RT.Util.ExtensionMethods;
 using Webber.Client.Models;
 
 namespace Webber.Server.Blocks;
@@ -10,6 +11,7 @@ class PingBlockConfig
     public string Host { get; set; } = "8.8.8.8";
     public int IntervalMs { get; set; } = 5000;
     public int MaxWaitMs { get; set; } = 2000;
+    public int RecentLength { get; set; } = 24;
 }
 
 class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
@@ -24,6 +26,20 @@ class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
         _config = config;
         _db = db;
         registerMigrations();
+    }
+
+    public override void Start()
+    {
+        if (_db.Enabled)
+            using (var conn = _db.OpenConnection())
+                _recentPings = conn.Query<TbPingHistoryEntry>(
+                        $@"SELECT * FROM {nameof(TbPingHistoryEntry)} WHERE {nameof(TbPingHistoryEntry.Timestamp)} >= @limit ORDER BY {nameof(TbPingHistoryEntry.Timestamp)}",
+                        new { limit = DateTime.UtcNow.AddMilliseconds(-_config.IntervalMs * (_config.RecentLength + 0.5)).ToDbDateTime() }
+                    )
+                    .Select(pt => (ms: pt.Ping, utc: pt.Timestamp.FromDbDateTime()))
+                    .ToQueue();
+
+        base.Start();
     }
 
     protected override bool ShouldTick() => true;
@@ -44,8 +60,12 @@ class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
             using (var conn = _db.OpenConnection())
                 conn.Insert(new TbPingHistoryEntry { Timestamp = sentUtc.ToDbDateTime(), Ping = dto.Last });
 
-        _recentPings.EnqueueWithMaxCapacity((dto.Last, sentUtc), 24);
-        dto.Recent = _recentPings.Select(t => t.ms).ToArray();
+        _recentPings.EnqueueWithMaxCapacity((dto.Last, sentUtc), _config.RecentLength);
+
+        var recent = new List<int?>();
+        for (var ts = sentUtc.AddMilliseconds(-_config.IntervalMs * (_config.RecentLength - 0.5)); ts < sentUtc; ts = ts.AddMilliseconds(_config.IntervalMs))
+            recent.Add(_recentPings.Where(r => r.utc >= ts && r.utc < ts.AddMilliseconds(_config.IntervalMs)).Select(r => (int?) (r.ms ?? -1)).FirstOrDefault());
+        dto.Recent = recent.ToArray();
 
         return dto;
     }

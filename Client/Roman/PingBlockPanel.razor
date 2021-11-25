@@ -9,7 +9,7 @@
                 <div>Ping</div>
             </div>
             <div class="RecentChart">
-                <BarChart BarCount=24 Data=@context.LastUpdate.Recent.Select(GetPt) />
+                <BarChart BarCount=@context.LastUpdate.Recent.Length Data=@context.LastUpdate.Recent.Select(GetPt) />
             </div>
         }
     </div>
@@ -18,8 +18,8 @@
 @code {
     private BarChart.Pt GetPt(int? value)
     {
-        if (value == null)
-            return new BarChart.Pt { Value = 1.0, Color = "#ff00ff" };
+        if (value == null /* missing data */ || value == -1 /* ping timeout */)
+            return new BarChart.Pt { Value = 1.0, Color = value == null ? "#404040" : "#ff00ff" };
         return new BarChart.Pt
             {
                 Value = BarChart.ScaleY(value.Value, 10, 2000, x => BarChart.ModifiedLog(x, 10)),
