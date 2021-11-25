@@ -3,7 +3,7 @@
 namespace Webber.Server.Blocks;
 
 public abstract class SimpleBlockServerBase<TDto> : BlockServerBase<TDto>
-    where TDto : BaseDto
+    where TDto : BaseDto, new()
 {
     private readonly TimeSpan _interval;
 
@@ -42,7 +42,7 @@ public abstract class SimpleBlockServerBase<TDto> : BlockServerBase<TDto>
             }
             catch (Exception ex)
             {
-                SendUpdate(LastUpdate with { ErrorMessage = ex.Message });
+                SendUpdate((LastUpdate ?? new TDto()) with { ErrorMessage = ex.Message });
             }
 
             Util.SleepUntil(start + _interval);
