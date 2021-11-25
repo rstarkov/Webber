@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Webber.Server;
 using Webber.Server.Blocks;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args, EnvironmentName = "Development" }); // blazor static files are broken for any other value of EnvironmentName. Use --config to load a custom appsettings.json instead.
@@ -51,6 +52,12 @@ foreach (var blockServerType in blockServerTypes)
         builder.Services.Add(new ServiceDescriptor(configType, config.Get(configType)));
 }
 
+var dbConfig = builder.Configuration.GetSection("Db").GetOrDefault<DbConfig>();
+if (dbConfig == null)
+    builder.Services.AddSingleton<IDbService, DisabledDbService>();
+else
+    builder.Services.AddSingleton<IDbService>(new DbService(dbConfig));
+
 var app = builder.Build();
 
 //app.UseWebAssemblyDebugging();
@@ -66,10 +73,11 @@ app.MapControllers();
 app.MapFallbackToFile("index.html");
 
 foreach (var service in app.Services.GetServices<IBlockServer>())
-{
     service.Init(app);
-    //service.MigrateSchema();
+
+var dbService = app.Services.GetRequiredService<IDbService>();
+dbService.Initialise();
+foreach (var service in app.Services.GetServices<IBlockServer>())
     service.Start();
-}
 
 app.Run();

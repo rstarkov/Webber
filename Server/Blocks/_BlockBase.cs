@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Data.Sqlite;
 using Webber.Client.Models;
 
 namespace Webber.Server.Blocks;
@@ -8,7 +7,6 @@ namespace Webber.Server.Blocks;
 public interface IBlockServer
 {
     void Init(WebApplication app);
-    bool MigrateSchema(SqliteConnection db, int curVersion);
     void Start();
 }
 
@@ -55,7 +53,6 @@ public abstract class BlockServerBase<TDto> : IBlockServer<TDto>
 
     public TDto LastUpdate { get; private set; }
 
-    public abstract bool MigrateSchema(SqliteConnection db, int curVersion);
     public abstract void Start();
 
     public BlockServerBase(IServiceProvider sp)

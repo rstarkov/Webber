@@ -1,7 +1,6 @@
 ﻿using System.Net.NetworkInformation;
 using Dapper;
 using Dapper.Contrib.Extensions;
-using Microsoft.Data.Sqlite;
 using Webber.Client.Models;
 
 namespace Webber.Server.Blocks;
@@ -16,12 +15,15 @@ class PingBlockConfig
 class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
 {
     private PingBlockConfig _config;
+    private IDbService _db;
     private Queue<(int? ms, DateTime utc)> _recentPings = new();
 
-    public PingBlockServer(IServiceProvider sp, PingBlockConfig config)
+    public PingBlockServer(IServiceProvider sp, PingBlockConfig config, IDbService db)
         : base(sp, config.IntervalMs)
     {
         _config = config;
+        _db = db;
+        registerMigrations();
     }
 
     protected override bool ShouldTick() => true;
@@ -38,8 +40,9 @@ class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
         else
             dto.Last = null;
 
-        //using (var db = Db.Open())
-        //    db.Insert(new TbPingHistoryEntry { Timestamp = utc.ToDbDateTime(), Ping = dto.Last });
+        if (_db.Enabled)
+            using (var conn = _db.OpenConnection())
+                conn.Insert(new TbPingHistoryEntry { Timestamp = sentUtc.ToDbDateTime(), Ping = dto.Last });
 
         _recentPings.EnqueueWithMaxCapacity((dto.Last, sentUtc), 24);
         dto.Recent = _recentPings.Select(t => t.ms).ToArray();
@@ -47,25 +50,23 @@ class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
         return dto;
     }
 
-    public override bool MigrateSchema(SqliteConnection db, int curVersion)
+    private void registerMigrations()
     {
-        if (curVersion == 0)
+        if (!_db.Enabled)
+            return;
+        _db.RegisterMigration("PingService", 0, 1, (conn, trn) =>
         {
-            if (db == null) return true;
-            db.Execute($@"CREATE TABLE {nameof(TbPingHistoryEntry)} (
+            conn.Execute($@"CREATE TABLE {nameof(TbPingHistoryEntry)} (
                     {nameof(TbPingHistoryEntry.Timestamp)} INTEGER PRIMARY KEY,
                     {nameof(TbPingHistoryEntry.Ping)} INT NULL
-                )");
-            return true;
-        }
-
-        return false;
+                )", transaction: trn);
+        });
     }
-}
 
-class TbPingHistoryEntry
-{
-    [ExplicitKey]
-    public long Timestamp { get; set; }
-    public int? Ping { get; set; }
+    class TbPingHistoryEntry
+    {
+        [ExplicitKey]
+        public long Timestamp { get; set; }
+        public int? Ping { get; set; }
+    }
 }

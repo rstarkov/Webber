@@ -16,20 +16,28 @@ class WeatherBlockConfig
 class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
 {
     private WeatherBlockConfig _config;
-    private Dictionary<DateTime, decimal> _temperatures = new Dictionary<DateTime, decimal>();
-    private HttpClient _httpClient = new HttpClient();
+    private IDbService _db;
+    private Dictionary<DateTime, decimal> _temperatures = new();
+    private HttpClient _httpClient = new();
 
-    public WeatherBlockServer(IServiceProvider sp, WeatherBlockConfig config)
+    public WeatherBlockServer(IServiceProvider sp, WeatherBlockConfig config, IDbService db)
         : base(sp, TimeSpan.FromMinutes(1))
     {
         _config = config;
+        _db = db;
+        registerMigrations();
     }
 
     public override void Start()
     {
-        //using (var db = Db.Open())
-        //    _temperatures = db.Query<TbWeatherTemperature>($@"SELECT * FROM {nameof(TbWeatherTemperature)} WHERE {nameof(TbWeatherTemperature.Timestamp)} > @limit", new { limit = DateTime.UtcNow.AddDays(-8).ToDbDateTime() })
-        //        .ToDictionary(r => r.Timestamp.FromDbDateTime(), r => (decimal) r.Temperature);
+        if (_db.Enabled)
+            using (var conn = _db.OpenConnection())
+            {
+                _temperatures = conn.Query<TbWeatherTemperature>(
+                        $@"SELECT * FROM {nameof(TbWeatherTemperature)} WHERE {nameof(TbWeatherTemperature.Timestamp)} > @limit",
+                        new { limit = DateTime.UtcNow.AddDays(-8).ToDbDateTime() }
+                    ).ToDictionary(r => r.Timestamp.FromDbDateTime(), r => (decimal) r.Temperature);
+            }
 
         base.Start();
     }
@@ -46,8 +54,9 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
         _temperatures.RemoveAllByKey(date => date < DateTime.UtcNow - TimeSpan.FromDays(8));
         _temperatures[DateTime.UtcNow] = curTemp;
 
-        //using (var db = Db.Open())
-        //    db.Insert(new TbWeatherTemperature { Timestamp = DateTime.UtcNow.ToDbDateTime(), Temperature = (double) curTemp });
+        if (_db.Enabled)
+            using (var conn = _db.OpenConnection())
+                conn.Insert(new TbWeatherTemperature { Timestamp = DateTime.UtcNow.ToDbDateTime(), Temperature = (double) curTemp });
 
         var dto = new WeatherBlockDto { ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromMinutes(30) };
 
@@ -132,25 +141,23 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
         return $"#{color.Item1:X2}{color.Item2:X2}{color.Item3:X2}";
     }
 
-    public override bool MigrateSchema(Microsoft.Data.Sqlite.SqliteConnection db, int curVersion)
+    private void registerMigrations()
     {
-        if (curVersion == 0)
+        if (!_db.Enabled)
+            return;
+        _db.RegisterMigration("WeatherService", 0, 1, (conn, trn) =>
         {
-            if (db == null) return true;
-            db.Execute($@"CREATE TABLE {nameof(TbWeatherTemperature)} (
+            conn.Execute($@"CREATE TABLE {nameof(TbWeatherTemperature)} (
                     {nameof(TbWeatherTemperature.Timestamp)} INTEGER PRIMARY KEY,
                     {nameof(TbWeatherTemperature.Temperature)} REAL NOT NULL
-                )");
-            return true;
-        }
-
-        return false;
+                )", transaction: trn);
+        });
     }
-}
 
-class TbWeatherTemperature
-{
-    [ExplicitKey]
-    public long Timestamp { get; set; }
-    public double Temperature { get; set; }
+    class TbWeatherTemperature
+    {
+        [ExplicitKey]
+        public long Timestamp { get; set; }
+        public double Temperature { get; set; }
+    }
 }

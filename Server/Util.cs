@@ -21,4 +21,11 @@ static class Util
             q.Dequeue();
         return q.ToArray();
     }
+
+    public static T GetOrDefault<T>(this IConfigurationSection section)
+    {
+        if (!section.Exists())
+            return default(T);
+        return section.Get<T>();
+    }
 }

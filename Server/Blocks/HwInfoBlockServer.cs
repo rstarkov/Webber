@@ -1,6 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using LibreHardwareMonitor.Hardware;
 using Webber.Client.Models;
-using LibreHardwareMonitor.Hardware;
 
 namespace Webber.Server.Blocks;
 
@@ -24,11 +23,6 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
     public HwInfoBlockServer(IServiceProvider sp, PingBlockServer pingProvider) : base(sp, METRIC_REFRESH_INTERVAL)
     {
         this._pingProvider = pingProvider;
-    }
-
-    public override bool MigrateSchema(SqliteConnection db, int curVersion)
-    {
-        throw new NotImplementedException();
     }
 
     public override void Start()

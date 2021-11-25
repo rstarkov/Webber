@@ -19,25 +19,29 @@ class RouterBlockConfig
 class RouterBlockServer : SimpleBlockServerBase<RouterBlockDto>
 {
     private RouterBlockConfig _config;
+    private IDbService _db;
     private Queue<RouterHistoryPoint> _history = new Queue<RouterHistoryPoint>();
 
-    public RouterBlockServer(IServiceProvider sp, RouterBlockConfig config)
+    public RouterBlockServer(IServiceProvider sp, RouterBlockConfig config, IDbService db)
         : base(sp, config.QueryIntervalMs)
     {
         _config = config;
+        _db = db;
+        registerMigrations();
     }
 
     public override void Start()
     {
-        //using (var db = Db.Open())
-        //{
-        //    _history = db.Query<TbRouterHistoryEntry>(
-        //            $@"SELECT * FROM {nameof(TbRouterHistoryEntry)} WHERE {nameof(TbRouterHistoryEntry.Timestamp)} >= @limit ORDER BY {nameof(TbRouterHistoryEntry.Timestamp)}",
-        //            new { limit = DateTime.UtcNow.AddHours(-24).ToDbDateTime() }
-        //        )
-        //        .Select(pt => new RouterHistoryPoint { Timestamp = pt.Timestamp.FromDbDateTime(), TxTotal = pt.TxTotal, RxTotal = pt.RxTotal })
-        //        .ToQueue();
-        //}
+        if (_db.Enabled)
+            using (var conn = _db.OpenConnection())
+            {
+                _history = conn.Query<TbRouterHistoryEntry>(
+                        $@"SELECT * FROM {nameof(TbRouterHistoryEntry)} WHERE {nameof(TbRouterHistoryEntry.Timestamp)} >= @limit ORDER BY {nameof(TbRouterHistoryEntry.Timestamp)}",
+                        new { limit = DateTime.UtcNow.AddHours(-24).ToDbDateTime() }
+                    )
+                    .Select(pt => new RouterHistoryPoint { Timestamp = pt.Timestamp.FromDbDateTime(), TxTotal = pt.TxTotal, RxTotal = pt.RxTotal })
+                    .ToQueue();
+            }
         ptPrev = _history.LastOrDefault();
 
         base.Start();
@@ -131,8 +135,9 @@ class RouterBlockServer : SimpleBlockServerBase<RouterBlockDto>
         var rxDiff = pt.RxTotal - ptPrev.RxTotal;
         var timeDiff = (pt.Timestamp - ptPrev.Timestamp).TotalSeconds;
 
-        //using (var db = Db.Open())
-        //    db.Insert(new TbRouterHistoryEntry { Timestamp = pt.Timestamp.ToDbDateTime(), TxTotal = pt.TxTotal, RxTotal = pt.RxTotal });
+        if (_db.Enabled)
+            using (var conn = _db.OpenConnection())
+                conn.Insert(new TbRouterHistoryEntry { Timestamp = pt.Timestamp.ToDbDateTime(), TxTotal = pt.TxTotal, RxTotal = pt.RxTotal });
 
         var rxRate = rxDiff / timeDiff;
         var txRate = txDiff / timeDiff;
@@ -180,20 +185,18 @@ class RouterBlockServer : SimpleBlockServerBase<RouterBlockDto>
         return dto;
     }
 
-    public override bool MigrateSchema(Microsoft.Data.Sqlite.SqliteConnection db, int curVersion)
+    private void registerMigrations()
     {
-        if (curVersion == 0)
+        if (!_db.Enabled)
+            return;
+        _db.RegisterMigration("RouterService", 0, 1, (conn, trn) =>
         {
-            if (db == null) return true;
-            db.Execute($@"CREATE TABLE {nameof(TbRouterHistoryEntry)} (
+            conn.Execute($@"CREATE TABLE {nameof(TbRouterHistoryEntry)} (
                     {nameof(TbRouterHistoryEntry.Timestamp)} INTEGER PRIMARY KEY,
                     {nameof(TbRouterHistoryEntry.TxTotal)} BIGINT NOT NULL,
                     {nameof(TbRouterHistoryEntry.RxTotal)} BIGINT NOT NULL
-                )");
-            return true;
-        }
-
-        return false;
+                )", transaction: trn);
+        });
     }
 
     class RouterHistoryPoint

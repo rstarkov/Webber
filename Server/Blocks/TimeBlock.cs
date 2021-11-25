@@ -36,9 +36,4 @@ class TimeBlockServer : SimpleBlockServerBase<TimeBlockDto>
     {
         return TimeZoneInfo.FindSystemTimeZoneById(timezoneName).GetUtcOffset(DateTimeOffset.UtcNow).TotalHours;
     }
-
-    public override bool MigrateSchema(Microsoft.Data.Sqlite.SqliteConnection db, int curVersion)
-    {
-        return false;
-    }
 }
