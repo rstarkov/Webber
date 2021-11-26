@@ -1,9 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Threading;
-using Webber.Client.Models;
-
-namespace Webber.Server;
+﻿namespace Webber.Server;
 
 static class Util
 {
@@ -27,5 +22,17 @@ static class Util
         if (!section.Exists())
             return default(T);
         return section.Get<T>();
+    }
+
+    private static DateTime _unixepoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+    public static uint ToUnixSeconds(this DateTime time)
+    {
+        return (uint) (time - _unixepoch).TotalSeconds;
+    }
+
+    public static DateTime FromUnixSeconds(this uint time)
+    {
+        return _unixepoch.AddSeconds(time);
     }
 }

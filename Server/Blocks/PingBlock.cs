@@ -28,6 +28,8 @@ class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
         registerMigrations();
     }
 
+    public IEnumerable<(DateTime SentUtc, int? PingMs)> RecentPings => _recentPings.Select(pt => (pt.utc, pt.ms));
+
     public override void Start()
     {
         if (_db.Enabled)
