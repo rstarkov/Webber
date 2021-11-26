@@ -109,7 +109,7 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         for (int i = 0; i < cores.Length; i++)
             coresAvg[i] = GetLastAverage(cpuHeat, a => a[i]);
 
-        var rping = _pingProvider.LastUpdate.Last ?? 99;
+        var rping = _pingProvider?.LastUpdate?.Last ?? 99;
         var hping = _historyNetworkPing.Count == 0 || DateTime.UtcNow - _historyNetworkPing.Last().TimeUtc > TimeSpan.FromSeconds(5)
             ? _historyNetworkPing.EnqueueWithMaxCapacity(new TimedMetric(time, rping), METRIC_CAPACITY)
             : _historyNetworkPing.ToArray();

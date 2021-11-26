@@ -78,11 +78,12 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             .Select(i => new CalendarEvent() { DisplayName = i.Summary ?? i.Description, Time = i.Start.DateTime.Value.ToUniversalTime() })
             .Concat(new[] { new CalendarEvent() { DisplayName = "Sleep!", Time = DateTime.UtcNow.Date.AddHours(22.5) } }) // sleep!
             .OrderBy(i => i.Time)
+            .Take(3)
             .ToArray();
 
         return new TimeUntilBlockDto()
         {
-            Events = candidates.Take(2).ToArray(),
+            Events = candidates,
         };
     }
 }

@@ -3,6 +3,7 @@ import "./App.css";
 import HwInfoBlock from './HwInfoBlock';
 import ClockBlock from './ClockBlock';
 import WeatherBlock from './WeatherBlock';
+import TimeUntilBlock from './TimeUntilBlock';
 
 function App() {
     return (
@@ -13,7 +14,10 @@ function App() {
             <div className="l5t1 w4h4">
                 <ClockBlock />
             </div>
-            <div className="l5t5 w4h2">
+            <div className="l5t5 w4h2" style={{ overflow: 'hidden' }}>
+                <TimeUntilBlock />
+            </div>
+            <div className="l5t7 w4h2">
                 <WeatherBlock />
             </div>
         </div>
