@@ -11,16 +11,16 @@ namespace Webber.Server.Blocks;
 
 class HttpingBlockConfig
 {
-    public List<Target> Targets = new List<Target> { new Target() };
+    public List<Target> Targets { get; set; } = new();
 
     public class Target
     {
-        public string Name = "Google"; // displayed
-        public string InternalName = "Google"; // stored in db
-        public string Url = "https://www.google.com";
-        public TimeSpan Interval = TimeSpan.FromSeconds(5);
-        public string MustContain = "";
-        public string TimeZone = "GMT Standard Time";
+        public string Name { get; set; } = "Google"; // displayed
+        public string InternalName { get; set; } = "Google"; // stored in db
+        public string Url { get; set; } = "https://www.google.com";
+        public TimeSpan Interval { get; set; } = TimeSpan.FromSeconds(5);
+        public string MustContain { get; set; } = "";
+        public string TimeZone { get; set; } = "GMT Standard Time";
 
         public override string ToString() => $"{Name} ({Url})";
     }
@@ -42,10 +42,6 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
         if (!_db.Enabled)
             throw new Exception("This service requires a database.");
         registerMigrations();
-        //var resolver = new UrlResolver();
-        //resolver.Add(new UrlHook(path: "/", specificPath: true), handleChartPage);
-        //resolver.Add(new UrlHook(path: "/ChartSvg", specificPath: true), handleChartSvg);
-        //server.AddUrlMapping(new UrlMapping(new UrlHook(path: "/HttpingService", specificPath: false), resolver.Handle));
     }
 
     public override void Start()
@@ -55,8 +51,6 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
             tgt.Start(this);
         base.Start();
     }
-
-    protected override bool ShouldTick() => true;
 
     protected override HttpingDto Tick()
     {
@@ -79,11 +73,11 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
                 for (int k = tgt.Recent.Count - 1; k >= 0; k--)
                 {
                     var pt = tgt.Recent[k];
-                    if (pt.Timestamp > cutoff30m && last30m.CountSample(pt.MsResponse))
+                    if (pt.Timestamp > cutoff30m && CountSample(ref last30m, pt.MsResponse))
                         stamps30m.Add(pt.MsResponse);
-                    if (pt.Timestamp > cutoff24h && last24h.CountSample(pt.MsResponse))
+                    if (pt.Timestamp > cutoff24h && CountSample(ref last24h, pt.MsResponse))
                         stamps24h.Add(pt.MsResponse);
-                    if (pt.Timestamp > cutoff30d && last30d.CountSample(pt.MsResponse))
+                    if (pt.Timestamp > cutoff30d && CountSample(ref last30d, pt.MsResponse))
                         stamps30d.Add(pt.MsResponse);
                 }
                 stamps30m.Sort();
@@ -114,7 +108,19 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
         return dto;
     }
 
-    private void SetPercentiles(ref HttpingIntervalDto stat, List<ushort> sortedValues)
+    private static bool CountSample(ref HttpingIntervalDto stat, ushort msResponse)
+    {
+        stat.TotalCount++;
+        if (msResponse == 65535)
+            stat.TimeoutCount++;
+        else if (msResponse == 0)
+            stat.ErrorCount++;
+        else
+            return true;
+        return false;
+    }
+
+    private static void SetPercentiles(ref HttpingIntervalDto stat, List<ushort> sortedValues)
     {
         stat.MsResponsePrc01 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 1 / 100];
         stat.MsResponsePrc25 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 25 / 100];
@@ -124,7 +130,7 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
         stat.MsResponsePrc99 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 99 / 100];
     }
 
-    private HttpingIntervalDto[] GetIntervalDto(QueueViewable<HttpingPointInterval> data, TimeSpan interval, Func<DateTime, DateTime> getIntervalStart)
+    private static HttpingIntervalDto[] GetIntervalDto(QueueViewable<HttpingPointInterval> data, TimeSpan interval, Func<DateTime, DateTime> getIntervalStart)
     {
         const int count = 30;
         var cur = getIntervalStart(getIntervalStart(DateTime.UtcNow) - interval);
@@ -162,8 +168,6 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
 
     private void registerMigrations()
     {
-        if (!_db.Enabled)
-            return;
         _db.RegisterMigration("HttpingService", 0, 1, (conn, trn) =>
         {
             conn.Execute(@"CREATE TABLE TbHttpingSite (
@@ -308,14 +312,13 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
 
         private void thread()
         {
+            var next = DateTime.UtcNow;
+            var hc = new HttpClient();
+            hc.Timeout = TimeSpan.FromSeconds(Settings.Interval.TotalSeconds * 0.90);
             while (true)
             {
-                var next = DateTime.UtcNow + Settings.Interval;
                 try
                 {
-                    var hc = new HttpClient();
-                    hc.Timeout = TimeSpan.FromSeconds(Settings.Interval.TotalSeconds * 0.90);
-
                     double msResponse = -1;
                     bool error = false;
                     bool ok = false;
@@ -356,7 +359,7 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
                             Recent.Dequeue();
 
                         // Recalculate stats if we've crossed into the next minute
-                        var prevPt = Recent.Count >= 2 ? Recent[Recent.Count - 2].Timestamp.FromUnixSeconds() : (DateTime?) null;
+                        var prevPt = Recent.Count >= 2 ? Recent[^2].Timestamp.FromUnixSeconds() : (DateTime?) null;
                         if (prevPt != null && prevPt.Value.TruncatedToMinutes() != start.TruncatedToMinutes())
                         {
                             AddIntervalIfRequired(Twominutely, prevPt.Value, start, GetStartOfTwominute, HttpingIntervalLength.TwoMinutes);
@@ -379,6 +382,9 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
                 }
 
             skip:
+                next += Settings.Interval;
+                if (next < DateTime.UtcNow - Settings.Interval)
+                    next = DateTime.UtcNow; // lagging behind too much; reset
                 Util.SleepUntil(next);
             }
         }
@@ -387,7 +393,7 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
             interval == HttpingIntervalLength.TwoMinutes ? GetStartOfTwominute :
             interval == HttpingIntervalLength.Hour ? GetStartOfHour :
             interval == HttpingIntervalLength.Day ? GetStartOfLocalDayInUtc :
-            interval == HttpingIntervalLength.Month ? GetStartOfLocalMonthInUtc : (Func<DateTime, DateTime>) GetStartOfLocalYearInUtc;
+            interval == HttpingIntervalLength.Month ? GetStartOfLocalMonthInUtc : GetStartOfLocalYearInUtc;
 
         public DateTime GetStartOfTwominute(DateTime dt) => new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, (dt.Minute / 2) * 2, 0, DateTimeKind.Utc);
         public DateTime GetStartOfHour(DateTime dt) => new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, 0, 0, DateTimeKind.Utc);
@@ -451,7 +457,7 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
             return interval;
         }
 
-        private void SetPercentiles(ref HttpingStatistic stat, List<ushort> sortedValues)
+        private static void SetPercentiles(ref HttpingStatistic stat, List<ushort> sortedValues)
         {
             stat.Prc01 = sortedValues[(sortedValues.Count - 1) * 1 / 100];
             stat.Prc25 = sortedValues[(sortedValues.Count - 1) * 25 / 100];

@@ -29,17 +29,5 @@ public record struct HttpingIntervalDto
     public int TotalCount { get; set; } // 0 = missing data
     public int TimeoutCount { get; set; }
     public int ErrorCount { get; set; }
-
-    public bool CountSample(ushort msResponse)
-    {
-        TotalCount++;
-        if (msResponse == 65535)
-            TimeoutCount++;
-        else if (msResponse == 0)
-            ErrorCount++;
-        else
-            return true;
-        return false;
-    }
 }
 
