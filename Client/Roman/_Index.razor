@@ -1,4 +1,5 @@
 ﻿@page "/"
+@inject JsInterop JS
 
 <PageTitle>Webber</PageTitle>
 
@@ -11,10 +12,18 @@
 {
     <div class="ControlsOverlay">
         <button @onclick="@(e => { _overlayShown = false; })">Dismiss</button>
-        <button onclick="document.body.requestFullscreen();">Full Screen</button>
+        <button @onclick="toggleFullscreen">@(_isFullscreen ? "Exit Full Screen" : "Full Screen")</button>
     </div>
 }
 
 @code {
     private bool _overlayShown = false;
+    private bool _isFullscreen = false;
+
+    private async Task toggleFullscreen()
+    {
+        _overlayShown = false;
+        await (_isFullscreen ? JS.ExitFullscreen() : JS.EnterFullscreen());
+        _isFullscreen = !_isFullscreen;
+    }
 }
