@@ -12,6 +12,8 @@ div.TimeBlockPanel {
     left: 39vw;
     width: 20vw;
     height: 26vw;
+    user-select: none;
+    cursor: pointer;
 }
 
 div.PingBlockPanel {
@@ -28,4 +30,16 @@ div.RouterBlockPanel {
     bottom: 0;
     left: 0;
     right: 0;
+}
+
+div.ControlsOverlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: rgba(37, 39, 49, 0.87);
+    display: grid;
+    align-items: center;
+    justify-items: center;
 }
