@@ -26,19 +26,21 @@ class HttpingBlockConfig
     }
 }
 
-class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
+class HttpingBlockServer : SimpleBlockServerBase<HttpingBlockDto>
 {
     private HttpingBlockConfig _config;
     private IDbService _db;
     private PingBlockServer _pingSvc;
     private List<HttpingTarget> _targets;
+    private ILogger _logger;
 
-    public HttpingBlockServer(IServiceProvider sp, HttpingBlockConfig config, IDbService db, PingBlockServer pingSvc)
+    public HttpingBlockServer(IServiceProvider sp, HttpingBlockConfig config, IDbService db, PingBlockServer pingSvc, ILogger<HttpingBlockServer> logger)
         : base(sp, 5000)
     {
         _config = config;
         _db = db;
         _pingSvc = pingSvc;
+        _logger = logger;
         if (!_db.Enabled)
             throw new Exception("This service requires a database.");
         registerMigrations();
@@ -52,9 +54,9 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
         base.Start();
     }
 
-    protected override HttpingDto Tick()
+    protected override HttpingBlockDto Tick()
     {
-        var dto = new HttpingDto { ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromSeconds(15) };
+        var dto = new HttpingBlockDto { ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromSeconds(15) };
         dto.Targets = new HttpingTargetDto[_targets.Count];
         int i = 0;
         foreach (var tgt in _targets)
@@ -225,6 +227,7 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
             _svc = svc;
             Timezone = TimeZoneInfo.FindSystemTimeZoneById(Settings.TimeZone);
 
+            var start = DateTime.UtcNow;
             using var conn = _svc._db.OpenConnection();
 
             _siteId = conn.Query<TbHttpingSite>($"SELECT * FROM {nameof(TbHttpingSite)} WHERE {nameof(TbHttpingSite.InternalName)} = @name", new { name = Settings.InternalName }).SingleOrDefault()?.SiteId
@@ -241,6 +244,8 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingDto>
             Hourly = loadRecentIntervals(conn, HttpingIntervalLength.Hour);
             Daily = loadRecentIntervals(conn, HttpingIntervalLength.Day);
             Monthly = loadRecentIntervals(conn, HttpingIntervalLength.Month);
+
+            _svc._logger.LogInformation($"Loaded data for {Settings.InternalName} in {(DateTime.UtcNow - start).TotalSeconds:0.0} sec");
 
             new Thread(thread) { IsBackground = true }.Start();
         }

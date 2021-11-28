@@ -1,6 +1,6 @@
 ﻿namespace Webber.Client.Models;
 
-public record HttpingDto : BaseDto
+public record HttpingBlockDto : BaseDto
 {
     public HttpingTargetDto[] Targets { get; set; }
 }

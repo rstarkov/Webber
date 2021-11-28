@@ -1,0 +1,28 @@
+﻿* {
+    font-size: 1.3vw;
+}
+
+.GridContainer {
+    display: grid;
+    grid-template-columns: min-content min-content min-content auto min-content min-content auto min-content min-content min-content 1fr 1fr 1fr 1fr;
+    column-gap: 1.5vw;
+}
+
+    .GridContainer > div {
+        padding-top: 0.5vw;
+        padding-bottom: 0.5vw;
+    }
+
+.ChartContainer {
+    height: 3vw;
+}
+
+div.sep {
+    width: 1px;
+    border-left: 1px solid #333;
+}
+
+div.EndContainer {
+    margin-top: 3vw;
+    text-align: center;
+}

@@ -1,0 +1,67 @@
+﻿@page "/httping"
+@using Webber.Client.Models
+@inject NavigationManager NavMgr
+
+<PageTitle>HTTPing – Webber</PageTitle>
+
+@{
+    <BlockPanel TDto="HttpingBlockDto">
+        @if (context.LastUpdate != null)
+        {
+            var dto = context.LastUpdate;
+            <div class=GridContainer>
+                <div>Site</div>
+                <div>50%</div>
+                <div>95%</div>
+                <div class=sep></div>
+                <div>50%</div>
+                <div>95%</div>
+                <div class=sep></div>
+                <div>50%</div>
+                <div>95%</div>
+                <div>Down</div>
+                <div>Recent chart</div>
+                <div>2 min chart</div>
+                <div>Hourly chart</div>
+                <div>Daily chart</div>
+
+                @foreach (var tgt in dto.Targets)
+                {
+                    <div>@tgt.Name</div>
+                    <div>@tgt.Last30m.MsResponsePrc50</div>
+                    <div>@tgt.Last30m.MsResponsePrc95</div>
+                    <div class=sep></div>
+                    <div>@tgt.Last24h.MsResponsePrc50</div>
+                    <div>@tgt.Last24h.MsResponsePrc95</div>
+                    <div class=sep></div>
+                    <div>@tgt.Last30d.MsResponsePrc50</div>
+                    <div>@tgt.Last30d.MsResponsePrc95</div>
+                    <div>@downtimeStr((tgt.Last30d.ErrorCount + tgt.Last30d.TimeoutCount) / (double)tgt.Last30d.TotalCount * 100)</div>
+                    <div class=ChartContainer><BarChart BarCount=@tgt.Recent.Length Data=@getRecentData(tgt) /></div>
+                    <div class=ChartContainer><BarChart BarCount=@tgt.Recent.Length Data=@getRecentData(tgt) /></div>
+                    <div class=ChartContainer><BarChart BarCount=@tgt.Recent.Length Data=@getRecentData(tgt) /></div>
+                    <div class=ChartContainer><BarChart BarCount=@tgt.Recent.Length Data=@getRecentData(tgt) /></div>
+                }
+            </div>
+        }
+    </BlockPanel>
+
+    <div class=EndContainer>
+        <button @onclick="@(e => { NavMgr.NavigateTo("/"); })">Back</button>
+    </div>
+}
+
+@code {
+    private string downtimeStr(double prc) => prc < 1 ? $"{prc:0.00}%" : $"{prc:0.0}%";
+
+    private IEnumerable<BarChart.Pt> getRecentData(HttpingTargetDto dto)
+    {
+        var greenMsCutoff = Math.Min((ushort)5000, dto.Last30d.MsResponsePrc75);
+        var redMsCutoff = greenMsCutoff * 1.5;
+        return dto.Recent.Select(pt => new BarChart.Pt
+            {
+                Value = BarChart.ScaleY(pt, dto.Last30d.MsResponsePrc01 * 0.9, dto.Last30d.MsResponsePrc50 * 3, v => BarChart.ModifiedLog(v, 10)),
+                Color = (pt == 0 || pt == 65535) ? "#ff00ff" : pt > redMsCutoff ? "#ff0000" : pt > greenMsCutoff ? "#1985f3" : "#08b025",
+            });
+    }
+}

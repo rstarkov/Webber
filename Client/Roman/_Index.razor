@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject JsInterop JS
+@inject NavigationManager NavMgr
 
 <PageTitle>Webber</PageTitle>
 
@@ -12,6 +13,7 @@
 {
     <div class="ControlsOverlay">
         <button @onclick="@(e => { _overlayShown = false; })">Dismiss</button>
+        <button @onclick="@(e => { NavMgr.NavigateTo("/httping"); })">HTTPing</button>
         <button @onclick="toggleFullscreen">@(_isFullscreen ? "Exit Full Screen" : "Full Screen")</button>
     </div>
 }
