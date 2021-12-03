@@ -125,9 +125,9 @@ const HwLoadGraph: React.FunctionComponent<HwLoadGraphProps> = ({ totalLoad, tot
                 options={loadOptions}
                 type="area"
                 height={height + 45}
-                width={width + 10 - 60}
+                width={width + 10 - 63}
                 series={series}
-                style={{ position: "relative", left: 60 }}
+                style={{ position: "relative", left: 63 }}
             />
             <span style={{ fontSize: "62px", fontWeight: "bold", position: "absolute", top: 10, left: 60, textAlign: "right", width: 130, display: "block" }}>{loadCurrent}%</span>
             <span style={{ fontSize: "62px", fontWeight: "bold", position: "absolute", top: 10, right: 4, color: "#FE5571" }}>{tempCurrent}°</span>

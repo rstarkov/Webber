@@ -31,7 +31,7 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         {
             IsCpuEnabled = true,
             IsGpuEnabled = true,
-            IsMemoryEnabled = false,
+            IsMemoryEnabled = true,
             IsMotherboardEnabled = false,
             IsControllerEnabled = false,
             IsNetworkEnabled = true,
@@ -49,10 +49,9 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         var time = DateTime.UtcNow;
         var hardware = _computer.Hardware;
 
-        var cpuSensors = hardware.First(s => s.HardwareType == HardwareType.Cpu).Sensors;
-        var gpuSensors = hardware.First(s => s.HardwareType == HardwareType.GpuNvidia).Sensors;
 
         // CPU
+        var cpuSensors = hardware.First(s => s.HardwareType == HardwareType.Cpu).Sensors;
         var cores = cpuSensors
             .Where(s => s.SensorType == SensorType.Load && s.Name.Contains("Core"))
             .Select(s => (double) (s.Value ?? 0d))
@@ -72,6 +71,7 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         var cpuTemp = _historyCpuPackageTemp.EnqueueWithMaxCapacity(new TimedMetric(time, cpupackagetemp), METRIC_CAPACITY);
 
         // GPU
+        var gpuSensors = hardware.First(s => s.HardwareType == HardwareType.GpuNvidia).Sensors;
         var gputotal = gpuSensors
             .Where(s => s.SensorType == SensorType.Load)
             .Select(s => (double) (s.Value ?? 0d))
@@ -95,6 +95,14 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         var netdown = netquery.Where(s => s.Name.Contains("Download")).Sum(s => (double) (s.Value ?? 0d));
         var networkUp = _historyNetworkUp.EnqueueWithMaxCapacity(new TimedMetric(time, netup), METRIC_CAPACITY);
         var networkDown = _historyNetworkDown.EnqueueWithMaxCapacity(new TimedMetric(time, netdown), METRIC_CAPACITY);
+
+        // MEMORY
+        var memoryload = hardware
+            .Where(h => h.HardwareType == HardwareType.Memory)
+            .Single().Sensors
+            .Where(s => s.SensorType == SensorType.Load)
+            .Select(s => (double) (s.Value ?? 0d))
+            .First();
 
         double GetLastAverage<T>(T[] queue, Func<T, double> selector)
         {
@@ -133,6 +141,8 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
             NetworkUpHistory = networkUp,
             NetworkPing = GetLastAverage(hping, m => m.Value),
             NetworkPingHistory = hping,
+
+            MemoryUtiliZation = memoryload / 100,
         };
     }
 

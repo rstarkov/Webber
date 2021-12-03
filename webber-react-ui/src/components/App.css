@@ -598,11 +598,11 @@ html {
 }
 
 .cpu-block {
-  width: 86px;
-  height: 86px;
-  line-height: 86px;
+  width: 41px;
+  height: 41px;
+  line-height: 41px;
   border: solid black 2px;
-  font-size: 30px;
+  font-size: 26px;
   text-align: center;
   display: inline-block;
   background-color: #0095ff;
