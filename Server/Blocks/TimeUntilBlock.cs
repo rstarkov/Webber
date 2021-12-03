@@ -33,14 +33,12 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
     private static readonly string DefaultCredentialsJson = "{\"installed\":{\"client_id\":\"130261896764-m7jl26tiob0gdrjqrmgjm0fcqqg0nkh2.apps.googleusercontent.com\",\"project_id\":\"titanium-cacao-318415\",\"auth_uri\":\"https://accounts.google.com/o/oauth2/auth\",\"token_uri\":\"https://oauth2.googleapis.com/token\",\"auth_provider_x509_cert_url\":\"https://www.googleapis.com/oauth2/v1/certs\",\"client_secret\":\"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\",\"redirect_uris\":[\"urn:ietf:wg:oauth:2.0:oob\",\"http://localhost\"]}}";
 
     private readonly TimeUntilBlockConfig _config;
-    private readonly TimeBlockConfig _timeConfig;
     private readonly ILogger<TimeUntilBlockServer> _log;
     private CalendarService _svc;
 
-    public TimeUntilBlockServer(IServiceProvider sp, ILogger<TimeUntilBlockServer> log, TimeUntilBlockConfig config, TimeBlockConfig timeConfig) : base(sp, TimeSpan.FromMinutes(1))
+    public TimeUntilBlockServer(IServiceProvider sp, ILogger<TimeUntilBlockServer> log, TimeUntilBlockConfig config) : base(sp, TimeSpan.FromMinutes(1))
     {
         this._config = config;
-        this._timeConfig = timeConfig;
         this._log = log;
     }
 
@@ -50,11 +48,14 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
          ? new MemoryStream(Encoding.UTF8.GetBytes(DefaultCredentialsJson))
          : File.OpenRead(_config.AppCredentialsPath);
 
+        using var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMinutes(5));
+
         var credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
             GoogleClientSecrets.FromStream(stream).Secrets,
             Scopes,
             "user",
-            CancellationToken.None,
+            cts.Token,
             new FileDataStore(Path.GetFullPath(_config.AuthStoreDirectory), true)
         );
 
@@ -87,13 +88,13 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
         List<Event> events = new List<Event>();
         foreach (var c in _config.CalendarKeys.Distinct())
         {
-            EventsResource.ListRequest request1 = _svc.Events.List(c);
-            request1.TimeMin = DateTime.Now;
-            request1.ShowDeleted = false;
-            request1.SingleEvents = true;
-            request1.MaxResults = _config.MaxNumberOfEvents;
-            request1.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
-            events.AddRange(request1.Execute().Items);
+            EventsResource.ListRequest request = _svc.Events.List(c);
+            request.TimeMin = DateTime.Now;
+            request.ShowDeleted = false;
+            request.SingleEvents = true;
+            request.MaxResults = _config.MaxNumberOfEvents;
+            request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
+            events.AddRange(request.Execute().Items);
         }
 
         bool checkSelfRsvpNotDeclined(Event i)
