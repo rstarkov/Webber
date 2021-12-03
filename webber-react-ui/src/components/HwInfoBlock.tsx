@@ -37,10 +37,10 @@ const HwInfoBlock: React.FunctionComponent<{ data: HwInfoDto }> = ({ data }) => 
                     totalLoadHistory={data.cpuTotalLoadHistory}
                 />
             </div>
-            <div className="cpu-heatmap w4h2 l1t3">
+            {/* <div className="cpu-heatmap w4h2 l1t3">
                 {_.map(data.cpuCoreHeatmap, (l, i) => <div key={i} className="cpu-block" style={{ backgroundColor: `rgba(0,149,255,${l / 100})`, color: "rgba(255,255,255,0.9)" }}>{Math.ceil(l)}%</div>)}
-            </div>
-            <div className="l1t5 w4h2">
+            </div> */}
+            <div className="l1t3 w4h2">
                 <HwLoadGraph
                     packageTemp={data.gpuTemp}
                     packageTempHistory={data.gpuTempHistory}
@@ -48,7 +48,7 @@ const HwInfoBlock: React.FunctionComponent<{ data: HwInfoDto }> = ({ data }) => 
                     totalLoadHistory={data.gpuLoadHistory}
                 />
             </div>
-            <div className="l1t7 w4h2">
+            <div className="l1t5 w4h2">
                 <HwNetworkGraph
                     down={data.networkDown}
                     downHistory={data.networkDownHistory}

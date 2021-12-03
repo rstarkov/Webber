@@ -6,7 +6,7 @@ namespace Webber.Server.Blocks;
 internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
 {
     private Computer _computer;
-    private Queue<double[]> _historyCpuCoreHeatmap = new();
+    //private Queue<double[]> _historyCpuCoreHeatmap = new();
     private Queue<TimedMetric> _historyCpuTotalLoad = new();
     private Queue<TimedMetric> _historyCpuPackageTemp = new();
     private Queue<TimedMetric> _historyGpuLoad = new();
@@ -53,11 +53,11 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         var gpuSensors = hardware.First(s => s.HardwareType == HardwareType.GpuNvidia).Sensors;
 
         // CPU
-        var cores = cpuSensors
-            .Where(s => s.SensorType == SensorType.Load && s.Name.Contains("Core"))
-            .Select(s => (double) (s.Value ?? 0d))
-            .ToArray();
-        var cpuHeat = _historyCpuCoreHeatmap.EnqueueWithMaxCapacity(cores, METRIC_CAPACITY);
+        //var cores = cpuSensors
+        //    .Where(s => s.SensorType == SensorType.Load && s.Name.Contains("Core"))
+        //    .Select(s => (double) (s.Value ?? 0d))
+        //    .ToArray();
+        //var cpuHeat = _historyCpuCoreHeatmap.EnqueueWithMaxCapacity(cores, METRIC_CAPACITY);
 
         var cputotal = cpuSensors
             .Where(s => s.SensorType == SensorType.Load && s.Name.Contains("Total"))
@@ -105,9 +105,9 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
             return avg;
         }
 
-        double[] coresAvg = new double[cores.Length];
-        for (int i = 0; i < cores.Length; i++)
-            coresAvg[i] = GetLastAverage(cpuHeat, a => a[i]);
+        //double[] coresAvg = new double[cores.Length];
+        //for (int i = 0; i < cores.Length; i++)
+        //    coresAvg[i] = GetLastAverage(cpuHeat, a => a[i]);
 
         var rping = _pingProvider?.LastUpdate?.Last ?? 99;
         var hping = _historyNetworkPing.Count == 0 || DateTime.UtcNow - _historyNetworkPing.Last().TimeUtc > TimeSpan.FromSeconds(5)
@@ -116,7 +116,7 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
 
         return new HwInfoBlockDto
         {
-            CpuCoreHeatmap = coresAvg,
+            //CpuCoreHeatmap = coresAvg,
             CpuTotalLoad = GetLastAverage(cpuLoad, m => m.Value),
             CpuTotalLoadHistory = cpuLoad,
             CpuPackageTemp = GetLastAverage(cpuTemp, m => m.Value),
