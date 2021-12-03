@@ -29,6 +29,9 @@ interface HwInfoDto extends BaseDto {
 const HwInfoBlock: React.FunctionComponent<{ data: HwInfoDto }> = ({ data }) => {
     return (
         <React.Fragment>
+            <div className="cpu-heatmap" style={{ position: "absolute", left: 0, top: 0, width: 60, height: 4 * 90 }}>
+                {_.map(data.cpuCoreHeatmap, (l, i) => <div key={i} className="cpu-block" style={{ backgroundColor: `rgba(0,149,255,${l / 100})`, color: "rgba(255,255,255,0.9)" }}>{Math.ceil(l)}%</div>)}
+            </div>
             <div className="w4h2">
                 <HwLoadGraph
                     packageTemp={data.cpuPackageTemp}
@@ -38,9 +41,6 @@ const HwInfoBlock: React.FunctionComponent<{ data: HwInfoDto }> = ({ data }) => 
                     label={"CPU"}
                 />
             </div>
-            {/* <div className="cpu-heatmap w4h2 l1t3">
-                {_.map(data.cpuCoreHeatmap, (l, i) => <div key={i} className="cpu-block" style={{ backgroundColor: `rgba(0,149,255,${l / 100})`, color: "rgba(255,255,255,0.9)" }}>{Math.ceil(l)}%</div>)}
-            </div> */}
             <div className="l1t3 w4h2">
                 <HwLoadGraph
                     packageTemp={data.gpuTemp}

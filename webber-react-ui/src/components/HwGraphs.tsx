@@ -125,12 +125,13 @@ const HwLoadGraph: React.FunctionComponent<HwLoadGraphProps> = ({ totalLoad, tot
                 options={loadOptions}
                 type="area"
                 height={height + 45}
-                width={width + 10}
+                width={width + 10 - 60}
                 series={series}
+                style={{ position: "relative", left: 60 }}
             />
-            <span style={{ fontSize: "62px", fontWeight: "bold", position: "absolute", top: 10, left: 0, textAlign: "right", width: 140, display: "block" }}>{loadCurrent}%</span>
+            <span style={{ fontSize: "62px", fontWeight: "bold", position: "absolute", top: 10, left: 60, textAlign: "right", width: 130, display: "block" }}>{loadCurrent}%</span>
             <span style={{ fontSize: "62px", fontWeight: "bold", position: "absolute", top: 10, right: 4, color: "#FE5571" }}>{tempCurrent}°</span>
-            <span style={{ fontSize: "40px", fontWeight: "bold", position: "absolute", bottom: 0, left: 20, opacity: 0.8 }}>{label}</span>
+            <span style={{ fontSize: "40px", fontWeight: "bold", position: "absolute", bottom: 0, left: 70, opacity: 0.8 }}>{label}</span>
         </div>
     );
 }
@@ -196,8 +197,9 @@ const HwNetworkGraph: React.FunctionComponent<HwNetworkGraphProps> = ({ ping, up
                 options={networkOptions}
                 type="line"
                 height={height + 45 + 110}
-                width={width + 10}
+                width={width + 12 + 16}
                 series={series}
+                style={{ position: "relative", left: -16 }}
             />
             <PingBubble ping={ping}>{Math.round(ping)}</PingBubble>
             <NetworkLabelContainer>
