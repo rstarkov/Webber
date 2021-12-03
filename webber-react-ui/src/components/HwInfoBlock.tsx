@@ -35,6 +35,7 @@ const HwInfoBlock: React.FunctionComponent<{ data: HwInfoDto }> = ({ data }) => 
                     packageTempHistory={data.cpuPackageTempHistory}
                     totalLoad={data.cpuTotalLoad}
                     totalLoadHistory={data.cpuTotalLoadHistory}
+                    label={"CPU"}
                 />
             </div>
             {/* <div className="cpu-heatmap w4h2 l1t3">
@@ -46,6 +47,7 @@ const HwInfoBlock: React.FunctionComponent<{ data: HwInfoDto }> = ({ data }) => 
                     packageTempHistory={data.gpuTempHistory}
                     totalLoad={data.gpuLoad}
                     totalLoadHistory={data.gpuLoadHistory}
+                    label={"GPU"}
                 />
             </div>
             <div className="l1t5 w4h2">

@@ -97,6 +97,7 @@ interface HwLoadGraphProps {
     totalLoadHistory: TimedMetric[];
     packageTemp: number;
     packageTempHistory: TimedMetric[];
+    label: string;
 }
 
 function createSeries(...args: TimedMetric[][]) {
@@ -109,13 +110,10 @@ function createSeries(...args: TimedMetric[][]) {
     return series;
 }
 
-const HwLoadGraph: React.FunctionComponent<HwLoadGraphProps> = ({ totalLoad, totalLoadHistory, packageTemp, packageTempHistory }) => {
+const HwLoadGraph: React.FunctionComponent<HwLoadGraphProps> = ({ totalLoad, totalLoadHistory, packageTemp, packageTempHistory, label }) => {
     const series = createSeries(packageTempHistory, totalLoadHistory);
 
-    let loadCurrent = Math.ceil(totalLoad).toString();
-    if (loadCurrent.length == 1)
-        loadCurrent = "\u00a0" + loadCurrent;
-
+    const loadCurrent = Math.ceil(totalLoad).toString();
     const tempCurrent = Math.ceil(packageTemp).toString();
 
     const width = 356;
@@ -130,8 +128,9 @@ const HwLoadGraph: React.FunctionComponent<HwLoadGraphProps> = ({ totalLoad, tot
                 width={width + 10}
                 series={series}
             />
-            <span style={{ fontSize: "62px", fontWeight: "bold", position: "absolute", top: 0, left: 20, paddingTop: 10 }}>{loadCurrent}%</span>
-            <span style={{ fontSize: "62px", fontWeight: "bold", position: "absolute", top: 0, right: 4, color: "#FE5571", paddingTop: 10 }}>{tempCurrent}°</span>
+            <span style={{ fontSize: "62px", fontWeight: "bold", position: "absolute", top: 10, left: 0, textAlign: "right", width: 140, display: "block" }}>{loadCurrent}%</span>
+            <span style={{ fontSize: "62px", fontWeight: "bold", position: "absolute", top: 10, right: 4, color: "#FE5571" }}>{tempCurrent}°</span>
+            <span style={{ fontSize: "40px", fontWeight: "bold", position: "absolute", bottom: 0, left: 20, opacity: 0.8 }}>{label}</span>
         </div>
     );
 }
