@@ -17,7 +17,7 @@ class TimeUntilBlockConfig
     public double? SleepTime { get; set; }
 
     /// <summary> An array of calendars to read from, as long as the authorized user has permission to access them. </summary>
-    public string[] CalendarKeys { get; set; } = new string[] { "primary" };
+    public string[] CalendarKeys { get; set; }
 
     /// <summary> Directory to save Google Authorization tokens to.</summary>
     public string AuthStoreDirectory { get; set; } = ".\\TimeUntilToken";
@@ -106,7 +106,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
 
         List<CalendarEvent> synthetic = new List<CalendarEvent>();
         if (_config.SleepTime.HasValue)
-            synthetic.Add(new CalendarEvent() { DisplayName = "Sleep!", StartTimeUtc = DateTime.UtcNow.Date.AddHours(22.5) });
+            synthetic.Add(new CalendarEvent() { DisplayName = "Sleep!", StartTimeUtc = DateTime.UtcNow.Date.AddHours(_config.SleepTime.Value) });
 
         var candidates = events
             .Where(i => i.Start != null && i.Start.DateTime != null) // filter out all day events
@@ -124,7 +124,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
         DateTime time = DateTime.UtcNow;
         foreach (var c in candidates)
         {
-            if (c.StartTimeUtc < time)
+            if (c.StartTimeUtc.AddMinutes(5) < time)
             {
                 c.HasStarted = true;
                 continue;
@@ -136,7 +136,6 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
 
         return new TimeUntilBlockDto()
         {
-            LocalOffsetHours = Util.GetUtcOffset(_timeConfig.LocalTimezoneName),
             Events = candidates,
         };
     }
