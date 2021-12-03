@@ -8,57 +8,93 @@ using Webber.Client.Models;
 
 namespace Webber.Server.Blocks;
 
+class TimeUntilBlockConfig
+{
+    /// <summary> The number of events to send to the client in each update. </summary>
+    public int MaxNumberOfEvents { get; set; } = 3;
+
+    /// <summary> Optionally add a sleep timer to the list of events. </summary>
+    public double? SleepTime { get; set; }
+
+    /// <summary> An array of calendars to read from, as long as the authorized user has permission to access them. </summary>
+    public string[] CalendarKeys { get; set; } = new string[] { "primary" };
+
+    /// <summary> Directory to save Google Authorization tokens to.</summary>
+    public string AuthStoreDirectory { get; set; } = ".\\TimeUntilToken";
+
+    /// <summary> This is optional, if you wish to create your own App via Google Console - otherwise it will use mine (hard coded). </summary>
+    public string AppCredentialsPath { get; set; }
+}
+
 internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
 {
-    static readonly string[] Scopes = { CalendarService.Scope.CalendarReadonly };
-    static readonly string ApplicationName = "TimeUntilBlockServer";
-    static readonly string CredentialsJson = "{\"installed\":{\"client_id\":\"130261896764-m7jl26tiob0gdrjqrmgjm0fcqqg0nkh2.apps.googleusercontent.com\",\"project_id\":\"titanium-cacao-318415\",\"auth_uri\":\"https://accounts.google.com/o/oauth2/auth\",\"token_uri\":\"https://oauth2.googleapis.com/token\",\"auth_provider_x509_cert_url\":\"https://www.googleapis.com/oauth2/v1/certs\",\"client_secret\":\"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\",\"redirect_uris\":[\"urn:ietf:wg:oauth:2.0:oob\",\"http://localhost\"]}}";
+    private static readonly string[] Scopes = { CalendarService.Scope.CalendarReadonly };
+    private static readonly string ApplicationName = "TimeUntilBlockServer";
+    private static readonly string DefaultCredentialsJson = "{\"installed\":{\"client_id\":\"130261896764-m7jl26tiob0gdrjqrmgjm0fcqqg0nkh2.apps.googleusercontent.com\",\"project_id\":\"titanium-cacao-318415\",\"auth_uri\":\"https://accounts.google.com/o/oauth2/auth\",\"token_uri\":\"https://oauth2.googleapis.com/token\",\"auth_provider_x509_cert_url\":\"https://www.googleapis.com/oauth2/v1/certs\",\"client_secret\":\"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\",\"redirect_uris\":[\"urn:ietf:wg:oauth:2.0:oob\",\"http://localhost\"]}}";
 
+    private readonly TimeUntilBlockConfig _config;
+    private readonly TimeBlockConfig _timeConfig;
+    private readonly ILogger<TimeUntilBlockServer> _log;
     private CalendarService _svc;
 
-    public TimeUntilBlockServer(IServiceProvider sp) : base(sp, TimeSpan.FromMinutes(1))
+    public TimeUntilBlockServer(IServiceProvider sp, ILogger<TimeUntilBlockServer> log, TimeUntilBlockConfig config, TimeBlockConfig timeConfig) : base(sp, TimeSpan.FromMinutes(1))
     {
+        this._config = config;
+        this._timeConfig = timeConfig;
+        this._log = log;
+    }
 
+    private async Task<UserCredential> DoGoogleAuth()
+    {
+        using Stream stream = String.IsNullOrWhiteSpace(_config.AppCredentialsPath)
+         ? new MemoryStream(Encoding.UTF8.GetBytes(DefaultCredentialsJson))
+         : File.OpenRead(_config.AppCredentialsPath);
+
+        var credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+            GoogleClientSecrets.FromStream(stream).Secrets,
+            Scopes,
+            "user",
+            CancellationToken.None,
+            new FileDataStore(Path.GetFullPath(_config.AuthStoreDirectory), true)
+        );
+
+        return credential;
     }
 
     public override void Start()
     {
-        UserCredential credential;
-
-        // The file token.json stores the user's access and refresh tokens, and is created
-        // automatically when the authorization flow completes for the first time.
-        credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
-            GoogleClientSecrets.FromStream(new MemoryStream(Encoding.UTF8.GetBytes(CredentialsJson))).Secrets,
-            Scopes, "user", CancellationToken.None,
-            new FileDataStore("calendar-token", true)).Result;
-
-        _svc = new CalendarService(new BaseClientService.Initializer()
+        DoGoogleAuth().ContinueWith(t =>
         {
-            HttpClientInitializer = credential,
-            ApplicationName = ApplicationName,
-        });
+            if (t.IsFaulted)
+            {
+                _log.LogError(t.Exception?.InnerExceptions?.FirstOrDefault()?.Message ?? t.Exception?.Message);
+                return;
+            }
 
-        base.Start();
+            _svc = new CalendarService(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = t.Result,
+                ApplicationName = ApplicationName,
+            });
+
+            // the Tick loop will not be started unless authorization is completed
+            base.Start();
+        });
     }
 
     protected override TimeUntilBlockDto Tick()
     {
-        // bins = 2kvskj1am9j51bn2ob1dre7437oeil5g@import.calendar.google.com
-        // work = caelan.sayler@bluestone.co.uk
-
-        EventsResource.ListRequest request1 = _svc.Events.List("primary");
-        request1.TimeMin = DateTime.Now;
-        request1.ShowDeleted = false;
-        request1.SingleEvents = true;
-        request1.MaxResults = 10;
-        request1.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
-
-        EventsResource.ListRequest request2 = _svc.Events.List("caelan.sayler@bluestone.co.uk");
-        request2.TimeMin = DateTime.Now;
-        request2.ShowDeleted = false;
-        request2.SingleEvents = true;
-        request2.MaxResults = 10;
-        request2.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
+        List<Event> events = new List<Event>();
+        foreach (var c in _config.CalendarKeys.Distinct())
+        {
+            EventsResource.ListRequest request1 = _svc.Events.List(c);
+            request1.TimeMin = DateTime.Now;
+            request1.ShowDeleted = false;
+            request1.SingleEvents = true;
+            request1.MaxResults = _config.MaxNumberOfEvents;
+            request1.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
+            events.AddRange(request1.Execute().Items);
+        }
 
         bool checkSelfRsvpNotDeclined(Event i)
         {
@@ -68,21 +104,39 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             return me.ResponseStatus != "declined";
         }
 
-        var events = request1.Execute().Items.Concat(request2.Execute().Items).ToArray();
+        List<CalendarEvent> synthetic = new List<CalendarEvent>();
+        if (_config.SleepTime.HasValue)
+            synthetic.Add(new CalendarEvent() { DisplayName = "Sleep!", StartTimeUtc = DateTime.UtcNow.Date.AddHours(22.5) });
 
         var candidates = events
-            .Where(i => i.Start != null && i.Start.DateTime != null) // eliminate all day events
+            .Where(i => i.Start != null && i.Start.DateTime != null) // filter out all day events
             .Where(i => i.EventType == "default") // filter out OOO
-            .Where(checkSelfRsvpNotDeclined) // filter out events I have declined
+            .Where(checkSelfRsvpNotDeclined) // filter out declined events
             .Where(i => !String.IsNullOrWhiteSpace(i.Summary)) // no title?
-            .Select(i => new CalendarEvent() { DisplayName = i.Summary ?? i.Description, Time = i.Start.DateTime.Value.ToUniversalTime() })
-            .Concat(new[] { new CalendarEvent() { DisplayName = "Sleep!", Time = DateTime.UtcNow.Date.AddHours(22.5) } }) // sleep!
-            .OrderBy(i => i.Time)
-            .Take(3)
+            .DistinctBy(i => i.Id)
+            .Select(i => new CalendarEvent() { DisplayName = i.Summary, StartTimeUtc = i.Start.DateTime.Value.ToUniversalTime() })
+            .Concat(synthetic)
+            .OrderBy(i => i.StartTimeUtc)
+            .Distinct() // this uses the 'record' equality logic to filter out events that might be added to more than one calendar
+            .Take(_config.MaxNumberOfEvents)
             .ToArray();
+
+        DateTime time = DateTime.UtcNow;
+        foreach (var c in candidates)
+        {
+            if (c.StartTimeUtc < time)
+            {
+                c.HasStarted = true;
+                continue;
+            }
+
+            c.IsNextUp = true;
+            break;
+        }
 
         return new TimeUntilBlockDto()
         {
+            LocalOffsetHours = Util.GetUtcOffset(_timeConfig.LocalTimezoneName),
             Events = candidates,
         };
     }

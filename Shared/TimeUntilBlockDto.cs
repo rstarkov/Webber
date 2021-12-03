@@ -3,8 +3,9 @@
 public record CalendarEvent
 {
     public string DisplayName { get; set; }
-    //public string DisplayColor { get; set; }
-    public DateTime Time { get; set; }
+    public DateTime StartTimeUtc { get; set; }
+    public bool HasStarted { get; set; }
+    public bool IsNextUp { get; set; }
 }
 
 public record TimeUntilBlockDto : BaseDto
