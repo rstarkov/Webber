@@ -5,11 +5,6 @@ using RT.Util.ExtensionMethods;
 
 namespace Webber.Server;
 
-class DbConfig
-{
-    public string FilePath { get; set; }
-}
-
 interface IDbService
 {
     bool Enabled { get; }
@@ -28,11 +23,11 @@ class DisabledDbService : IDbService
 
 class DbService : IDbService
 {
-    private DbConfig _config;
+    private AppConfig _config;
     private List<MigrationInfo> _migrations = new();
     private bool _initialised = false;
 
-    public DbService(DbConfig config)
+    public DbService(AppConfig config)
     {
         _config = config;
     }
@@ -43,7 +38,7 @@ class DbService : IDbService
     {
         if (!_initialised)
             throw new InvalidOperationException("The database has not been initialised yet.");
-        var conn = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = _config.FilePath }.ConnectionString);
+        var conn = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = _config.DbFilePath }.ConnectionString);
         conn.Open();
         return conn;
     }
@@ -70,11 +65,11 @@ class DbService : IDbService
 
         SqlMapperExtensions.TableNameMapper = type => type.Name;
 
-        var connString = new SqliteConnectionStringBuilder { DataSource = _config.FilePath }.ConnectionString;
+        var connString = new SqliteConnectionStringBuilder { DataSource = _config.DbFilePath }.ConnectionString;
 
-        if (!File.Exists(_config.FilePath))
+        if (!File.Exists(_config.DbFilePath))
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(_config.FilePath)));
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(_config.DbFilePath)));
             using var conn = new SqliteConnection(connString);
             conn.Open();
             conn.Execute($@"CREATE TABLE {nameof(TbSchema)} (

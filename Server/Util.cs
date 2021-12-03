@@ -35,4 +35,9 @@ static class Util
     {
         return _unixepoch.AddSeconds(time);
     }
+
+    public static double GetUtcOffset(string timezoneName)
+    {
+        return TimeZoneInfo.FindSystemTimeZoneById(timezoneName).GetUtcOffset(DateTimeOffset.UtcNow).TotalHours;
+    }
 }

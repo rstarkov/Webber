@@ -27,13 +27,10 @@ class TimeBlockServer : SimpleBlockServerBase<TimeBlockDto>
     protected override TimeBlockDto Tick()
     {
         var dto = new TimeBlockDto { ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromHours(24) };
-        dto.LocalOffsetHours = getUtcOffset(_config.LocalTimezoneName);
-        dto.TimeZones = _config.ExtraTimezones.Select(tz => new TimeBlockDto.TimeZoneDto { DisplayName = tz.DisplayName, OffsetHours = getUtcOffset(tz.TimezoneName) }).ToArray();
+        dto.LocalOffsetHours = Util.GetUtcOffset(_config.LocalTimezoneName);
+        dto.TimeZones = _config.ExtraTimezones.Select(tz => new TimeBlockDto.TimeZoneDto { DisplayName = tz.DisplayName, OffsetHours = Util.GetUtcOffset(tz.TimezoneName) }).ToArray();
         return dto;
     }
 
-    private double getUtcOffset(string timezoneName)
-    {
-        return TimeZoneInfo.FindSystemTimeZoneById(timezoneName).GetUtcOffset(DateTimeOffset.UtcNow).TotalHours;
-    }
+
 }

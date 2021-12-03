@@ -8,7 +8,7 @@ bool help = false;
 var options = new Mono.Options.OptionSet()
 {
     "",
-    $"Usage { Path.GetFileName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName)} [options]",
+    $"Usage {Path.GetFileName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName)} [options]",
     "",
     "Runs a SignalR server which provides statistics about this machine, local network / environment (even the weather!)",
     "",
@@ -32,8 +32,8 @@ builder.Services.AddSignalR();
 var blockServerTypes = Assembly.GetExecutingAssembly().GetTypes().Where(t => !t.IsAbstract && t.IsAssignableTo(typeof(IBlockServer))).ToList();
 foreach (var blockServerType in blockServerTypes)
 {
-    var config = builder.Configuration.GetSection(blockServerType.Name.Replace("BlockServer", "Block"));
-    if (!config.Exists())
+    var blockConfig = builder.Configuration.GetSection(blockServerType.Name.Replace("BlockServer", "Block"));
+    if (!blockConfig.Exists())
         continue;
 
     // Register the block server
@@ -49,14 +49,17 @@ foreach (var blockServerType in blockServerTypes)
     var configTypeName = blockServerType.FullName.Replace("BlockServer", "BlockConfig");
     var configType = Assembly.GetExecutingAssembly().GetType(configTypeName);
     if (configType != null)
-        builder.Services.Add(new ServiceDescriptor(configType, config.Get(configType)));
+        builder.Services.Add(new ServiceDescriptor(configType, blockConfig.Get(configType)));
 }
 
-var dbConfig = builder.Configuration.GetSection("Db").GetOrDefault<DbConfig>();
-if (dbConfig == null)
+var config = builder.Configuration.GetSection("App").GetOrDefault<AppConfig>();
+builder.Services.AddSingleton<AppConfig>(config);
+
+// TODO make this just a single service which toggles "Enabled" on the presence of DbFilePath
+if (String.IsNullOrEmpty(config.DbFilePath))
     builder.Services.AddSingleton<IDbService, DisabledDbService>();
 else
-    builder.Services.AddSingleton<IDbService>(new DbService(dbConfig));
+    builder.Services.AddSingleton<IDbService>(new DbService(config));
 
 var app = builder.Build();
 
@@ -78,3 +81,9 @@ foreach (var service in app.Services.GetServices<IBlockServer>())
     service.Start();
 
 app.Run();
+
+class AppConfig
+{
+    public string DbFilePath { get; init; }
+    public string LocalTimezoneName { get; init; }
+}
