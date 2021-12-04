@@ -19,10 +19,12 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
     static readonly int METRIC_CAPACITY = (int) Math.Ceiling((1000d / METRIC_REFRESH_INTERVAL) * 40d);
 
     private readonly PingBlockServer _pingProvider;
+    private readonly RouterBlockServer _routerProvider;
 
-    public HwInfoBlockServer(IServiceProvider sp, PingBlockServer pingProvider) : base(sp, METRIC_REFRESH_INTERVAL)
+    public HwInfoBlockServer(IServiceProvider sp, PingBlockServer pingProvider, RouterBlockServer routerProvider) : base(sp, METRIC_REFRESH_INTERVAL)
     {
         this._pingProvider = pingProvider;
+        this._routerProvider = routerProvider;
     }
 
     public override void Start()
@@ -34,7 +36,7 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
             IsMemoryEnabled = true,
             IsMotherboardEnabled = false,
             IsControllerEnabled = false,
-            IsNetworkEnabled = true,
+            IsNetworkEnabled = false,
             IsStorageEnabled = false,
         };
         _computer.Open();
@@ -85,16 +87,17 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         var gpuTemp = _historyGpuTemp.EnqueueWithMaxCapacity(new TimedMetric(time, gpupackagetemp), METRIC_CAPACITY);
 
         // NETWORK
-        var netquery = hardware
-            .Where(h => h.HardwareType == HardwareType.Network)
-            .Where(h => h.Name == "ASUS STRIX")
-            .Single().Sensors
-            .Where(s => s.SensorType == SensorType.Throughput);
+        //var netquery = hardware
+        //    .Where(h => h.HardwareType == HardwareType.Network)
+        //    .Where(h => h.Name == "ASUS STRIX")
+        //    .Single().Sensors
+        //    .Where(s => s.SensorType == SensorType.Throughput);
+        //var netup = netquery.Where(s => s.Name.Contains("Upload")).Sum(s => (double) (s.Value ?? 0d));
+        //var netdown = netquery.Where(s => s.Name.Contains("Download")).Sum(s => (double) (s.Value ?? 0d));
 
-        var netup = netquery.Where(s => s.Name.Contains("Upload")).Sum(s => (double) (s.Value ?? 0d));
-        var netdown = netquery.Where(s => s.Name.Contains("Download")).Sum(s => (double) (s.Value ?? 0d));
-        var networkUp = _historyNetworkUp.EnqueueWithMaxCapacity(new TimedMetric(time, netup), METRIC_CAPACITY);
-        var networkDown = _historyNetworkDown.EnqueueWithMaxCapacity(new TimedMetric(time, netdown), METRIC_CAPACITY);
+        var routerdata = _routerProvider.LastUpdate;
+        var networkUp = _historyNetworkUp.EnqueueWithMaxCapacity(new TimedMetric(time, routerdata?.TxLast ?? 0), METRIC_CAPACITY);
+        var networkDown = _historyNetworkDown.EnqueueWithMaxCapacity(new TimedMetric(time, routerdata?.RxLast ?? 0), METRIC_CAPACITY);
 
         // MEMORY
         var memoryload = hardware
