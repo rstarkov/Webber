@@ -96,8 +96,16 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         //var netdown = netquery.Where(s => s.Name.Contains("Download")).Sum(s => (double) (s.Value ?? 0d));
 
         var routerdata = _routerProvider.LastUpdate;
-        var networkUp = _historyNetworkUp.EnqueueWithMaxCapacity(new TimedMetric(time, routerdata?.TxLast ?? 0), METRIC_CAPACITY);
-        var networkDown = _historyNetworkDown.EnqueueWithMaxCapacity(new TimedMetric(time, routerdata?.RxLast ?? 0), METRIC_CAPACITY);
+        var networkUp = _historyNetworkUp.ToArray();
+        var networkDown = _historyNetworkDown.ToArray();
+
+        if (routerdata != null)
+        {
+            if (routerdata.TxLast > 0 && (!_historyNetworkUp.Any() || routerdata.TxLast != _historyNetworkUp.Last().Value))
+                networkUp = _historyNetworkUp.EnqueueWithMaxCapacity(new TimedMetric(time, routerdata.TxLast), METRIC_CAPACITY);
+            if (routerdata.RxLast > 0 && (!_historyNetworkDown.Any() || routerdata.RxLast != _historyNetworkDown.Last().Value))
+                networkDown = _historyNetworkDown.EnqueueWithMaxCapacity(new TimedMetric(time, routerdata.RxLast), METRIC_CAPACITY);
+        }
 
         // MEMORY
         var memoryload = hardware

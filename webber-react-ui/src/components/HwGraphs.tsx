@@ -196,7 +196,7 @@ const HwNetworkGraph: React.FunctionComponent<HwNetworkGraphProps> = ({ ping, up
             <Chart
                 options={networkOptions}
                 type="line"
-                height={height + 45 + 110}
+                height={height + 45 + 80}
                 width={width + 12 + 16}
                 series={series}
                 style={{ position: "relative", left: -16 }}

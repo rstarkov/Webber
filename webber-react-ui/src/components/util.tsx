@@ -112,7 +112,7 @@ export function round2places(num: number): number {
 }
 
 export function formatBytes(bytes: number, div: number = 1024): string {
-    if (bytes < div) return bytes + "b";
+    if (bytes < div) return round2places(bytes).toFixed(2) + "b";
     if (bytes < div * div) return round2places(bytes / div).toFixed(2) + "kb";
     if (bytes < div * div * div) return round2places(bytes / (div * div)).toFixed(2) + "mb";
     return round2places(bytes / (div * div * div)).toFixed(2) + "gb";
