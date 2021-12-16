@@ -1,14 +1,16 @@
-<svg width="100%" height="100%">
+﻿<svg width="100%" height="100%">
     <g>
         @{
             double barWidth = (100 - BarSpacing * (BarCount - 1)) / BarCount;
             double x = 100 - barWidth;
+            var sb = new System.Text.StringBuilder();
             @foreach (var pt in Data.Reverse())
             {
                 var y = Downwards ? 0 : (100 - pt.Value * 100);
-                <rect x=@($"{x:0.000}%") y=@($"{y:0.000}%") width=@($"{barWidth:0.000}%") height=@($"{pt.Value * 100:0.000}%") stroke-width="0" fill=@pt.Color></rect>
+                sb.Append($"<rect x='{x:0.000}%' y='{y:0.000}%' width='{barWidth:0.000}%' height='{pt.Value * 100:0.000}%' stroke-width='0' fill='{pt.Color}'></rect>");
                 x -= barWidth + BarSpacing;
             }
+            @(new MarkupString(sb.ToString()))
         }
     </g>
 </svg>
@@ -44,16 +46,20 @@
     }
 
     private DateTime _shouldRenderAt = DateTime.UtcNow;
+    private Pt[] _lastData;
 
     protected override bool ShouldRender()
     {
-        _shouldRenderAt = DateTime.UtcNow;
-        return base.ShouldRender();
+        var should = _lastData == null || _lastData.Length != Data.Length || !_lastData.Zip(Data).All(x => x.First == x.Second);
+        if (should)
+            _shouldRenderAt = DateTime.UtcNow;
+        return should;
     }
 
     protected override void OnAfterRender(bool firstRender)
     {
         base.OnAfterRender(firstRender);
-        Console.WriteLine($"BarChart OnAfterRender: {(DateTime.UtcNow - _shouldRenderAt).TotalMilliseconds:#,0}ms");
+        //Console.WriteLine($"BarChart OnAfterRender: {(DateTime.UtcNow - _shouldRenderAt).TotalMilliseconds:#,0}ms");
+        _lastData = Data;
     }
 }

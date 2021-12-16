@@ -38,9 +38,9 @@
                     <div>@tgt.Last30d.MsResponsePrc95</div>
                     <div>@downtimeStr((tgt.Last30d.ErrorCount + tgt.Last30d.TimeoutCount) / (double)tgt.Last30d.TotalCount * 100)</div>
                     <div class=ChartContainer><BarChart BarCount=@tgt.Recent.Length Data=@getRecentData(tgt) /></div>
-                    <div class=ChartContainer><BarChart BarCount=@tgt.Recent.Length Data=@getRecentData(tgt) /></div>
-                    <div class=ChartContainer><BarChart BarCount=@tgt.Recent.Length Data=@getRecentData(tgt) /></div>
-                    <div class=ChartContainer><BarChart BarCount=@tgt.Recent.Length Data=@getRecentData(tgt) /></div>
+                    <div class=ChartContainer></div>
+                    <div class=ChartContainer></div>
+                    <div class=ChartContainer></div>
                 }
             </div>
         }
