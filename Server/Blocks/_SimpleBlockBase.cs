@@ -31,7 +31,9 @@ public abstract class SimpleBlockServerBase<TDto> : BlockServerBase<TDto>
         while (true)
         {
             var start = DateTime.UtcNow;
+#if !DEBUG
             try
+#endif
             {
                 if (ShouldTick())
                 {
@@ -40,10 +42,12 @@ public abstract class SimpleBlockServerBase<TDto> : BlockServerBase<TDto>
                         SendUpdate(update);
                 }
             }
+#if !DEBUG
             catch (Exception ex)
             {
                 SendUpdate((LastUpdate ?? new TDto()) with { ErrorMessage = ex.Message });
             }
+#endif
 
             Util.SleepUntil(start + _interval);
         }
