@@ -9,7 +9,7 @@
                 <div>Ping</div>
             </div>
             <div class="RecentChart">
-                <BarChart BarCount=@context.LastUpdate.Recent.Length Data=@context.LastUpdate.Recent.Select(GetPt) />
+                <BarChart BarCount=@context.LastUpdate.Recent.Length Data=@context.LastUpdate.Recent.Select(GetPt).ToArray() />
             </div>
         }
     </div>

@@ -1,4 +1,4 @@
-﻿<svg width="100%" height="100%">
+<svg width="100%" height="100%">
     <g>
         @{
             double barWidth = (100 - BarSpacing * (BarCount - 1)) / BarCount;
@@ -14,14 +14,14 @@
 </svg>
 
 @code {
-    public class Pt
+    public record struct Pt
     {
         public string Color = "";
         public double Value; // 0..1
     }
 
     [Parameter]
-    public IEnumerable<Pt> Data { get; set; } = new Pt[0];
+    public Pt[] Data { get; set; } = new Pt[0];
 
     [Parameter]
     public int BarCount { get; set; } = 10;

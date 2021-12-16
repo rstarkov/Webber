@@ -1,4 +1,4 @@
-﻿@page "/httping"
+@page "/httping"
 @using Webber.Client.Models
 @inject NavigationManager NavMgr
 
@@ -54,7 +54,7 @@
 @code {
     private string downtimeStr(double prc) => prc < 1 ? $"{prc:0.00}%" : $"{prc:0.0}%";
 
-    private IEnumerable<BarChart.Pt> getRecentData(HttpingTargetDto dto)
+    private BarChart.Pt[] getRecentData(HttpingTargetDto dto)
     {
         var greenMsCutoff = Math.Min((ushort)5000, dto.Last30d.MsResponsePrc75);
         var redMsCutoff = greenMsCutoff * 1.5;
@@ -62,6 +62,6 @@
             {
                 Value = BarChart.ScaleY(pt, dto.Last30d.MsResponsePrc01 * 0.9, dto.Last30d.MsResponsePrc50 * 3, v => BarChart.ModifiedLog(v, 10)),
                 Color = (pt == 0 || pt == 65535) ? "#ff00ff" : pt > redMsCutoff ? "#ff0000" : pt > greenMsCutoff ? "#1985f3" : "#08b025",
-            });
+            }).ToArray();
     }
 }
