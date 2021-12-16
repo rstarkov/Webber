@@ -49,6 +49,7 @@ public abstract class BlockServerBase<TDto> : IBlockServer<TDto>
     }
 
     private IHubContext<BlockHub, IBlockHub> _hub;
+    private AppConfig _config;
     private ConcurrentBag<string> _connectedIds = new ConcurrentBag<string>();
 
     public TDto LastUpdate { get; private set; }
@@ -58,6 +59,7 @@ public abstract class BlockServerBase<TDto> : IBlockServer<TDto>
     public BlockServerBase(IServiceProvider sp)
     {
         _hub = sp.GetRequiredService<IHubContext<BlockHub, IBlockHub>>();
+        _config = sp.GetRequiredService<AppConfig>();
     }
 
     public void Init(WebApplication app)
@@ -68,6 +70,7 @@ public abstract class BlockServerBase<TDto> : IBlockServer<TDto>
     protected void SendUpdate(TDto dto)
     {
         dto.SentUtc = DateTime.UtcNow;
+        dto.LocalOffsetHours = Util.GetUtcOffset(_config.LocalTimezoneName);
         LastUpdate = dto;
         _hub.Clients.All.Update(dto);
     }

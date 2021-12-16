@@ -35,7 +35,6 @@ interface TimeZone {
 }
 
 interface ClockBlockDto extends BaseDto {
-    localOffsetHours: number;
     timeZones: TimeZone[];
 }
 
@@ -43,14 +42,10 @@ const ClockBlock: React.FunctionComponent<{ data: ClockBlockDto }> = ({ data }) 
 
     const [time, setTime] = React.useState(moment.utc().valueOf());
 
-    function updateTime() {
-        setTime(moment.utc().valueOf());
-    }
-
     React.useEffect(() => {
-        const interval = setInterval(updateTime, 1000);
+        const interval = setInterval(() => { setTime(moment.utc().valueOf()); }, 1000);
         return () => clearInterval(interval);
-    }, []);
+    });
 
     function getTimeString(offset: number): string {
         return moment(time).utcOffset(offset).format("HH:mm");
@@ -62,7 +57,7 @@ const ClockBlock: React.FunctionComponent<{ data: ClockBlockDto }> = ({ data }) 
             <Time>{getTimeString(data.localOffsetHours)}</Time>
             {_.map(data.timeZones, t => (
                 <React.Fragment key={t.displayName}>
-                    <TimeLabel>{t.displayName}</TimeLabel>
+                    <TimeLabel style={{ marginTop: 30 }}>{t.displayName}</TimeLabel>
                     <SecondaryTime>{getTimeString(t.offsetHours)}</SecondaryTime>
                 </React.Fragment>
             ))}

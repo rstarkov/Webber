@@ -19,10 +19,12 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
     static readonly int METRIC_CAPACITY = (int) Math.Ceiling((1000d / METRIC_REFRESH_INTERVAL) * 40d);
 
     private readonly PingBlockServer _pingProvider;
+    private readonly RouterBlockServer _routerProvider;
 
-    public HwInfoBlockServer(IServiceProvider sp, PingBlockServer pingProvider) : base(sp, METRIC_REFRESH_INTERVAL)
+    public HwInfoBlockServer(IServiceProvider sp, PingBlockServer pingProvider, RouterBlockServer routerProvider) : base(sp, METRIC_REFRESH_INTERVAL)
     {
         this._pingProvider = pingProvider;
+        this._routerProvider = routerProvider;
     }
 
     public override void Start()
@@ -31,10 +33,10 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         {
             IsCpuEnabled = true,
             IsGpuEnabled = true,
-            IsMemoryEnabled = false,
+            IsMemoryEnabled = true,
             IsMotherboardEnabled = false,
             IsControllerEnabled = false,
-            IsNetworkEnabled = true,
+            IsNetworkEnabled = false,
             IsStorageEnabled = false,
         };
         _computer.Open();
@@ -49,10 +51,9 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         var time = DateTime.UtcNow;
         var hardware = _computer.Hardware;
 
-        var cpuSensors = hardware.First(s => s.HardwareType == HardwareType.Cpu).Sensors;
-        var gpuSensors = hardware.First(s => s.HardwareType == HardwareType.GpuNvidia).Sensors;
 
         // CPU
+        var cpuSensors = hardware.First(s => s.HardwareType == HardwareType.Cpu).Sensors;
         var cores = cpuSensors
             .Where(s => s.SensorType == SensorType.Load && s.Name.Contains("Core"))
             .Select(s => (double) (s.Value ?? 0d))
@@ -72,6 +73,7 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         var cpuTemp = _historyCpuPackageTemp.EnqueueWithMaxCapacity(new TimedMetric(time, cpupackagetemp), METRIC_CAPACITY);
 
         // GPU
+        var gpuSensors = hardware.First(s => s.HardwareType == HardwareType.GpuNvidia).Sensors;
         var gputotal = gpuSensors
             .Where(s => s.SensorType == SensorType.Load)
             .Select(s => (double) (s.Value ?? 0d))
@@ -85,16 +87,33 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         var gpuTemp = _historyGpuTemp.EnqueueWithMaxCapacity(new TimedMetric(time, gpupackagetemp), METRIC_CAPACITY);
 
         // NETWORK
-        var netquery = hardware
-            .Where(h => h.HardwareType == HardwareType.Network)
-            .Where(h => h.Name == "ASUS STRIX")
-            .Single().Sensors
-            .Where(s => s.SensorType == SensorType.Throughput);
+        //var netquery = hardware
+        //    .Where(h => h.HardwareType == HardwareType.Network)
+        //    .Where(h => h.Name == "ASUS STRIX")
+        //    .Single().Sensors
+        //    .Where(s => s.SensorType == SensorType.Throughput);
+        //var netup = netquery.Where(s => s.Name.Contains("Upload")).Sum(s => (double) (s.Value ?? 0d));
+        //var netdown = netquery.Where(s => s.Name.Contains("Download")).Sum(s => (double) (s.Value ?? 0d));
 
-        var netup = netquery.Where(s => s.Name.Contains("Upload")).Sum(s => (double) (s.Value ?? 0d));
-        var netdown = netquery.Where(s => s.Name.Contains("Download")).Sum(s => (double) (s.Value ?? 0d));
-        var networkUp = _historyNetworkUp.EnqueueWithMaxCapacity(new TimedMetric(time, netup), METRIC_CAPACITY);
-        var networkDown = _historyNetworkDown.EnqueueWithMaxCapacity(new TimedMetric(time, netdown), METRIC_CAPACITY);
+        var routerdata = _routerProvider.LastUpdate;
+        var networkUp = _historyNetworkUp.ToArray();
+        var networkDown = _historyNetworkDown.ToArray();
+
+        if (routerdata != null)
+        {
+            if (routerdata.TxLast > 0 && (!_historyNetworkUp.Any() || routerdata.TxLast != _historyNetworkUp.Last().Value))
+                networkUp = _historyNetworkUp.EnqueueWithMaxCapacity(new TimedMetric(time, routerdata.TxLast), METRIC_CAPACITY);
+            if (routerdata.RxLast > 0 && (!_historyNetworkDown.Any() || routerdata.RxLast != _historyNetworkDown.Last().Value))
+                networkDown = _historyNetworkDown.EnqueueWithMaxCapacity(new TimedMetric(time, routerdata.RxLast), METRIC_CAPACITY);
+        }
+
+        // MEMORY
+        var memoryload = hardware
+            .Where(h => h.HardwareType == HardwareType.Memory)
+            .Single().Sensors
+            .Where(s => s.SensorType == SensorType.Load)
+            .Select(s => (double) (s.Value ?? 0d))
+            .First();
 
         double GetLastAverage<T>(T[] queue, Func<T, double> selector)
         {
@@ -133,6 +152,8 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
             NetworkUpHistory = networkUp,
             NetworkPing = GetLastAverage(hping, m => m.Value),
             NetworkPingHistory = hping,
+
+            MemoryUtiliZation = memoryload / 100,
         };
     }
 
