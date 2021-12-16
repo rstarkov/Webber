@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
@@ -36,7 +36,8 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
     private readonly ILogger<TimeUntilBlockServer> _log;
     private CalendarService _svc;
 
-    public TimeUntilBlockServer(IServiceProvider sp, ILogger<TimeUntilBlockServer> log, TimeUntilBlockConfig config) : base(sp, TimeSpan.FromMinutes(1))
+    public TimeUntilBlockServer(IServiceProvider sp, ILogger<TimeUntilBlockServer> log, TimeUntilBlockConfig config)
+        : base(sp, TimeSpan.FromMinutes(1))
     {
         this._config = config;
         this._log = log;
@@ -92,7 +93,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             request.TimeMin = DateTime.Now;
             request.ShowDeleted = false;
             request.SingleEvents = true;
-            request.MaxResults = _config.MaxNumberOfEvents;
+            request.MaxResults = _config.MaxNumberOfEvents * 3;
             request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
             events.AddRange(request.Execute().Items);
         }
