@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Dapper;
 using Dapper.Contrib.Extensions;
 using Microsoft.Data.Sqlite;
@@ -318,12 +318,13 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingBlockDto>
         private void thread()
         {
             var next = DateTime.UtcNow;
-            var hc = new HttpClient();
-            hc.Timeout = TimeSpan.FromSeconds(Settings.Interval.TotalSeconds * 0.90);
             while (true)
             {
                 try
                 {
+                    using var hc = new HttpClient(); // we create a new one each time to make sure it's not keepalive and it's forced to negotiate SSL
+                    hc.Timeout = TimeSpan.FromSeconds(Settings.Interval.TotalSeconds * 0.90);
+
                     double msResponse = -1;
                     bool error = false;
                     bool ok = false;
