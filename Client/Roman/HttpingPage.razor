@@ -1,4 +1,4 @@
-@page "/httping"
+﻿@page "/httping"
 @using Webber.Client.Models
 @inject NavigationManager NavMgr
 
@@ -60,7 +60,7 @@
         var redMsCutoff = greenMsCutoff * 1.5;
         return dto.Recent.Select(pt => new BarChart.Pt
             {
-                Value = BarChart.ScaleY(pt, dto.Last30d.MsResponsePrc01 * 0.9, dto.Last30d.MsResponsePrc50 * 3, v => BarChart.ModifiedLog(v, 10)),
+                Value = (pt == 0 || pt == 65535) ? 1.0 : BarChart.ScaleY(pt, dto.Last30d.MsResponsePrc01 * 0.9, dto.Last30d.MsResponsePrc50 * 3, v => BarChart.ModifiedLog(v, 10)),
                 Color = (pt == 0 || pt == 65535) ? "#ff00ff" : pt > redMsCutoff ? "#ff0000" : pt > greenMsCutoff ? "#1985f3" : "#08b025",
             }).ToArray();
     }
