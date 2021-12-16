@@ -1,9 +1,17 @@
 ﻿using Topshelf;
 using Webber.Server;
 
+if (args.Length == 2 && args[0] == "--debug")
+{
+    var svc = new WebberService(args[1]);
+    svc.Start(null);
+    while (true)
+        Thread.Sleep(1000);
+}
+
 string configPath = null;
 
-Environment.ExitCode = (int) HostFactory.Run(host =>
+return (int) HostFactory.Run(host =>
 {
     host.AddPersistedCommandLineArgument("config", c => configPath = c);
     host.Service<WebberService>((d) => new WebberService(configPath));
