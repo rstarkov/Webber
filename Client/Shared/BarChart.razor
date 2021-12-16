@@ -42,4 +42,18 @@
         if (transform == null) transform = x => x;
         return (transform(value) - transform(min)) / (transform(max) - transform(min));
     }
+
+    private DateTime _shouldRenderAt = DateTime.UtcNow;
+
+    protected override bool ShouldRender()
+    {
+        _shouldRenderAt = DateTime.UtcNow;
+        return base.ShouldRender();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+        Console.WriteLine($"BarChart OnAfterRender: {(DateTime.UtcNow - _shouldRenderAt).TotalMilliseconds:#,0}ms");
+    }
 }

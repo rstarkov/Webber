@@ -1,4 +1,4 @@
-@using Microsoft.AspNetCore.SignalR.Client
+﻿@using Microsoft.AspNetCore.SignalR.Client
 @using Webber.Client.Models
 
 @typeparam TDto where TDto : BaseDto
@@ -50,6 +50,7 @@
 
     private void OnUpdateReceived(TDto dto)
     {
+        Console.WriteLine($"UpdateReceived for {typeof(TDto).Name}: {DateTime.Now:HH:mm:ss.f}");
         LastUpdate = dto;
         _lastUpdateReceivedUtc = DateTime.UtcNow;
         _invalidTimer.Interval = Math.Max(1, (dto.ValidUntilUtc - DateTime.UtcNow).TotalMilliseconds);
