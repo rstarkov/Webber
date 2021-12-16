@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.AspNetCore.SignalR.Client
 @using Webber.Client.Models
 
 @typeparam TDto where TDto : BaseDto
@@ -82,11 +82,14 @@
 
     private async Task ConnectWithRetryAsync()
     {
-        while (!_cts.Token.IsCancellationRequested)
+        if (_cts == null)
+            return;
+        var token = _cts.Token;
+        while (!token.IsCancellationRequested)
         {
             try
             {
-                await _hubConnection!.StartAsync(_cts.Token);
+                await _hubConnection!.StartAsync(token);
                 return;
             }
             catch { }
@@ -99,6 +102,7 @@
         GC.SuppressFinalize(this);
         _cts.Cancel();
         _cts.Dispose();
+        _cts = null;
         _invalidTimer.Dispose();
         _justReceivedTimer.Dispose();
         await _hubConnection!.DisposeAsync();
