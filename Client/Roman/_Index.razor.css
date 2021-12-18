@@ -28,8 +28,16 @@ div.RouterBlockPanel {
     position: absolute;
     top: 28vw;
     bottom: 0;
-    left: 0;
+    left: 47vw;
     right: 0;
+}
+
+div.TimeUntilBlockPanel {
+    position: absolute;
+    top: 28vw;
+    bottom: 0;
+    left: 0;
+    width: 45vw;
 }
 
 div.ControlsOverlay {

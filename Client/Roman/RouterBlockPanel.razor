@@ -7,29 +7,29 @@
             <div class="Label KB">KB/s</div>
             <div class="Label">Recent traffic</div>
             <div></div>
-            <div class="Label">Hourly traffic</div>
+@*            <div class="Label">Hourly traffic</div>
             <div class="Label KB">KB/s</div>
-
+*@
             <div class="Label">@rate2str(context.LastUpdate.TxLast)</div>
             <div class="Chart Downwards">
                 <BarChart BarCount=24 Data=@context.LastUpdate.HistoryRecent.Select(GetTxPt).ToArray() Downwards=true />
             </div>
             <div class="Label Up">Up</div>
-            <div class="Chart Downwards">
+@*            <div class="Chart Downwards">
                 <BarChart BarCount=24 Data=@context.LastUpdate.HistoryHourly.Select(GetTxPt).ToArray() Downwards=true />
             </div>
             <div class="Label">@rate2str(context.LastUpdate.TxAverageRecent)</div>
-
+*@
             <div class="Label">@rate2str(context.LastUpdate.RxLast)</div>
             <div class="Chart">
                 <BarChart BarCount=24 Data=@context.LastUpdate.HistoryRecent.Select(GetRxPt).ToArray() />
             </div>
             <div class="Label Dn">Dn</div>
-            <div class="Chart">
+@*            <div class="Chart">
                 <BarChart BarCount=24 Data=@context.LastUpdate.HistoryHourly.Select(GetRxPt).ToArray() />
             </div>
             <div class="Label">@rate2str(context.LastUpdate.RxAverageRecent)</div>
-        </div>
+*@        </div>
     }
 </BlockPanel>
 
