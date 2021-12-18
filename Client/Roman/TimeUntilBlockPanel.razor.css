@@ -1,0 +1,65 @@
+﻿div.CalContent {
+    display: grid;
+    grid-template-columns: min-content min-content;
+    column-gap: 1rem;
+    margin-right: -1.5vw;
+    margin-bottom: -1.5vw;
+}
+
+    div.CalContent::after {
+        box-shadow: inset -3vw -3vw 2vw #111;
+        position: absolute;
+        content: "";
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+
+.newGroup {
+    margin-top: 0.4rem;
+}
+
+.leftMins, .leftHrs, .leftTmrw, .leftWeek {
+    margin-left: 0.5rem;
+}
+
+.leftMins {
+    color: #d60e0e;
+    font-weight: bold;
+}
+
+.leftHrs {
+    color: #d26c23;
+}
+
+.leftTmrw {
+    color: #2e80ff;
+}
+
+.leftWeek {
+    color: #888;
+}
+
+.timeMins, .descMins {
+    color: #ff7979;
+}
+
+.timeHrs, .descHrs {
+    color: #fff;
+}
+
+.timeTmrw, .descTmrw {
+    color: #bbb;
+    font-weight: 300;
+}
+
+.timeWeek, .descWeek {
+    color: #888;
+    font-weight: 300;
+}
+
+.timeLong, .descLong {
+    color: #666;
+    font-weight: 100;
+}

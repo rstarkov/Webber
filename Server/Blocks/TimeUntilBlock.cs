@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
@@ -138,6 +138,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
 
         return new TimeUntilBlockDto()
         {
+            ValidUntilUtc = DateTime.UtcNow.AddMinutes(3),
             Events = candidates,
         };
     }
