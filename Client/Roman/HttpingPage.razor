@@ -27,6 +27,8 @@
 
                 @foreach (var tgt in dto.Targets)
                 {
+                    double yScale(int pt) => BarChart.ScaleY(pt, tgt.Last30d.MsResponsePrc01 * 0.9, tgt.Last30d.MsResponsePrc50 * 3, v => BarChart.ModifiedLog(v, 10));
+
                     <div>@tgt.Name</div>
                     <div>@tgt.Last30m.MsResponsePrc50</div>
                     <div>@tgt.Last30m.MsResponsePrc95</div>
@@ -37,10 +39,10 @@
                     <div>@tgt.Last30d.MsResponsePrc50</div>
                     <div>@tgt.Last30d.MsResponsePrc95</div>
                     <div>@downtimeStr((tgt.Last30d.ErrorCount + tgt.Last30d.TimeoutCount) / (double)tgt.Last30d.TotalCount * 100)</div>
-                    <div class=ChartContainer><BarChart BarCount=@tgt.Recent.Length Data=@getRecentData(tgt) /></div>
-                    <div class=ChartContainer></div>
-                    <div class=ChartContainer></div>
-                    <div class=ChartContainer></div>
+                    <div class=ChartContainer><BarChart BarCount=@tgt.Recent.Length Data=@getRecentData(tgt, yScale) /></div>
+                    <div class=ChartContainer><BarChart BarCount=@tgt.Twominutely.Length Data=@getPercentilesData(tgt.Twominutely, yScale) /></div>
+                    <div class=ChartContainer><BarChart BarCount=@tgt.Hourly.Length Data=@getPercentilesData(tgt.Hourly, yScale) /></div>
+                    <div class=ChartContainer><BarChart BarCount=@tgt.Daily.Length Data=@getPercentilesData(tgt.Daily, yScale) /></div>
                 }
             </div>
         }
@@ -52,16 +54,46 @@
 }
 
 @code {
+    private string _barGreen = "#08b025";
+    private string _barYellow = "#ffff00";
+    private string _barBlue = "#1985f3";
+    private string _barRed = "#ff0000";
+    private string _barFuchsia = "#ff00ff";
+    private string _barGray = "#404040";
+
     private string downtimeStr(double prc) => prc < 1 ? $"{prc:0.00}%" : $"{prc:0.0}%";
 
-    private BarChart.Pt[] getRecentData(HttpingTargetDto dto)
+    private BarChart.Pt[] getRecentData(HttpingTargetDto dto, Func<int, double> yScale)
     {
         var greenMsCutoff = Math.Min((ushort)5000, dto.Last30d.MsResponsePrc75);
         var redMsCutoff = greenMsCutoff * 1.5;
         return dto.Recent.Select(pt => new BarChart.Pt
             {
-                Value = (pt == 0 || pt == 65535) ? 1.0 : BarChart.ScaleY(pt, dto.Last30d.MsResponsePrc01 * 0.9, dto.Last30d.MsResponsePrc50 * 3, v => BarChart.ModifiedLog(v, 10)),
-                Color = (pt == 0 || pt == 65535) ? "#ff00ff" : pt > redMsCutoff ? "#ff0000" : pt > greenMsCutoff ? "#1985f3" : "#08b025",
+                Value = (pt == 0 || pt == 65535) ? 1.0 : yScale(pt),
+                Color = (pt == 0 || pt == 65535) ? _barFuchsia : pt > redMsCutoff ? _barRed : pt > greenMsCutoff ? _barBlue : _barGreen,
             }).ToArray();
+    }
+
+    private BarChart.Pt[] getPercentilesData(HttpingIntervalDto[] points, Func<int, double> yScale)
+    {
+        return (
+            from pt in points
+            let hasSuccessful = pt.TotalCount > pt.ErrorCount + pt.TimeoutCount
+            let hasAny = pt.TotalCount > 0
+            select new BarChart.Pt
+                {
+                    Value = hasSuccessful ? yScale(pt.MsResponsePrc95) : 1.0,
+                    Color = hasSuccessful ? _barRed : hasAny ? _barFuchsia : _barGray,
+
+                    Value2 = hasSuccessful ? yScale(pt.MsResponsePrc75) : 1.0,
+                    Color2 = hasSuccessful ? _barBlue : null,
+
+                    Value3 = hasSuccessful ? yScale(pt.MsResponsePrc50) : 1.0,
+                    Color3 = hasSuccessful ? _barYellow : null,
+
+                    Value4 = hasSuccessful ? yScale(pt.MsResponsePrc01) : 1.0,
+                    Color4 = hasSuccessful ? _barGreen : null,
+                }
+        ).ToArray();
     }
 }

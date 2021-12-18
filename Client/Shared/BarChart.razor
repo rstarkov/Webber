@@ -6,8 +6,12 @@
             var sb = new System.Text.StringBuilder();
             @foreach (var pt in Data.Reverse())
             {
-                var y = Downwards ? 0 : (100 - pt.Value * 100);
-                sb.Append($"<rect x='{x:0.000}%' y='{y:0.000}%' width='{barWidth:0.000}%' height='{pt.Value * 100:0.000}%' stroke-width='0' fill='{pt.Color}'></rect>");
+                string makeRect(double value, string color)
+                    => $"<rect x='{x:0.000}%' y='{(Downwards ? 0 : (100 - value * 100)):0.000}%' width='{barWidth:0.000}%' height='{value * 100:0.000}%' stroke-width='0' fill='{color}'></rect>";
+                sb.Append(makeRect(pt.Value, pt.Color));
+                if (pt.Color2 != null) sb.Append(makeRect(pt.Value2, pt.Color2));
+                if (pt.Color3 != null) sb.Append(makeRect(pt.Value3, pt.Color3));
+                if (pt.Color4 != null) sb.Append(makeRect(pt.Value4, pt.Color4));
                 x -= barWidth + BarSpacing;
             }
             @(new MarkupString(sb.ToString()))
@@ -16,10 +20,19 @@
 </svg>
 
 @code {
-    public record struct Pt
+    public record class Pt
     {
         public string Color = "";
         public double Value; // 0..1
+
+        public string Color2 = "";
+        public double Value2; // 0..1
+
+        public string Color3 = "";
+        public double Value3; // 0..1
+
+        public string Color4 = "";
+        public double Value4; // 0..1
     }
 
     [Parameter]
