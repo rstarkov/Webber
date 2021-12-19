@@ -25,4 +25,10 @@ public class JsInterop
         await _import;
         await _module.InvokeVoidAsync("exitFullscreen");
     }
+
+    public async Task ReloadPage()
+    {
+        await _import;
+        await _module.InvokeVoidAsync("reloadPage");
+    }
 }

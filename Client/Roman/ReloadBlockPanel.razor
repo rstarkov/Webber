@@ -1,0 +1,18 @@
+﻿@using Webber.Client.Models
+
+@inject JsInterop JS
+
+@inherits BlockPanel<ReloadBlockDto>
+
+@code {
+    private static string _currentServerHash = null;
+
+    protected override async Task OnUpdateReceivedAsync()
+    {
+        Console.WriteLine($"ServerHash: prev={_currentServerHash} cur={LastUpdate?.ServerHash}");
+        if (_currentServerHash == null)
+            _currentServerHash = LastUpdate?.ServerHash;
+        else if (_currentServerHash != LastUpdate.ServerHash)
+            await JS.ReloadPage();
+    }
+}

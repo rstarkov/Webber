@@ -4,3 +4,6 @@
 export function exitFullscreen() {
     document.exitFullscreen();
 }
+export function reloadPage() {
+    location.reload();
+}

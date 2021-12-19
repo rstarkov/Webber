@@ -9,11 +9,13 @@
 <div class="PingBlockPanel"><PingBlockPanel /></div>
 <div class="RouterBlockPanel"><RouterBlockPanel /></div>
 <div class="TimeUntilBlockPanel"><TimeUntilBlockPanel /></div>
+<div style="display:none"><ReloadBlockPanel /></div>
 
 @if (_overlayShown)
 {
     <div class="ControlsOverlay">
         <button @onclick="@(e => { _overlayShown = false; })">Dismiss</button>
+        <button @onclick="@(async e => { await JS.ReloadPage(); })">Force Reload</button>
         <button @onclick="@(e => { NavMgr.NavigateTo("/httping"); })">HTTPing</button>
         <button @onclick="toggleFullscreen">@(_isFullscreen ? "Exit Full Screen" : "Full Screen")</button>
     </div>

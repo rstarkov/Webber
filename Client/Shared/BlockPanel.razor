@@ -48,14 +48,20 @@
         await base.OnInitializedAsync();
     }
 
-    private void OnUpdateReceived(TDto dto)
+    protected virtual Task OnUpdateReceivedAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    private async Task OnUpdateReceived(TDto dto)
     {
         Console.WriteLine($"UpdateReceived for {typeof(TDto).Name}: {DateTime.Now:HH:mm:ss.f}");
         LastUpdate = dto;
         _lastUpdateReceivedUtc = DateTime.UtcNow;
-        _invalidTimer.Interval = Math.Max(1, (dto.ValidUntilUtc - DateTime.UtcNow).TotalMilliseconds);
+        _invalidTimer.Interval = Math.Max(1, Math.Min(1e9, (dto.ValidUntilUtc - DateTime.UtcNow).TotalMilliseconds));
         _invalidTimer.Enabled = true;
         _justReceivedTimer.Enabled = true;
+        await OnUpdateReceivedAsync();
         StateHasChanged();
     }
 
