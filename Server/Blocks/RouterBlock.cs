@@ -14,6 +14,8 @@ class RouterBlockConfig
     public double AverageDecay { get; set; } = 0.85;
     public double AverageDecayFast { get; set; } = 0.50;
     public string LoginAuth { get; set; } = "base64(user:pass)";
+    public int SleepOnParallelSec { get; set; } = 5 * 60;
+    public int SleepOnErrorSec { get; set; } = 60;
 }
 
 class RouterBlockServer : SimpleBlockServerBase<RouterBlockDto>
@@ -106,6 +108,15 @@ class RouterBlockServer : SimpleBlockServerBase<RouterBlockDto>
 
             pt.Timestamp = DateTime.UtcNow;
 
+            // When kicked out, the response looks something like this: <HTML><HEAD><script>top.location.href='/Main_Login.asp';</script></HEAD></HTML>
+            if (respStr.Contains("location.href='/Main_Login.asp'"))
+            {
+                SendUpdate(LastUpdate with { ErrorMessage = $"Parallel login detected; sleeping." });
+                Thread.Sleep(TimeSpan.FromSeconds(_config.SleepOnParallelSec));
+                login();
+                return null;
+            }
+
             var match = Regex.Match(respStr, @"'INTERNET':{rx:0x(?<rx>.*?),tx:0x(?<tx>.*?)}");
             if (!match.Success)
                 throw new Exception();
@@ -116,7 +127,7 @@ class RouterBlockServer : SimpleBlockServerBase<RouterBlockDto>
         catch (Exception ex)
         {
             Logger.LogDebug(ex, "Pausing due to exception while screen scraping:");
-            Thread.Sleep(TimeSpan.FromSeconds(60));
+            Thread.Sleep(TimeSpan.FromSeconds(_config.SleepOnErrorSec));
             login();
             return null;
         }
