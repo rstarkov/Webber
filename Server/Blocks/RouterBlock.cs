@@ -111,7 +111,8 @@ class RouterBlockServer : SimpleBlockServerBase<RouterBlockDto>
             // When kicked out, the response looks something like this: <HTML><HEAD><script>top.location.href='/Main_Login.asp';</script></HEAD></HTML>
             if (respStr.Contains("location.href='/Main_Login.asp'"))
             {
-                SendUpdate(LastUpdate with { ErrorMessage = $"Parallel login detected; sleeping." });
+                Logger.LogInformation("Parallel login detected; sleeping.");
+                SendUpdate(LastUpdate with { ErrorMessage = "Parallel login detected; sleeping." });
                 Thread.Sleep(TimeSpan.FromSeconds(_config.SleepOnParallelSec));
                 login();
                 return null;
