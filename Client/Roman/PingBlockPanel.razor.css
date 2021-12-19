@@ -9,4 +9,5 @@ div.RecentChart {
     padding: 0 0.5vw;
     border-bottom: 1px solid #999;
     flex: 1;
+    min-height: 0;
 }
