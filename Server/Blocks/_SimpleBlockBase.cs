@@ -42,7 +42,8 @@ public abstract class SimpleBlockServerBase<TDto> : BlockServerBase<TDto>
             }
             catch (TellUserException ex)
             {
-                SendUpdate(new TDto { ErrorMessage = ex.Message });
+                Logger.LogWarning($"TellUser: {ex.Message}");
+                SendUpdate((LastUpdate ?? new TDto()) with { ErrorMessage = ex.Message });
             }
 #if !DEBUG
             catch (Exception ex)

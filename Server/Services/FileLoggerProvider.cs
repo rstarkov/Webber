@@ -78,7 +78,7 @@ public class FileLoggerProvider : ILoggerProvider
                 var lines = new List<string> { $"{DateTime.Now:HH:mm:ss.fff} {logLevel.ToString()[0]} [{_categoryName}] {formatter(state, exception)}" };
                 foreach (var ex in exception.SelectChain(e => e.InnerException))
                 {
-                    lines.Add($" {ex.GetType().Name}: {ex.Message}");
+                    lines.Add($"{ex.GetType().Name}: {ex.Message}");
                     lines.Add(ex.StackTrace);
                 }
                 File.AppendAllLines(filename, lines);

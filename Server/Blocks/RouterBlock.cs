@@ -51,6 +51,7 @@ class RouterBlockServer : SimpleBlockServerBase<RouterBlockDto>
 
     private void login()
     {
+        Logger.LogDebug("Logging in to router UI");
         var handler = new HttpClientHandler();
         _httpClient = new HttpClient(handler); // we got logged out, so start from scratch just in case
         var req = new HttpRequestMessage(HttpMethod.Post, _config.BaseUrl + "/login.cgi");
@@ -65,10 +66,12 @@ class RouterBlockServer : SimpleBlockServerBase<RouterBlockDto>
             ["next_page"] = "index.asp",
             ["login_authorization"] = _config.LoginAuth,
         });
-        _httpClient.Send(req).EnsureSuccessStatusCode();
+        var resp = _httpClient.Send(req);
+        if (!resp.IsSuccessStatusCode)
+            throw new TellUserException("Router login failed");
         var cookies = handler.CookieContainer.GetCookies(new Uri(_config.BaseUrl + "/login.cgi"));
         if (cookies.Count == 0)
-            throw new Exception("Router login failed");
+            throw new TellUserException("Router login failed");
         handler.CookieContainer.Add(new Uri(_config.BaseUrl), new Cookie("asus_token", handler.CookieContainer.GetCookies(new Uri(_config.BaseUrl + "/login.cgi"))[0].Value));
         handler.CookieContainer.Add(new Uri(_config.BaseUrl), new Cookie("bw_rtab", "INTERNET"));
         handler.CookieContainer.Add(new Uri(_config.BaseUrl), new Cookie("traffic_warning_0", "2017.7:1"));
@@ -110,8 +113,9 @@ class RouterBlockServer : SimpleBlockServerBase<RouterBlockDto>
             pt.TxTotal = Convert.ToInt64(match.Groups["tx"].Value, 16);
             pt.RxTotal = Convert.ToInt64(match.Groups["rx"].Value, 16);
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.LogDebug(ex, "Pausing due to exception while screen scraping:");
             Thread.Sleep(TimeSpan.FromSeconds(60));
             login();
             return null;
