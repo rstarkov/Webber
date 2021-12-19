@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging.Configuration;
 using Microsoft.Extensions.Options;
+using RT.Util.ExtensionMethods;
 
 namespace Webber.Server.Services;
 
@@ -81,6 +82,11 @@ public class Console2LoggerProvider : ILoggerProvider
                 logLevel == LogLevel.Debug ? ConsoleColor.Gray :
                 logLevel == LogLevel.Trace ? ConsoleColor.DarkGray : ConsoleColor.Cyan;
             Console.WriteLine($"{DateTime.Now:HH:mm:ss.fff} {logLevel.ToString()[0]} [{_categoryName}] {formatter(state, exception)}");
+            foreach (var ex in exception.SelectChain(e => e.InnerException))
+            {
+                Console.WriteLine($" {ex.GetType().Name}: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+            }
         }
     }
 }

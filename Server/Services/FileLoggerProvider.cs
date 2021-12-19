@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging.Configuration;
 using Microsoft.Extensions.Options;
+using RT.Util.ExtensionMethods;
 
 namespace Webber.Server.Services;
 
@@ -74,8 +75,13 @@ public class FileLoggerProvider : ILoggerProvider
             try
             {
                 var filename = _fileName.Replace("{date}", $"{DateTime.Now:yyyy-MM-dd}");
-                var line = $"{DateTime.Now:HH:mm:ss.fff} {logLevel.ToString()[0]} [{_categoryName}] {formatter(state, exception)}";
-                File.AppendAllLines(filename, new[] { line });
+                var lines = new List<string> { $"{DateTime.Now:HH:mm:ss.fff} {logLevel.ToString()[0]} [{_categoryName}] {formatter(state, exception)}" };
+                foreach (var ex in exception.SelectChain(e => e.InnerException))
+                {
+                    lines.Add($" {ex.GetType().Name}: {ex.Message}");
+                    lines.Add(ex.StackTrace);
+                }
+                File.AppendAllLines(filename, lines);
             }
             catch { }
         }

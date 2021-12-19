@@ -48,6 +48,8 @@ public abstract class BlockServerBase<TDto> : IBlockServer<TDto>
         }
     }
 
+    protected readonly ILogger Logger;
+
     private IHubContext<BlockHub, IBlockHub> _hub;
     private AppConfig _config;
     private ConcurrentBag<string> _connectedIds = new ConcurrentBag<string>();
@@ -58,6 +60,7 @@ public abstract class BlockServerBase<TDto> : IBlockServer<TDto>
 
     public BlockServerBase(IServiceProvider sp)
     {
+        Logger = (ILogger) sp.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
         _hub = sp.GetRequiredService<IHubContext<BlockHub, IBlockHub>>();
         _config = sp.GetRequiredService<AppConfig>();
     }

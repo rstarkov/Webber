@@ -47,6 +47,7 @@ public abstract class SimpleBlockServerBase<TDto> : BlockServerBase<TDto>
 #if !DEBUG
             catch (Exception ex)
             {
+                Logger.LogError(ex, "Unhandled exception");
                 SendUpdate((LastUpdate ?? new TDto()) with { ErrorMessage = ex.Message });
             }
 #endif
