@@ -1,4 +1,4 @@
-﻿@using Webber.Client.Models
+@using Webber.Client.Models
 
 <BlockPanel TDto="RouterBlockDto">
     @if (context.LastUpdate != null)
@@ -48,8 +48,8 @@
     }
 
     private BarChart.Pt GetTxPt(RouterBlockDto.HistoryPoint pt)
-        => GetPt(pt?.TxRate, 762_500, "#05305c", "#0959aa", "#1985f3", "#64adf7");
+        => GetPt(pt?.TxRate, 2_900_000, "#05305c", "#0959aa", "#1985f3", "#64adf7");
 
     private BarChart.Pt GetRxPt(RouterBlockDto.HistoryPoint pt)
-        => GetPt(pt?.RxRate, 12_625_000, "#573805", "#966008", "#ed980d", "#f6bb5a");
+        => GetPt(pt?.RxRate, 26_000_000, "#573805", "#966008", "#ed980d", "#f6bb5a");
 }
