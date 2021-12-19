@@ -9,6 +9,7 @@ class AppConfig
 {
     public string DbFilePath { get; init; }
     public string LocalTimezoneName { get; init; }
+    public bool UseBlazor { get; init; } = false;
 }
 
 class WebberService : ServiceControl
@@ -75,9 +76,14 @@ class WebberService : ServiceControl
         app = builder.Build();
         app.Logger.LogInformation($"Webber starting");
 
-        //app.UseWebAssemblyDebugging();
+        if (config.UseBlazor)
+        {
+            app.UseMiddleware<NoCacheHeadersMiddleware>();
+            //app.UseWebAssemblyDebugging();
+        }
         app.UseExceptionHandler("/Error");
-        app.UseBlazorFrameworkFiles();
+        if (config.UseBlazor)
+            app.UseBlazorFrameworkFiles();
         app.UseStaticFiles();
         app.UseRouting();
         app.MapRazorPages();

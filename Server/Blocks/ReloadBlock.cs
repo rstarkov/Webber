@@ -8,7 +8,6 @@ namespace Webber.Server.Blocks;
 
 class ReloadBlockServer : BlockServerBase<ReloadBlockDto>
 {
-    private TimeBlockConfig _config;
     private string _path;
     private FileSystemWatcher _watcher;
     private AutoResetEvent _event = new AutoResetEvent(false);
