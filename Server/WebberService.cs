@@ -1,7 +1,7 @@
-﻿using Topshelf;
-using System.Reflection;
-using Webber.Server;
+﻿using System.Reflection;
+using Topshelf;
 using Webber.Server.Blocks;
+using Webber.Server.Services;
 
 namespace Webber.Server;
 
@@ -34,6 +34,8 @@ class WebberService : ServiceControl
 
         builder.Configuration.AddJsonFile(_configPath, optional: false);
 
+        builder.Logging.AddConsole2(); // disabled by default; enabled/configured in config JSON
+        builder.Logging.AddFile(); // disabled by default; enabled/configured in config JSON
         builder.Services.AddControllersWithViews();
         builder.Services.AddRazorPages();
         builder.Services.AddSignalR();
@@ -71,6 +73,7 @@ class WebberService : ServiceControl
             builder.Services.AddSingleton<IDbService>(new DbService(config));
 
         app = builder.Build();
+        app.Logger.LogInformation($"Webber starting");
 
         //app.UseWebAssemblyDebugging();
         app.UseExceptionHandler("/Error");
