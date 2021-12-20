@@ -4,7 +4,7 @@
     @if (context.LastUpdate != null)
     {
         <div style="display: grid; grid-template-rows: min-content min-content 1fr min-content; height: 100%;">
-            <div style="color: @context.LastUpdate.CurTemperatureColor; font-size: 200%; font-weight: bold; margin-bottom: 1vw; text-align: center;">@temp2str(context.LastUpdate.CurTemperature) °C</div>
+            <div style="color: @context.LastUpdate.CurTemperatureColor; font-size: 280%; font-weight: bold; margin-top: -1.7vw; margin-bottom: 0.1vw; text-align: center;">@temp2str(context.LastUpdate.CurTemperature) °C</div>
             <div style="display: grid; grid-template-columns: 1fr repeat(4, min-content) 1fr">
                 <div></div>
                 <div style="color: @context.LastUpdate.MinTemperatureColor; text-align: right;">@temp2str(context.LastUpdate.MinTemperature) °C</div>

@@ -10,7 +10,7 @@ div.TimeBlockPanel {
     position: absolute;
     top: 0;
     left: 39vw;
-    width: 20vw;
+    width: 25vw;
     height: 26vw;
     user-select: none;
     cursor: pointer;
@@ -20,7 +20,7 @@ div.PingBlockPanel {
     position: absolute;
     top: 0;
     right: 0;
-    width: 39vw;
+    width: 34vw;
     height: 26vw;
 }
 
