@@ -26,7 +26,7 @@
         if (start < DateTime.Today.AddDays(1))
             return @<span><span class=timeHrs>@($"{start:HH:mm}")</span><span class=leftHrs>@($"{left.TotalHours:0.0}hr")</span></span>;
         if (start < DateTime.Today.AddDays(2))
-            return @<span><span class=timeTmrw>@($"{start:HH:mm}")</span><span class=leftTmrw>tom.</span></span>;
+            return @<span><span class=timeTmrw>@($"{start:HH:mm}")</span><span class=leftTmrw>@($"{left.TotalHours:0.0}hr")</span></span>;
         if (start < DateTime.Today.AddDays(8))
             return @<span><span class=timeWeek>@($"{start:HH:mm}")</span><span class=leftWeek>@($"{start:ddd}")</span></span>;
         return @<span><span class=timeLong>@($"{(start - DateTime.Today).TotalDays:0} days")</span></span>
