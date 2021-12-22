@@ -6,6 +6,7 @@ public record CalendarEvent
     public DateTime StartTimeUtc { get; set; }
     public bool HasStarted { get; set; }
     public bool IsNextUp { get; set; }
+    public bool IsRecurring { get; set; }
 }
 
 public record TimeUntilBlockDto : BaseDto
