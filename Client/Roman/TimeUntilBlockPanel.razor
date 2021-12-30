@@ -29,8 +29,7 @@
             return @<span><span class=timeTmrw>@($"{start:HH:mm}")</span><span class=leftTmrw>@($"{left.TotalHours:0.0}hr")</span></span>;
         if (start < DateTime.Today.AddDays(8))
             return @<span><span class=timeWeek>@($"{start:HH:mm}")</span><span class=leftWeek>@($"{start:ddd}")</span></span>;
-        return @<span><span class=timeLong>@($"{(start - DateTime.Today).TotalDays:0} days")</span></span>
-    ;
+        return @<span><span class=timeLong>@($"{(start.Date - DateTime.Today).TotalDays:0} days")</span></span>;
     }
 
     private string descClass(CalendarEvent evt)
