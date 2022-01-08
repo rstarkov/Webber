@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Topshelf;
 using Topshelf.HostConfigurators;
@@ -102,7 +102,7 @@ public static class TopshelfExtensions
             var conf = Marshal.PtrToStructure<QUERY_SERVICE_CONFIG>(hGlobal);
 
             // add our persisted command line options to the existing image path
-            var args = String.Join(" ", _args.Select(a => $"-{a.Name} \"{a.Value}\""));
+            var args = string.Join(" ", _args.Select(a => $"-{a.Name} \"{a.Value}\""));
             string newImagePath = conf.lpBinaryPathName + " " + args;
 
             // persist the new image path

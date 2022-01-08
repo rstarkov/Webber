@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
@@ -45,7 +45,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
 
     private async Task<UserCredential> DoGoogleAuth()
     {
-        using Stream stream = String.IsNullOrWhiteSpace(_config.AppCredentialsPath)
+        using Stream stream = string.IsNullOrWhiteSpace(_config.AppCredentialsPath)
          ? new MemoryStream(Encoding.UTF8.GetBytes(DefaultCredentialsJson))
          : File.OpenRead(_config.AppCredentialsPath);
 
@@ -114,7 +114,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             .Where(i => i.Start != null && i.Start.DateTime != null) // filter out all day events
             .Where(i => i.EventType == "default") // filter out OOO
             .Where(checkSelfRsvpNotDeclined) // filter out declined events
-            .Where(i => !String.IsNullOrWhiteSpace(i.Summary)) // no title?
+            .Where(i => !string.IsNullOrWhiteSpace(i.Summary)) // no title?
             .OrderBy(i => i.Start.DateTime)
             .DistinctBy(i => i.RecurringEventId ?? i.Id)
             .Select(i => new CalendarEvent() { DisplayName = i.Summary, StartTimeUtc = i.Start.DateTime.Value.ToUniversalTime(), IsRecurring = i.RecurringEventId != null })

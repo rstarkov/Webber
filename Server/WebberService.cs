@@ -19,7 +19,7 @@ class WebberService : ServiceControl
 
     public WebberService(string configPath)
     {
-        if (String.IsNullOrWhiteSpace(configPath) || !File.Exists(configPath))
+        if (string.IsNullOrWhiteSpace(configPath) || !File.Exists(configPath))
             throw new ArgumentException("The '-config' command line variable is required");
         this._configPath = configPath;
 
@@ -68,7 +68,7 @@ class WebberService : ServiceControl
         builder.Services.AddSingleton<AppConfig>(config);
 
         // TODO make this just a single service which toggles "Enabled" on the presence of DbFilePath
-        if (String.IsNullOrEmpty(config.DbFilePath))
+        if (string.IsNullOrEmpty(config.DbFilePath))
             builder.Services.AddSingleton<IDbService, DisabledDbService>();
         else
             builder.Services.AddSingleton<IDbService>(new DbService(config));
