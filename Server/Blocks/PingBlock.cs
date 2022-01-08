@@ -54,7 +54,7 @@ class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
 
         var dto = new PingBlockDto { ValidUntilUtc = sentUtc + TimeSpan.FromSeconds(15) };
         if (response.Status == IPStatus.Success)
-            dto.Last = (int) Math.Min(response.RoundtripTime, _config.MaxWaitMs);
+            dto.Last = (int)Math.Min(response.RoundtripTime, _config.MaxWaitMs);
         else
             dto.Last = null;
 
@@ -66,7 +66,7 @@ class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
 
         var recent = new List<int?>();
         for (var ts = sentUtc.AddMilliseconds(-_config.IntervalMs * (_config.RecentLength - 0.5)); ts < sentUtc; ts = ts.AddMilliseconds(_config.IntervalMs))
-            recent.Add(_recentPings.Where(r => r.utc >= ts && r.utc < ts.AddMilliseconds(_config.IntervalMs)).Select(r => (int?) (r.ms ?? -1)).FirstOrDefault());
+            recent.Add(_recentPings.Where(r => r.utc >= ts && r.utc < ts.AddMilliseconds(_config.IntervalMs)).Select(r => (int?)(r.ms ?? -1)).FirstOrDefault());
         dto.Recent = recent.ToArray();
 
         return dto;

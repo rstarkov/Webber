@@ -100,7 +100,7 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingBlockDto>
                     Last24h = last24h,
                     Last30d = last30d,
                 };
-                tgtdto.Recent = tgt.Recent.Select(pt => (int) pt.MsResponse).Skip(tgt.Recent.Count - 30).ToArray();
+                tgtdto.Recent = tgt.Recent.Select(pt => (int)pt.MsResponse).Skip(tgt.Recent.Count - 30).ToArray();
 
                 dto.Targets[i] = tgtdto;
             }
@@ -124,12 +124,12 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingBlockDto>
 
     private static void SetPercentiles(ref HttpingIntervalDto stat, List<ushort> sortedValues)
     {
-        stat.MsResponsePrc01 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 1 / 100];
-        stat.MsResponsePrc25 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 25 / 100];
-        stat.MsResponsePrc50 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 50 / 100];
-        stat.MsResponsePrc75 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 75 / 100];
-        stat.MsResponsePrc95 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 95 / 100];
-        stat.MsResponsePrc99 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 99 / 100];
+        stat.MsResponsePrc01 = sortedValues.Count == 0 ? (ushort)0 : sortedValues[(sortedValues.Count - 1) * 1 / 100];
+        stat.MsResponsePrc25 = sortedValues.Count == 0 ? (ushort)0 : sortedValues[(sortedValues.Count - 1) * 25 / 100];
+        stat.MsResponsePrc50 = sortedValues.Count == 0 ? (ushort)0 : sortedValues[(sortedValues.Count - 1) * 50 / 100];
+        stat.MsResponsePrc75 = sortedValues.Count == 0 ? (ushort)0 : sortedValues[(sortedValues.Count - 1) * 75 / 100];
+        stat.MsResponsePrc95 = sortedValues.Count == 0 ? (ushort)0 : sortedValues[(sortedValues.Count - 1) * 95 / 100];
+        stat.MsResponsePrc99 = sortedValues.Count == 0 ? (ushort)0 : sortedValues[(sortedValues.Count - 1) * 99 / 100];
     }
 
     private static HttpingIntervalDto[] GetIntervalDto(QueueViewable<HttpingPointInterval> data, TimeSpan interval, Func<DateTime, DateTime> getIntervalStart)
@@ -355,7 +355,7 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingBlockDto>
                         else if (!ok)
                             pt.MsResponse = 0; // wrong code or didn't contain what we wanted
                         else
-                            pt.MsResponse = (ushort) ((int) Math.Round(msResponse)).Clip(1, 65534);
+                            pt.MsResponse = (ushort)((int)Math.Round(msResponse)).Clip(1, 65534);
                         Recent.Enqueue(pt);
                         using (var conn = _svc._db.OpenConnection())
                             conn.Insert(new TbHttpingRecent { SiteId = _siteId, Timestamp = start.ToDbDateTime(), MsResponse = pt.MsResponse });
@@ -365,7 +365,7 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingBlockDto>
                             Recent.Dequeue();
 
                         // Recalculate stats if we've crossed into the next minute
-                        var prevPt = Recent.Count >= 2 ? Recent[^2].Timestamp.FromUnixSeconds() : (DateTime?) null;
+                        var prevPt = Recent.Count >= 2 ? Recent[^2].Timestamp.FromUnixSeconds() : (DateTime?)null;
                         if (prevPt != null && prevPt.Value.TruncatedToMinutes() != start.TruncatedToMinutes())
                         {
                             AddIntervalIfRequired(Twominutely, prevPt.Value, start, GetStartOfTwominute, HttpingIntervalLength.TwoMinutes);
@@ -481,8 +481,8 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingBlockDto>
 
         public HttpingPoint(TbHttpingRecent r) : this()
         {
-            Timestamp = (uint) (r.Timestamp / 1000);
-            MsResponse = (ushort) r.MsResponse;
+            Timestamp = (uint)(r.Timestamp / 1000);
+            MsResponse = (ushort)r.MsResponse;
         }
 
         public override string ToString() => $"{Timestamp.FromUnixSeconds()} : {MsResponse:#,0} ms";
@@ -514,12 +514,12 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingBlockDto>
             TotalCount = r.TotalCount;
             TimeoutCount = r.TimeoutCount;
             ErrorCount = r.ErrorCount;
-            MsResponse.Prc01 = (ushort) r.MsResponsePrc01;
-            MsResponse.Prc25 = (ushort) r.MsResponsePrc25;
-            MsResponse.Prc50 = (ushort) r.MsResponsePrc50;
-            MsResponse.Prc75 = (ushort) r.MsResponsePrc75;
-            MsResponse.Prc95 = (ushort) r.MsResponsePrc95;
-            MsResponse.Prc99 = (ushort) r.MsResponsePrc99;
+            MsResponse.Prc01 = (ushort)r.MsResponsePrc01;
+            MsResponse.Prc25 = (ushort)r.MsResponsePrc25;
+            MsResponse.Prc50 = (ushort)r.MsResponsePrc50;
+            MsResponse.Prc75 = (ushort)r.MsResponsePrc75;
+            MsResponse.Prc95 = (ushort)r.MsResponsePrc95;
+            MsResponse.Prc99 = (ushort)r.MsResponsePrc99;
         }
 
         public override string ToString() => $"{StartUtc} : {TotalCount:#,0} samples, {TimeoutCount + ErrorCount:#,0} timeouts/errors, {MsResponse}";

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Topshelf;
 using Topshelf.HostConfigurators;
@@ -79,11 +79,11 @@ public static class TopshelfExtensions
         if (!_args.Any())
             return;
 
-        using var scmHandle = OpenSCManager(null, null, (int) SCM_ACCESS.SC_MANAGER_ALL_ACCESS);
+        using var scmHandle = OpenSCManager(null, null, (int)SCM_ACCESS.SC_MANAGER_ALL_ACCESS);
         if (scmHandle.IsInvalid)
             throw new Win32Exception();
 
-        using var serviceHandle = OpenService(scmHandle, s.ServiceName, (int) SCM_ACCESS.SC_MANAGER_ALL_ACCESS);
+        using var serviceHandle = OpenService(scmHandle, s.ServiceName, (int)SCM_ACCESS.SC_MANAGER_ALL_ACCESS);
         if (serviceHandle.IsInvalid)
             throw new Win32Exception();
 
@@ -92,7 +92,7 @@ public static class TopshelfExtensions
         if (sizeNeeded == 0)
             throw new Win32Exception();
 
-        var hGlobal = Marshal.AllocHGlobal((int) sizeNeeded);
+        var hGlobal = Marshal.AllocHGlobal((int)sizeNeeded);
         try
         {
             // retrieve existing config

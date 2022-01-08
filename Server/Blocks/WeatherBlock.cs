@@ -36,7 +36,7 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
                 _temperatures = conn.Query<TbWeatherTemperature>(
                         $@"SELECT * FROM {nameof(TbWeatherTemperature)} WHERE {nameof(TbWeatherTemperature.Timestamp)} > @limit",
                         new { limit = DateTime.UtcNow.AddDays(-8).ToDbDateTime() }
-                    ).ToDictionary(r => r.Timestamp.FromDbDateTime(), r => (decimal) r.Temperature);
+                    ).ToDictionary(r => r.Timestamp.FromDbDateTime(), r => (decimal)r.Temperature);
             }
 
         base.Start();
@@ -48,7 +48,7 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
     {
         var result = _httpClient.GetAsync("https://www.cl.cam.ac.uk/research/dtg/weather/current-obs.txt").GetAwaiter().GetResult();
         if (!result.IsSuccessStatusCode)
-            throw new TellUserException($"Weather server is down ({(int) result.StatusCode})");
+            throw new TellUserException($"Weather server is down ({(int)result.StatusCode})");
         var content = result.Content.ReadAsStringAsync().GetAwaiter().GetResult();
         var datetime = Regex.Match(content, @"at (?<time>\d+:\d\d (AM|PM)) on (?<date>\d+ \w\w\w \d\d):");
         if (!datetime.Success)
@@ -61,7 +61,7 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
 
         if (_db.Enabled)
             using (var conn = _db.OpenConnection())
-                conn.Insert(new TbWeatherTemperature { Timestamp = DateTime.UtcNow.ToDbDateTime(), Temperature = (double) curTemp });
+                conn.Insert(new TbWeatherTemperature { Timestamp = DateTime.UtcNow.ToDbDateTime(), Temperature = (double)curTemp });
 
         var dto = new WeatherBlockDto { ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromMinutes(30) };
 
@@ -126,14 +126,14 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
                 prevTempsAtSameTime.Add(match);
             center = center.AddDays(-1);
         }
-        int blend(int c1, int c2, double pos) => (int) Math.Round(c1 * pos + c2 * (1 - pos));
+        int blend(int c1, int c2, double pos) => (int)Math.Round(c1 * pos + c2 * (1 - pos));
         ValueTuple<int, int, int> blend3(ValueTuple<int, int, int> c1, ValueTuple<int, int, int> c2, double pos) => (blend(c1.Item1, c2.Item1, pos), blend(c1.Item2, c2.Item2, pos), blend(c1.Item3, c2.Item3, pos));
         var color = (0xDF, 0x72, 0xFF); // purple = can't color by deviation
         if (prevTempsAtSameTime.Count >= 3)
         {
-            var mean = (double) prevTempsAtSameTime.Average(pt => pt.temp);
-            var stdev = Math.Sqrt(prevTempsAtSameTime.Sum(pt => ((double) pt.temp - mean) * ((double) pt.temp - mean)) / (prevTempsAtSameTime.Count - 1));
-            var cur = (double) temp;
+            var mean = (double)prevTempsAtSameTime.Average(pt => pt.temp);
+            var stdev = Math.Sqrt(prevTempsAtSameTime.Sum(pt => ((double)pt.temp - mean) * ((double)pt.temp - mean)) / (prevTempsAtSameTime.Count - 1));
+            var cur = (double)temp;
             var coldest = (0x2F, 0x9E, 0xFF);
             var warmest = (0xFF, 0x5D, 0x2F);
             if (cur < mean - stdev)

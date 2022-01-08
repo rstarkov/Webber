@@ -28,7 +28,7 @@ static class Util
 
     public static uint ToUnixSeconds(this DateTime time)
     {
-        return (uint) (time - _unixepoch).TotalSeconds;
+        return (uint)(time - _unixepoch).TotalSeconds;
     }
 
     public static DateTime FromUnixSeconds(this uint time)

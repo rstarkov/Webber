@@ -60,7 +60,7 @@ public abstract class BlockServerBase<TDto> : IBlockServer<TDto>
 
     public BlockServerBase(IServiceProvider sp)
     {
-        Logger = (ILogger) sp.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
+        Logger = (ILogger)sp.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
         _hub = sp.GetRequiredService<IHubContext<BlockHub, IBlockHub>>();
         _config = sp.GetRequiredService<AppConfig>();
     }

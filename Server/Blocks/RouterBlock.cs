@@ -173,10 +173,10 @@ class RouterBlockServer : SimpleBlockServerBase<RouterBlockDto>
 
         var dto = new RouterBlockDto { ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromSeconds(10) };
 
-        dto.RxLast = (int) Math.Round(rxRate);
-        dto.TxLast = (int) Math.Round(txRate);
-        dto.RxAverageRecent = (int) Math.Round(avgRx);
-        dto.TxAverageRecent = (int) Math.Round(avgTx);
+        dto.RxLast = (int)Math.Round(rxRate);
+        dto.TxLast = (int)Math.Round(txRate);
+        dto.RxAverageRecent = (int)Math.Round(avgRx);
+        dto.TxAverageRecent = (int)Math.Round(avgTx);
         dto.HistoryRecent = recentHistory.Select(h => new RouterBlockDto.HistoryPoint { TxRate = h.txRate, RxRate = h.rxRate }).ToArray();
         dto.HistoryHourly = Enumerable.Range(1, 24).Select(h =>
         {

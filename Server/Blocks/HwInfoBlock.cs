@@ -16,7 +16,7 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
     private Queue<TimedMetric> _historyNetworkPing = new();
 
     static readonly int METRIC_REFRESH_INTERVAL = 500;
-    static readonly int METRIC_CAPACITY = (int) Math.Ceiling((1000d / METRIC_REFRESH_INTERVAL) * 40d);
+    static readonly int METRIC_CAPACITY = (int)Math.Ceiling((1000d / METRIC_REFRESH_INTERVAL) * 40d);
 
     private readonly PingBlockServer _pingProvider;
     private readonly RouterBlockServer _routerProvider;
@@ -56,19 +56,19 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         var cpuSensors = hardware.First(s => s.HardwareType == HardwareType.Cpu).Sensors;
         var cores = cpuSensors
             .Where(s => s.SensorType == SensorType.Load && s.Name.Contains("Core"))
-            .Select(s => (double) (s.Value ?? 0d))
+            .Select(s => (double)(s.Value ?? 0d))
             .ToArray();
         var cpuHeat = _historyCpuCoreHeatmap.EnqueueWithMaxCapacity(cores, METRIC_CAPACITY);
 
         var cputotal = cpuSensors
             .Where(s => s.SensorType == SensorType.Load && s.Name.Contains("Total"))
-            .Select(s => (double) (s.Value ?? 0d))
+            .Select(s => (double)(s.Value ?? 0d))
             .First();
         var cpuLoad = _historyCpuTotalLoad.EnqueueWithMaxCapacity(new TimedMetric(time, cputotal), METRIC_CAPACITY);
 
         var cpupackagetemp = cpuSensors
             .Where(s => s.SensorType == SensorType.Temperature && s.Name.Contains("Package"))
-            .Select(s => (double) (s.Value ?? 0d))
+            .Select(s => (double)(s.Value ?? 0d))
             .First();
         var cpuTemp = _historyCpuPackageTemp.EnqueueWithMaxCapacity(new TimedMetric(time, cpupackagetemp), METRIC_CAPACITY);
 
@@ -76,13 +76,13 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         var gpuSensors = hardware.First(s => s.HardwareType == HardwareType.GpuNvidia).Sensors;
         var gputotal = gpuSensors
             .Where(s => s.SensorType == SensorType.Load)
-            .Select(s => (double) (s.Value ?? 0d))
+            .Select(s => (double)(s.Value ?? 0d))
             .Max();
         var gpuLoad = _historyGpuLoad.EnqueueWithMaxCapacity(new TimedMetric(time, gputotal), METRIC_CAPACITY);
 
         var gpupackagetemp = gpuSensors
             .Where(s => s.SensorType == SensorType.Temperature)
-            .Select(s => (double) (s.Value ?? 0d))
+            .Select(s => (double)(s.Value ?? 0d))
             .Max();
         var gpuTemp = _historyGpuTemp.EnqueueWithMaxCapacity(new TimedMetric(time, gpupackagetemp), METRIC_CAPACITY);
 
@@ -112,13 +112,13 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
             .Where(h => h.HardwareType == HardwareType.Memory)
             .Single().Sensors
             .Where(s => s.SensorType == SensorType.Load)
-            .Select(s => (double) (s.Value ?? 0d))
+            .Select(s => (double)(s.Value ?? 0d))
             .First();
 
         double GetLastAverage<T>(T[] queue, Func<T, double> selector)
         {
             if (queue.Length == 0) return 0d;
-            int numberToAvg = Math.Min(queue.Length - 1, (int) Math.Ceiling(4000d / METRIC_REFRESH_INTERVAL));
+            int numberToAvg = Math.Min(queue.Length - 1, (int)Math.Ceiling(4000d / METRIC_REFRESH_INTERVAL));
             var slice = queue[^numberToAvg..];
             var avg = slice.Select(selector).Sum() / numberToAvg;
             return avg;

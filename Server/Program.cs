@@ -11,7 +11,7 @@ if (args.Length == 2 && args[0] == "--debug")
 
 string configPath = null;
 
-return (int) HostFactory.Run(host =>
+return (int)HostFactory.Run(host =>
 {
     host.AddPersistedCommandLineArgument("config", c => configPath = c);
     host.Service<WebberService>((d) => new WebberService(configPath));

@@ -129,7 +129,7 @@ static class DatabaseExtensions
 {
     private static DateTime _unixepoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-    public static long ToDbDateTime(this DateTime dt) => (long) (dt.ToUniversalTime() - _unixepoch).TotalMilliseconds;
+    public static long ToDbDateTime(this DateTime dt) => (long)(dt.ToUniversalTime() - _unixepoch).TotalMilliseconds;
 
     public static DateTime FromDbDateTime(this long dt) => _unixepoch.AddMilliseconds(dt);
 }
