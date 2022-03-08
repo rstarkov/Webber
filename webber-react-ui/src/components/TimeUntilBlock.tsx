@@ -1,12 +1,10 @@
 import * as _ from 'lodash';
 import * as React from 'react';
 import { withSubscription, BaseDto } from './util';
-import styled from "styled-components";
 import { Textfit } from 'react-textfit';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCalendarAlt, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment';
-import pad from "pad-left";
 
 moment.locale('en', {
     relativeTime: {
@@ -46,6 +44,21 @@ function getTimeString(e: CalendarEvent) {
     let opacity = 0.6;
     if (e.hasStarted) opacity = 0.4;
     if (e.isNextUp) opacity = 1;
+
+    const wrapLen = 50;
+    let displayText = momentStr + " - " + e.displayName;
+
+    if (displayText.length > wrapLen) {
+        var breakpt = displayText.lastIndexOf(" ", wrapLen);
+        var str1 = displayText.substring(0, breakpt);
+        var str2 = displayText.substring(breakpt);
+        if (str2.length > str1.length) {
+            str2 = str2.substring(0, str1.length - 3) + "...";
+        }
+        return (
+            <div style={{ opacity, lineHeight: "30px" }}>{str1}<br />{str2}</div>
+        );
+    }
 
     return (
         <span style={{ opacity }}>{momentStr} - {e.displayName}</span>
