@@ -21,6 +21,7 @@
     private RenderFragment strTimestamp(DateTime start)
     {
         var left = start - DateTime.UtcNow;
+        start = start.ToLocalTime();
         if (left.TotalMinutes < 60)
             return @<span><span class=timeMins>@($"{start:HH:mm}")</span><span class=leftMins>@($"{Math.Floor(left.TotalMinutes):0}min")</span></span>;
         if (start < DateTime.Today.AddDays(1))
