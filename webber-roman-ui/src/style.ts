@@ -2,11 +2,8 @@ import { createGlobalStyle } from 'styled-components'
 
 export const GlobalStyle = createGlobalStyle`
     * {
-        color: white;
         padding: 0;
         margin: 0;
-        font-size: 2.8vw;
-        font-family: 'Open Sans';
         white-space: nowrap;
         box-sizing: border-box;
     }
@@ -19,9 +16,10 @@ export const GlobalStyle = createGlobalStyle`
         overflow: hidden;
     }
 
-    div#app, div#page {
-        width: 100vw;
-        height: 100vh;
+    html, body, button {
+        color: white;
+        font-size: 2.8vw;
+        font-family: 'Open Sans';
     }
 
     button {
@@ -34,4 +32,10 @@ export const GlobalStyle = createGlobalStyle`
         background: #433881;
         border-color: #725dee;
     }
+
+    div#app, div#page {
+        width: 100vw;
+        height: 100vh;
+    }
+
 `;
