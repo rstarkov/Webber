@@ -84,6 +84,7 @@ class WebberService : ServiceControl
         app.UseExceptionHandler("/Error");
         if (config.UseBlazor)
             app.UseBlazorFrameworkFiles();
+        app.UseCors(b => { b.WithOrigins("http://localhost:3000").AllowAnyHeader().WithMethods("GET", "POST").AllowCredentials(); });
         app.UseStaticFiles();
         app.UseRouting();
         app.MapRazorPages();
