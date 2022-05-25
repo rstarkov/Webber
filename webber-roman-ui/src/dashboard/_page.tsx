@@ -4,6 +4,8 @@ import { usePingBlock } from '../blocks/PingBlock';
 import { useWeatherBlock } from '../blocks/WeatherBlock';
 import { RemilkPanel } from "./RemilkPanel";
 import { TimeUntilPanel } from "./TimeUntilPanel";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
 
 function PingText(): JSX.Element {
     const ping = usePingBlock();
@@ -56,12 +58,35 @@ const BigTemperature = styled.div`
     font-weight: bold;
 `;
 
+const Degrees = styled.span`
+    font-size: 70%;
+    position: relative;
+    top: -2.0vw;
+    margin-left: 1.0vw;
+`;
+
+const SunTimesDiv = styled.div`
+    display: grid;
+    justify-items: right;
+    opacity: 0.7;
+`;
+
+function SunTimes(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+    const weather = useWeatherBlock();
+    return <SunTimesDiv {...props}>
+        <div><FontAwesomeIcon icon={faSun} color='#ff0' /> {weather.dto?.sunriseTime}</div>
+        <div><FontAwesomeIcon icon={faMoon} color='#4479ff' /> {weather.dto?.sunsetTime}</div>
+        <div style={{fontSize: '80%', color: '#999'}}>{weather.dto?.sunsetDeltaTime}</div>
+    </SunTimesDiv>
+}
+
 export function DashboardPage(): JSX.Element {
     const weather = useWeatherBlock();
 
     return (
         <>
-            <BigTemperature style={{ position: 'absolute', left: '0vw', top: '-1vw', color: weather.dto?.curTemperatureColor }}>{weather.dto?.curTemperature.toFixed(0)} °C</BigTemperature>
+            <BigTemperature style={{ position: 'absolute', left: '0vw', top: '-1vw', color: weather.dto?.curTemperatureColor }}>{weather.dto?.curTemperature.toFixed(0)}<Degrees>°C</Degrees></BigTemperature>
+            <SunTimes style={{ position: 'absolute', left: '25vw', top: '1vw' }} />
             <MainClock style={{ position: 'absolute', left: '41vw', top: '-1vw' }} onClick={() => document.body.requestFullscreen()} />
             <ZonesClock style={{ position: 'absolute', left: '39vw', top: '12vw', width: '30vw' }} />
             {/* <PingText />
