@@ -24,7 +24,8 @@ public record RemilkBlockDto : BaseDto
 public record RemilkTask
 {
     public string Id { get; set; }
-    public DateTime? DueUtc { get; set; }
+    public DateTime DueUtc { get; set; }
+    public bool HasDueTime { get; set; }
     public int Priority { get; set; }
     public string Description { get; set; }
 
@@ -35,8 +36,11 @@ public record RemilkTask
         var oldest = series.Elements("task").OrderBy(e => e.Attribute("due").Value).First();
         var priority = oldest.Attribute("priority").Value;
         Priority = priority switch { "1" => 1, "2" => 2, "3" => 3, "N" => 4, _ => throw new Exception("unknown priority") };
+        HasDueTime = oldest.Attribute("has_due_time").Value == "1";
         if (oldest.Attribute("due").Value != "")
             DueUtc = DateTime.Parse(oldest.Attribute("due").Value).ToUniversalTime();
+        else
+            DueUtc = DateTime.Parse(oldest.Attribute("added").Value).ToUniversalTime();
     }
 }
 

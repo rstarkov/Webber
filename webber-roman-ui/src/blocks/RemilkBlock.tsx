@@ -1,23 +1,26 @@
 import { DateTime } from "luxon";
 import { Config } from "../config";
 import { makeContext } from "../util/makeContext";
+import { endOfLocalDay } from "../util/util";
 import { BaseDto, useBlock } from "./_BlockBase";
 
 export interface RemilkBlockDto extends BaseDto {
     tasks: RemilkTask[];
 }
 
-interface RemilkTask {
+export interface RemilkTask {
     id: string;
-    dueUtc: DateTime | null;
+    dueUtc: DateTime;
+    hasDueTime: boolean;
     priority: number;
     description: string;
 }
 
 function dtoPatcher(dto: RemilkBlockDto) {
     for (let i = 0; i < dto.tasks.length; i++) {
-        if (dto.tasks[i].dueUtc)
-            dto.tasks[i].dueUtc = DateTime.fromISO(dto.tasks[i].dueUtc as any).setZone("Europe/London");
+        dto.tasks[i].dueUtc = DateTime.fromISO(dto.tasks[i].dueUtc as any).setZone("Europe/London");
+        if (!dto.tasks[i].hasDueTime)
+            dto.tasks[i].dueUtc = endOfLocalDay(dto.tasks[i].dueUtc, false);
     }
 }
 
