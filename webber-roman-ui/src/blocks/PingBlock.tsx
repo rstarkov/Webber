@@ -1,3 +1,4 @@
+import { Config } from "../config";
 import { makeContext } from "../util/makeContext";
 import { BaseDto, useBlock } from "./_BlockBase";
 
@@ -10,12 +11,8 @@ function dtoPatcher(dto: PingBlockDto) {
 }
 
 const ctx = makeContext(() => {
-    const [dto, connection] = useBlock<PingBlockDto>("http://localhost/hub/PingBlock", dtoPatcher);
-
-    return {
-        dto,
-        connection,
-    };
+    const block = useBlock<PingBlockDto>(`${Config.ServerUrl}/hub/PingBlock`, dtoPatcher);
+    return block;
 });
 
 export const usePingBlock = ctx.useFunc;
