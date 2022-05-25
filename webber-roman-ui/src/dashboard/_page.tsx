@@ -1,4 +1,5 @@
 import { DateTime } from "luxon";
+import styled from "styled-components";
 import { usePingBlock } from '../blocks/PingBlock';
 import { useWeatherBlock } from '../blocks/WeatherBlock';
 import { RemilkPanel } from "./RemilkPanel";
@@ -19,25 +20,53 @@ function PingHistory(): JSX.Element {
     );
 }
 
-export function ClockPanel(): JSX.Element {
-    return <div>
-        <p>{DateTime.local().toFormat('HH:mm')}</p>
-        <p>UTC: {DateTime.utc().toFormat('HH:mm')}</p>
-        <p>Ukr: {DateTime.utc().setZone('Europe/Kiev').toFormat('HH:mm')}</p>
-        <p>Can: {DateTime.utc().setZone('Canada/Mountain').toFormat('HH:mm')}</p>
-    </div>;
+const ZonesClockDiv = styled.div`
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: 1fr 1fr;
+    justify-items: center;
+`;
+const ZoneName = styled.div`
+    color: #777;
+`;
+const ZoneTime = styled.div`
+`;
+
+function ZonesClock(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+    return <ZonesClockDiv {...props}>
+        <ZoneName>UTC</ZoneName><ZoneTime>{DateTime.utc().toFormat('HH:mm')}</ZoneTime>
+        <ZoneName>Ukr</ZoneName><ZoneTime>{DateTime.utc().setZone('Europe/Kiev').toFormat('HH:mm')}</ZoneTime>
+        <ZoneName>Can</ZoneName><ZoneTime>{DateTime.utc().setZone('Canada/Mountain').toFormat('HH:mm')}</ZoneTime>
+    </ZonesClockDiv>;
 }
+
+const MainClockDiv = styled.div`
+    font-size: 350%;
+    font-weight: bold;
+`;
+
+function MainClock(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+    return <MainClockDiv {...props}>
+        {DateTime.local().toFormat('HH:mm')}
+    </MainClockDiv>;
+}
+
+const BigTemperature = styled.div`
+    font-size: 350%;
+    font-weight: bold;
+`;
 
 export function DashboardPage(): JSX.Element {
     const weather = useWeatherBlock();
 
     return (
         <>
-            <b>{weather.dto?.curTemperature.toFixed(0)} °C</b>
-            <ClockPanel />
-            <PingText />
-            <button onClick={() => document.body.requestFullscreen()}>FS</button>
-            <TimeUntilPanel style={{ position: 'absolute', left: '10vw', top: '50vh', width: '40vw' }} />
+            <BigTemperature style={{ position: 'absolute', left: '0vw', top: '-1vw', color: weather.dto?.curTemperatureColor }}>{weather.dto?.curTemperature.toFixed(0)} °C</BigTemperature>
+            <MainClock style={{ position: 'absolute', left: '41vw', top: '-1vw' }} onClick={() => document.body.requestFullscreen()} />
+            <ZonesClock style={{ position: 'absolute', left: '39vw', top: '12vw', width: '30vw' }} />
+            {/* <PingText />
+            <button >FS</button> */}
+            <TimeUntilPanel style={{ position: 'absolute', left: '0vw', top: '50vh', width: '30vw', bottom: '0vh', overflow: 'hidden' }} />
             <RemilkPanel style={{ position: 'absolute', right: 0, top: 0, width: '30vw', borderLeft: '0.5vw solid #888', paddingLeft: '2vw' }} />
         </>
     )
