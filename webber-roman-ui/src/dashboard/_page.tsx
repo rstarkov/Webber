@@ -89,7 +89,7 @@ export function DashboardPage(): JSX.Element {
             <SunTimes style={{ position: 'absolute', left: '25vw', top: '0vw' }} />
             <MainClock style={{ position: 'absolute', left: '41vw', top: '-3vw' }} onClick={() => document.body.requestFullscreen()} />
             <ZonesClock style={{ position: 'absolute', left: '39vw', top: '10vw', width: '30vw' }} />
-            <TimeUntilPanel style={{ position: 'absolute', left: '0vw', top: '50vh', width: '30vw', bottom: '0vh', overflow: 'hidden' }} />
+            <TimeUntilPanel style={{ position: 'absolute', left: '0vw', top: '50vh', width: '40vw', bottom: '0vh', overflow: 'hidden' }} />
             <RemilkPanel style={{ position: 'absolute', right: 0, top: 0, width: '28vw' }} />
         </>
     )

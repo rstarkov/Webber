@@ -11,6 +11,7 @@ export const BlockPanelStatusDot = styled.div`
     top: 0.8vw;
     background-color: yellow;
     box-shadow: 0 0 0.25vw 0.25vw #000;
+    z-index: 999;
 `;
 
 export function BlockPanelContainer({ children, ...rest }: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
