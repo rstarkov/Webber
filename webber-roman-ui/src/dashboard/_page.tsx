@@ -76,7 +76,7 @@ function SunTimes(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     return <SunTimesDiv {...props}>
         <div><FontAwesomeIcon icon={faSun} color='#ff0' /> {weather.dto?.sunriseTime}</div>
         <div><FontAwesomeIcon icon={faMoon} color='#4479ff' /> {weather.dto?.sunsetTime}</div>
-        <div style={{fontSize: '80%', color: '#999'}}>{weather.dto?.sunsetDeltaTime}</div>
+        <div style={{ fontSize: '80%', color: '#999' }}>{weather.dto?.sunsetDeltaTime}</div>
     </SunTimesDiv>
 }
 
@@ -85,14 +85,12 @@ export function DashboardPage(): JSX.Element {
 
     return (
         <>
-            <BigTemperature style={{ position: 'absolute', left: '0vw', top: '-1vw', color: weather.dto?.curTemperatureColor }}>{weather.dto?.curTemperature.toFixed(0)}<Degrees>°C</Degrees></BigTemperature>
-            <SunTimes style={{ position: 'absolute', left: '25vw', top: '1vw' }} />
-            <MainClock style={{ position: 'absolute', left: '41vw', top: '-1vw' }} onClick={() => document.body.requestFullscreen()} />
-            <ZonesClock style={{ position: 'absolute', left: '39vw', top: '12vw', width: '30vw' }} />
-            {/* <PingText />
-            <button >FS</button> */}
+            <BigTemperature style={{ position: 'absolute', left: '0vw', top: '-3vw', color: weather.dto?.curTemperatureColor }}>{weather.dto?.curTemperature.toFixed(0)}<Degrees>°C</Degrees></BigTemperature>
+            <SunTimes style={{ position: 'absolute', left: '25vw', top: '0vw' }} />
+            <MainClock style={{ position: 'absolute', left: '41vw', top: '-3vw' }} onClick={() => document.body.requestFullscreen()} />
+            <ZonesClock style={{ position: 'absolute', left: '39vw', top: '10vw', width: '30vw' }} />
             <TimeUntilPanel style={{ position: 'absolute', left: '0vw', top: '50vh', width: '30vw', bottom: '0vh', overflow: 'hidden' }} />
-            <RemilkPanel style={{ position: 'absolute', right: 0, top: 0, width: '30vw', borderLeft: '0.5vw solid #888', paddingLeft: '2vw' }} />
+            <RemilkPanel style={{ position: 'absolute', right: 0, top: 0, width: '28vw' }} />
         </>
     )
 }
