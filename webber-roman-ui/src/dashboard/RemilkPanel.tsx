@@ -72,7 +72,7 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
     const tasksToday = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffStartOfToday && t.dueUtc <= cutoffEndOfToday).sort(byPriority);
     const tasksTomorrow = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffEndOfToday && t.dueUtc <= cutoffTomorrow).sort(byPriority);
     const tasksSoon = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffTomorrow && t.dueUtc <= cutoffSoon).sort(byDueDate);
-    const tasksEasy = tasks.filter(t => t.tags.includes('easy') && t.dueUtc > cutoffStartOfToday).sort(byPriority);
+    const tasksEasy = tasks.filter(t => t.tags.includes('easy') && t.dueUtc <= cutoffEndOfToday).sort(byPriority);
 
     return <BlockPanelContainer state={remilk} {...rest}>
         {tasksEasy && tasksEasy.length > 0 && <TaskSectionDiv style={{ color: '#73ff73' }}>
