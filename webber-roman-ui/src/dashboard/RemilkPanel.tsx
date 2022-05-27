@@ -37,6 +37,12 @@ function Task(p: { task: RemilkTask }): JSX.Element {
 }
 
 const TaskSectionDiv = styled.div`
+    padding-bottom: 0.07rem;
+    padding-top: 0.05rem;
+    border-bottom: 0.15rem solid #666;
+    &:last-child {
+        border-bottom: none;
+    }
 `;
 
 export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
@@ -57,34 +63,24 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
     const tasksSoon = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffTomorrow && t.dueUtc <= cutoffSoon).sort(byDueDate);
     const tasksEasy = tasks.filter(t => t.tags.includes('easy')).sort(byPriority);
 
-    const showEasy = tasksEasy && tasksEasy.length > 0;
-    const showNeglected = tasksNeglected && tasksNeglected.length > 0;
-    const showOverdue = tasksOverdue && tasksOverdue.length > 0;
-
     return <BlockPanelContainer state={remilk} {...rest}>
-        {showEasy && <TaskSectionDiv style={{ color: '#73ff73' }}>
-            <h3>Easy</h3>
+        {tasksEasy && tasksEasy.length > 0 && <TaskSectionDiv style={{ color: '#73ff73' }}>
             {tasksEasy.map(t => <Task key={t.id} task={t} />)}
         </TaskSectionDiv>}
-        {showNeglected && <TaskSectionDiv>
-            <h3>Neglected</h3>
+        {tasksNeglected && tasksNeglected.length > 0 && <TaskSectionDiv>
             {tasksNeglected.map(t => <Task key={t.id} task={t} />)}
         </TaskSectionDiv>}
-        {showOverdue && <TaskSectionDiv>
-            <h3>Overdue</h3>
+        {tasksOverdue && tasksOverdue.length > 0 && <TaskSectionDiv>
             {tasksOverdue.map(t => <Task key={t.id} task={t} />)}
         </TaskSectionDiv>}
         {tasksToday && tasksToday.length > 0 && <TaskSectionDiv>
-            {(showEasy || showNeglected || showOverdue) && <h3>Today</h3>}
             {tasksToday.map(t => <Task key={t.id} task={t} />)}
         </TaskSectionDiv>}
         <div style={{ opacity: 0.3 }}>
             {tasksTomorrow && tasksTomorrow.length > 0 && <TaskSectionDiv>
-                <h3>Tomorrow</h3>
                 {tasksTomorrow.map(t => <Task key={t.id} task={t} />)}
             </TaskSectionDiv>}
             {tasksSoon && tasksSoon.length > 0 && <TaskSectionDiv>
-                <h3>Soon</h3>
                 {tasksSoon.map(t => <Task key={t.id} task={t} />)}
             </TaskSectionDiv>}
         </div>
