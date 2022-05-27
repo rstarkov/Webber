@@ -55,7 +55,7 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
     const showNeglected = tasksNeglected && tasksNeglected.length > 0;
     const showOverdue = tasksOverdue && tasksOverdue.length > 0;
 
-    return <BlockPanelContainer {...rest}>
+    return <BlockPanelContainer state={remilk} {...rest}>
         {showNeglected && <>
             <h3>Neglected</h3>
             {tasksNeglected.map(t => <Task key={t.id} task={t} />)}

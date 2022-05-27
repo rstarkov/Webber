@@ -6,6 +6,7 @@ import { RemilkPanel } from "./RemilkPanel";
 import { TimeUntilPanel } from "./TimeUntilPanel";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
+import { BlockPanelContainer } from "./Container";
 
 function PingText(): JSX.Element {
     const ping = usePingBlock();
@@ -82,6 +83,7 @@ function SunTimes(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
 
 export function DashboardPage(): JSX.Element {
     const weather = useWeatherBlock();
+    const ping = usePingBlock();
 
     return (
         <>
@@ -91,6 +93,7 @@ export function DashboardPage(): JSX.Element {
             <ZonesClock style={{ position: 'absolute', left: '39vw', top: '10vw', width: '30vw' }} />
             <TimeUntilPanel style={{ position: 'absolute', left: '0vw', top: '50vh', width: '40vw', bottom: '0vh', overflow: 'hidden' }} />
             <RemilkPanel style={{ position: 'absolute', right: 0, top: 0, width: '28vw' }} />
+            <BlockPanelContainer state={ping} style={{position:'absolute', left: 0, top: '20vw', width: '7vw'}}>{ping.dto?.last}</BlockPanelContainer>
         </>
     )
 }
