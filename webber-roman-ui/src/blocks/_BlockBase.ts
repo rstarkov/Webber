@@ -29,7 +29,6 @@ export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto)
     const [dto, setDto] = useState<TDto | null>(null);
     const [status, setStatus] = useState<BlockConnectionStatus>('disconnected');
     const [updates, setUpdates] = useState(0);
-    console.log([url, status]);
 
     useEffect(() => {
         let exited = false;
@@ -38,7 +37,7 @@ export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto)
         dbg('START ' + url);
         const conn = new HubConnectionBuilder()
             .withUrl(url)
-            .withAutomaticReconnect({ nextRetryDelayInMilliseconds: (rc) => rc.previousRetryCount <= 2 ? 2_000 : 10_000 })
+            .withAutomaticReconnect({ nextRetryDelayInMilliseconds: () => null }) // auto reconnects mean we lose the distinction between 'connecting' and 'disconnected'; we need manual reconnect anyway because the initial connection failure is not subject to auto retries // (rc) => rc.previousRetryCount <= 2 ? 2_000 : 10_000 })
             .build();
         conn.on('Update', (dto: TDto) => {
             basePatcher(dto);
@@ -60,8 +59,8 @@ export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto)
                 if (exited) conn.stop();
             } catch {
                 dbg('catch');
-                conn.stop();
                 setStatus('disconnected');
+                conn.stop();
                 await new Promise(r => setTimeout(r, 10_000));
                 if (!exited)
                     connect();
