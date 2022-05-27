@@ -28,11 +28,13 @@ public record RemilkTask
     public bool HasDueTime { get; set; }
     public int Priority { get; set; }
     public string Description { get; set; }
+    public string[] Tags { get; set; }
 
     public RemilkTask(XElement series)
     {
         Id = series.Attribute("id").Value;
         Description = series.Attribute("name").Value;
+        Tags = series.Element("tags").Elements("tag").Select(e => e.Value).ToArray();
         var oldest = series.Elements("task").OrderBy(e => e.Attribute("due").Value).First();
         var priority = oldest.Attribute("priority").Value;
         Priority = priority switch { "1" => 1, "2" => 2, "3" => 3, "N" => 4, _ => throw new Exception("unknown priority") };

@@ -14,6 +14,7 @@ export interface RemilkTask {
     hasDueTime: boolean;
     priority: number;
     description: string;
+    tags: string[];
 }
 
 function dtoPatcher(dto: RemilkBlockDto) {

@@ -36,6 +36,9 @@ function Task(p: { task: RemilkTask }): JSX.Element {
     return <TaskDiv style={{ borderLeftColor: PrioColors[p.task.priority] }}>{p.task.description}</TaskDiv>;
 }
 
+const TaskSectionDiv = styled.div`
+`;
+
 export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     const remilk = useRemilkBlock();
     const tasks = remilk.dto?.tasks ?? [];
@@ -46,37 +49,44 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
     const cutoffTomorrow = cutoffStartOfToday.plus({ day: 2 });
     const cutoffSoon = cutoffStartOfToday.plus({ day: 5 });
 
-    const tasksNeglected = tasks.filter(t => t.dueUtc <= cutoffNeglected).sort(byPriority);
-    const tasksOverdue = tasks.filter(t => t.dueUtc > cutoffNeglected && t.dueUtc <= cutoffStartOfToday).sort(byPriority);
-    const tasksToday = tasks.filter(t => t.dueUtc > cutoffStartOfToday && t.dueUtc <= cutoffEndOfToday).sort(byPriority);
-    const tasksTomorrow = tasks.filter(t => t.dueUtc > cutoffEndOfToday && t.dueUtc <= cutoffTomorrow).sort(byPriority);
-    const tasksSoon = tasks.filter(t => t.dueUtc > cutoffTomorrow && t.dueUtc <= cutoffSoon).sort(byDueDate);
+    function tagFilter(t: RemilkTask) { return !t.tags.includes('easy'); }
+    const tasksNeglected = tasks.filter(t => tagFilter(t) && t.dueUtc <= cutoffNeglected).sort(byPriority);
+    const tasksOverdue = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffNeglected && t.dueUtc <= cutoffStartOfToday).sort(byPriority);
+    const tasksToday = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffStartOfToday && t.dueUtc <= cutoffEndOfToday).sort(byPriority);
+    const tasksTomorrow = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffEndOfToday && t.dueUtc <= cutoffTomorrow).sort(byPriority);
+    const tasksSoon = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffTomorrow && t.dueUtc <= cutoffSoon).sort(byDueDate);
+    const tasksEasy = tasks.filter(t => t.tags.includes('easy')).sort(byPriority);
 
+    const showEasy = tasksEasy && tasksEasy.length > 0;
     const showNeglected = tasksNeglected && tasksNeglected.length > 0;
     const showOverdue = tasksOverdue && tasksOverdue.length > 0;
 
     return <BlockPanelContainer state={remilk} {...rest}>
-        {showNeglected && <>
+        {showEasy && <TaskSectionDiv style={{ color: '#73ff73' }}>
+            <h3>Easy</h3>
+            {tasksEasy.map(t => <Task key={t.id} task={t} />)}
+        </TaskSectionDiv>}
+        {showNeglected && <TaskSectionDiv>
             <h3>Neglected</h3>
             {tasksNeglected.map(t => <Task key={t.id} task={t} />)}
-        </>}
-        {showOverdue && <>
+        </TaskSectionDiv>}
+        {showOverdue && <TaskSectionDiv>
             <h3>Overdue</h3>
             {tasksOverdue.map(t => <Task key={t.id} task={t} />)}
-        </>}
-        {tasksToday && tasksToday.length > 0 && <>
-            {(showNeglected || showOverdue) && <h3>Today</h3>}
+        </TaskSectionDiv>}
+        {tasksToday && tasksToday.length > 0 && <TaskSectionDiv>
+            {(showEasy || showNeglected || showOverdue) && <h3>Today</h3>}
             {tasksToday.map(t => <Task key={t.id} task={t} />)}
-        </>}
+        </TaskSectionDiv>}
         <div style={{ opacity: 0.3 }}>
-            {tasksTomorrow && tasksTomorrow.length > 0 && <>
+            {tasksTomorrow && tasksTomorrow.length > 0 && <TaskSectionDiv>
                 <h3>Tomorrow</h3>
                 {tasksTomorrow.map(t => <Task key={t.id} task={t} />)}
-            </>}
-            {tasksSoon && tasksSoon.length > 0 && <>
+            </TaskSectionDiv>}
+            {tasksSoon && tasksSoon.length > 0 && <TaskSectionDiv>
                 <h3>Soon</h3>
                 {tasksSoon.map(t => <Task key={t.id} task={t} />)}
-            </>}
+            </TaskSectionDiv>}
         </div>
     </BlockPanelContainer >;
 }
