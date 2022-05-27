@@ -34,9 +34,17 @@ const TaskDiv = styled.div`
 const NonTaskDiv = styled(TaskDiv)`
     border-left-color: rgba(0,0,0,0);
 `;
+const DueSpan = styled.span<{ overdue: boolean }>`
+    margin-right: 0.5rem;
+    font-size: 75%;
+    font-weight: bold;
+    color: ${p => p.overdue ? 'red' : '#359AFF'};
+`;
 
 function Task(p: { task: RemilkTask }): JSX.Element {
-    return <TaskDiv style={{ borderLeftColor: PrioColors[p.task.priority] }}>{p.task.description}</TaskDiv>;
+    return <TaskDiv style={{ borderLeftColor: PrioColors[p.task.priority] }}>
+        {p.task.hasDueTime && <DueSpan overdue={p.task.dueUtc < DateTime.utc()}>{p.task.dueUtc.toLocal().toFormat('HH:mm')}</DueSpan>}{p.task.description}
+    </TaskDiv>;
 }
 
 const TaskSectionDiv = styled.div`
