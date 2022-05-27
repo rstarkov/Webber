@@ -31,6 +31,9 @@ const TaskDiv = styled.div`
     margin: 0.3rem 0;
     border-left: 0.2rem solid yellow;
 `;
+const NonTaskDiv = styled(TaskDiv)`
+    border-left-color: rgba(0,0,0,0);
+`;
 
 function Task(p: { task: RemilkTask }): JSX.Element {
     return <TaskDiv style={{ borderLeftColor: PrioColors[p.task.priority] }}>{p.task.description}</TaskDiv>;
@@ -61,28 +64,28 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
     const tasksToday = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffStartOfToday && t.dueUtc <= cutoffEndOfToday).sort(byPriority);
     const tasksTomorrow = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffEndOfToday && t.dueUtc <= cutoffTomorrow).sort(byPriority);
     const tasksSoon = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffTomorrow && t.dueUtc <= cutoffSoon).sort(byDueDate);
-    const tasksEasy = tasks.filter(t => t.tags.includes('easy')).sort(byPriority);
+    const tasksEasy = tasks.filter(t => t.tags.includes('easy') && t.dueUtc > cutoffStartOfToday).sort(byPriority);
 
     return <BlockPanelContainer state={remilk} {...rest}>
         {tasksEasy && tasksEasy.length > 0 && <TaskSectionDiv style={{ color: '#73ff73' }}>
             {tasksEasy.map(t => <Task key={t.id} task={t} />)}
         </TaskSectionDiv>}
-        {tasksNeglected && tasksNeglected.length > 0 && <TaskSectionDiv>
-            {tasksNeglected.map(t => <Task key={t.id} task={t} />)}
+        {tasksNeglected && tasksNeglected.length > 0 && <TaskSectionDiv style={{ color: '#f0f' }}>
+            {tasksNeglected.slice(0, 1).map(t => <Task key={t.id} task={t} />)}
+            {tasksNeglected.length > 1 && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksNeglected.length - 1} more</NonTaskDiv>}
         </TaskSectionDiv>}
-        {tasksOverdue && tasksOverdue.length > 0 && <TaskSectionDiv>
-            {tasksOverdue.map(t => <Task key={t.id} task={t} />)}
+        {tasksOverdue && tasksOverdue.length > 0 && <TaskSectionDiv style={{ color: 'red' }}>
+            {tasksOverdue.slice(0, 2).map(t => <Task key={t.id} task={t} />)}
+            {tasksOverdue.length > 2 && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksOverdue.length - 2} more</NonTaskDiv>}
         </TaskSectionDiv>}
         {tasksToday && tasksToday.length > 0 && <TaskSectionDiv>
             {tasksToday.map(t => <Task key={t.id} task={t} />)}
         </TaskSectionDiv>}
-        <div style={{ opacity: 0.3 }}>
-            {tasksTomorrow && tasksTomorrow.length > 0 && <TaskSectionDiv>
-                {tasksTomorrow.map(t => <Task key={t.id} task={t} />)}
-            </TaskSectionDiv>}
-            {tasksSoon && tasksSoon.length > 0 && <TaskSectionDiv>
-                {tasksSoon.map(t => <Task key={t.id} task={t} />)}
-            </TaskSectionDiv>}
-        </div>
+        {tasksTomorrow && tasksTomorrow.length > 0 && <TaskSectionDiv style={{ opacity: 0.5 }}>
+            {tasksTomorrow.map(t => <Task key={t.id} task={t} />)}
+        </TaskSectionDiv>}
+        {tasksSoon && tasksSoon.length > 0 && <TaskSectionDiv style={{ opacity: 0.25 }}>
+            {tasksSoon.map(t => <Task key={t.id} task={t} />)}
+        </TaskSectionDiv>}
     </BlockPanelContainer >;
 }
