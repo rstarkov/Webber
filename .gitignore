@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# wwwroot contains only the build outputs of webber-react-ui or webber-roman-ui; nothing to commit
+wwwroot
+
 # User-specific files
 launchSettings.json
 *.rsuser

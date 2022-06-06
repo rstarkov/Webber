@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <LangVersion>10</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>Webber</AssemblyName>
@@ -12,17 +12,10 @@
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
     <PackageReference Include="Google.Apis.Calendar.v3" Version="1.55.0.2500" />
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.8.9" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="6.0.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="6.0.0" />
     <PackageReference Include="RT.Util.Core" Version="2.0.1702" />
     <PackageReference Include="SolarCalculator" Version="3.0.6" />
     <PackageReference Include="Topshelf" Version="4.3.0" />
   </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Shared\Webber.Shared.csproj" />
-    <ProjectReference Include="..\Client\Webber.Client.csproj" />
-  </ItemGroup>
-
 
 </Project>

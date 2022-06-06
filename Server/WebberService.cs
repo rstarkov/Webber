@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Topshelf;
 using Webber.Server.Blocks;
 using Webber.Server.Services;
@@ -9,7 +9,7 @@ class AppConfig
 {
     public string DbFilePath { get; init; }
     public string LocalTimezoneName { get; init; }
-    public bool UseBlazor { get; init; } = false;
+    public bool DisableCaching { get; init; }
 }
 
 class WebberService : ServiceControl
@@ -37,8 +37,7 @@ class WebberService : ServiceControl
 
         builder.Logging.AddConsole2(); // disabled by default; enabled/configured in config JSON
         builder.Logging.AddFile(); // disabled by default; enabled/configured in config JSON
-        builder.Services.AddControllersWithViews();
-        builder.Services.AddRazorPages();
+        builder.Services.AddControllers();
         builder.Services.AddSignalR();
 
         var blockServerTypes = Assembly.GetExecutingAssembly().GetTypes().Where(t => !t.IsAbstract && t.IsAssignableTo(typeof(IBlockServer))).ToList();
@@ -76,18 +75,11 @@ class WebberService : ServiceControl
         app = builder.Build();
         app.Logger.LogInformation($"Webber starting");
 
-        if (config.UseBlazor)
-        {
+        if (config.DisableCaching)
             app.UseMiddleware<NoCacheHeadersMiddleware>();
-            //app.UseWebAssemblyDebugging();
-        }
-        app.UseExceptionHandler("/Error");
-        if (config.UseBlazor)
-            app.UseBlazorFrameworkFiles();
         app.UseCors(b => { b.WithOrigins("http://localhost:3000").AllowAnyHeader().WithMethods("GET", "POST").AllowCredentials(); });
         app.UseStaticFiles();
         app.UseRouting();
-        app.MapRazorPages();
         app.MapControllers();
         app.MapFallbackToFile("index.html");
     }
