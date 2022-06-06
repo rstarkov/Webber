@@ -4,6 +4,7 @@ import { BlockConnectionStatus, BlockState } from "../blocks/_BlockBase";
 
 export const BlockPanelContainerDiv = styled.div`
     position: relative;
+    overflow: hidden;
 `;
 export const BlockPanelDot = styled.div`
     position: absolute;
@@ -44,3 +45,9 @@ export function BlockPanelContainer({ state, children, ...rest }: BlockPanelProp
         {children}
     </BlockPanelContainerDiv>;
 }
+
+export const BlockPanelBorderedContainer = styled(BlockPanelContainer)`
+    padding: 1.5vw;
+    border: 0.5vw solid #444;
+    background: #111;
+`;

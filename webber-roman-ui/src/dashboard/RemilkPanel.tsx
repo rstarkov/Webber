@@ -4,6 +4,25 @@ import { RemilkTask, useRemilkBlock } from "../blocks/RemilkBlock";
 import { startOfLocalDay } from "../util/util";
 import { BlockPanelContainer } from "./Container";
 
+const RemilkPanelContainer = styled(BlockPanelContainer)`
+    display: grid;
+    grid-auto-flow: columns;
+    grid-template-rows: 1fr auto;
+`;
+
+const OverflowFaderDiv = styled.div`
+    overflow: hidden;
+    &::after {
+        box-shadow: inset -3vw -3vw 2vw #000;
+        position: absolute;
+        content: "";
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+`;
+
 function TaskToday(p: { task: RemilkTask }): JSX.Element {
     const overdue = p.task.dueUtc < DateTime.utc();
     return <p key={p.task.id}>{overdue && "OVERDUE: "}{p.task.description}</p>
@@ -35,15 +54,16 @@ const NonTaskDiv = styled(TaskDiv)`
     border-left-color: rgba(0,0,0,0);
 `;
 const DueSpan = styled.span<{ overdue: boolean }>`
-    margin-right: 0.5rem;
+    margin-right: 0.33rem;
     font-size: 75%;
     font-weight: bold;
     color: ${p => p.overdue ? 'red' : '#359AFF'};
 `;
 
 function Task(p: { task: RemilkTask }): JSX.Element {
-    return <TaskDiv style={{ borderLeftColor: PrioColors[p.task.priority] }}>
-        {p.task.hasDueTime && <DueSpan overdue={p.task.dueUtc < DateTime.utc()}>{p.task.dueUtc.toLocal().toFormat('HH:mm')}</DueSpan>}{p.task.description}
+    const overdue = p.task.dueUtc < DateTime.utc();
+    return <TaskDiv style={{ borderLeftColor: PrioColors[p.task.priority], color: overdue ? 'red' : 'inherit' }}>
+        {p.task.hasDueTime && <DueSpan overdue={overdue}>{p.task.dueUtc.toLocal().toFormat('HH:mm')}</DueSpan>}{p.task.description}
     </TaskDiv>;
 }
 
@@ -54,6 +74,16 @@ const TaskSectionDiv = styled.div`
     &:last-child {
         border-bottom: none;
     }
+`;
+
+const TaskCountContainerDiv = styled.div`
+    font-size: 75%;
+    color: #999;
+    display: grid;
+    grid-template-columns: auto auto auto;
+    justify-content: space-between;
+    z-index: 999;
+    position: relative;
 `;
 
 export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
@@ -68,32 +98,35 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
 
     function tagFilter(t: RemilkTask) { return !t.tags.includes('easy'); }
     const tasksNeglected = tasks.filter(t => tagFilter(t) && t.dueUtc <= cutoffNeglected).sort(byPriority);
-    const tasksOverdue = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffNeglected && t.dueUtc <= cutoffStartOfToday).sort(byPriority);
-    const tasksToday = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffStartOfToday && t.dueUtc <= cutoffEndOfToday).sort(byPriority);
+    const tasksToday = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffNeglected && t.dueUtc <= cutoffEndOfToday).sort(byPriority);
     const tasksTomorrow = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffEndOfToday && t.dueUtc <= cutoffTomorrow).sort(byPriority);
     const tasksSoon = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffTomorrow && t.dueUtc <= cutoffSoon).sort(byDueDate);
     const tasksEasy = tasks.filter(t => t.tags.includes('easy') && t.dueUtc <= cutoffEndOfToday).sort(byPriority);
+    const dayCount = tasks.filter(t => tagFilter(t) && t.dueUtc <= cutoffEndOfToday).length;
+    const weekCount = tasks.filter(t => tagFilter(t) && t.dueUtc <= cutoffEndOfToday.plus({ day: 7 })).length;
+    const monthCount = tasks.filter(t => tagFilter(t) && t.dueUtc <= cutoffEndOfToday.plus({ day: 31 })).length;
 
-    return <BlockPanelContainer state={remilk} {...rest}>
-        {tasksEasy && tasksEasy.length > 0 && <TaskSectionDiv style={{ color: '#73ff73' }}>
-            {tasksEasy.map(t => <Task key={t.id} task={t} />)}
-        </TaskSectionDiv>}
-        {tasksNeglected && tasksNeglected.length > 0 && <TaskSectionDiv style={{ color: '#f0f' }}>
-            {tasksNeglected.slice(0, 1).map(t => <Task key={t.id} task={t} />)}
-            {tasksNeglected.length > 1 && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksNeglected.length - 1} more</NonTaskDiv>}
-        </TaskSectionDiv>}
-        {tasksOverdue && tasksOverdue.length > 0 && <TaskSectionDiv style={{ color: 'red' }}>
-            {tasksOverdue.slice(0, 2).map(t => <Task key={t.id} task={t} />)}
-            {tasksOverdue.length > 2 && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksOverdue.length - 2} more</NonTaskDiv>}
-        </TaskSectionDiv>}
-        {tasksToday && tasksToday.length > 0 && <TaskSectionDiv>
-            {tasksToday.map(t => <Task key={t.id} task={t} />)}
-        </TaskSectionDiv>}
-        {tasksTomorrow && tasksTomorrow.length > 0 && <TaskSectionDiv style={{ opacity: 0.5 }}>
-            {tasksTomorrow.map(t => <Task key={t.id} task={t} />)}
-        </TaskSectionDiv>}
-        {tasksSoon && tasksSoon.length > 0 && <TaskSectionDiv style={{ opacity: 0.25 }}>
-            {tasksSoon.map(t => <Task key={t.id} task={t} />)}
-        </TaskSectionDiv>}
-    </BlockPanelContainer >;
+    return <RemilkPanelContainer state={remilk} {...rest}>
+        <OverflowFaderDiv>
+            {tasksEasy.length > 0 && <TaskSectionDiv style={{ color: '#73ff73' }}>
+                {tasksEasy.map(t => <Task key={t.id} task={t} />)}
+            </TaskSectionDiv>}
+            {tasksNeglected.length > 0 && <TaskSectionDiv style={{ color: '#f0f' }}>
+                {tasksNeglected.slice(0, 1).map(t => <Task key={t.id} task={t} />)}
+                {tasksNeglected.length > 1 && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksNeglected.length - 1} more</NonTaskDiv>}
+            </TaskSectionDiv>}
+            {tasksToday.length > 0 && <TaskSectionDiv>
+                {tasksToday.map(t => <Task key={t.id} task={t} />)}
+            </TaskSectionDiv>}
+            {tasksTomorrow.length > 0 && <TaskSectionDiv style={{ opacity: 0.5 }}>
+                {tasksTomorrow.map(t => <Task key={t.id} task={t} />)}
+            </TaskSectionDiv>}
+            {tasksSoon.length > 0 && <TaskSectionDiv style={{ opacity: 0.25 }}>
+                {tasksSoon.map(t => <Task key={t.id} task={t} />)}
+            </TaskSectionDiv>}
+        </OverflowFaderDiv>
+        <TaskCountContainerDiv>
+            <div>{dayCount} now</div><div>{weekCount} wk</div><div>{monthCount} mth</div>
+        </TaskCountContainerDiv>
+    </RemilkPanelContainer >;
 }
