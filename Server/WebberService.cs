@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Topshelf;
 using Webber.Server.Blocks;
 using Webber.Server.Services;
@@ -9,6 +9,7 @@ class AppConfig
 {
     public string DbFilePath { get; init; }
     public string LocalTimezoneName { get; init; }
+    public string[] CorsOrigins { get; init; }
     public bool DisableCaching { get; init; }
 }
 
@@ -77,7 +78,7 @@ class WebberService : ServiceControl
 
         if (config.DisableCaching)
             app.UseMiddleware<NoCacheHeadersMiddleware>();
-        app.UseCors(b => { b.WithOrigins("http://localhost:3000").AllowAnyHeader().WithMethods("GET", "POST").AllowCredentials(); });
+        app.UseCors(b => { b.WithOrigins(config.CorsOrigins ?? new[] { "http://localhost:3000" }).AllowAnyHeader().WithMethods("GET", "POST").AllowCredentials(); });
         app.UseStaticFiles();
         app.UseRouting();
         app.MapControllers();
