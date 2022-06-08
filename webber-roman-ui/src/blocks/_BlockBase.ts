@@ -51,7 +51,7 @@ export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto)
         });
         conn.onreconnecting(() => { setStatus('connecting'); dbg('on reconnecting'); });
         conn.onreconnected(() => { setStatus('connected'); dbg('on reconnected'); });
-        conn.onclose(() => { setStatus('disconnected'); dbg('on close'); });
+        conn.onclose(() => { setStatus('disconnected'); dbg('on close'); connect(); });
         async function connect() {
             setStatus('connecting'); dbg('connecting');
             try {
