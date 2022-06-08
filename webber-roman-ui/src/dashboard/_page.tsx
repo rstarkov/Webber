@@ -7,6 +7,7 @@ import { TimeUntilPanel } from "./TimeUntilPanel";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
 import { BlockPanelContainer } from "./Container";
+import { useDebugBlock } from "../blocks/DebugBlock";
 
 
 const ZonesClockDiv = styled.div`
@@ -103,6 +104,13 @@ function SunTimes(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
         <div><FontAwesomeIcon icon={faMoon} color='#4479ff' /> {weather.dto?.sunsetTime}</div>
         <div style={{ fontSize: '80%', color: '#999' }}>{weather.dto?.sunsetDeltaTime}</div>
     </SunTimesDiv>
+}
+
+function DebugLog(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+    const { logs } = useDebugBlock();
+    return <div {...props}>
+        {logs.map(s => <p>{s}</p>)}
+    </div>
 }
 
 export function DashboardPage(): JSX.Element {

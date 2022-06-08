@@ -1,6 +1,7 @@
 import { HubConnectionBuilder } from "@microsoft/signalr";
 import { useEffect, useState } from "react";
 import { DateTime } from "luxon";
+import { useDebugBlock } from "./DebugBlock";
 
 export type BlockConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
@@ -29,11 +30,12 @@ export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto)
     const [dto, setDto] = useState<TDto | null>(null);
     const [status, setStatus] = useState<BlockConnectionStatus>('disconnected');
     const [updates, setUpdates] = useState(0);
+    const { pushLog } = useDebugBlock();
 
     useEffect(() => {
         let exited = false;
         const instance = Math.random();
-        function dbg(str: string) { console.log(`[wbbr ${instance}] ${str}`); }
+        function dbg(str: string) { console.log(`[wbbr ${instance}] ${str}`); if (url.endsWith('PingBlock')) pushLog(str); }
         dbg('START ' + url);
         const conn = new HubConnectionBuilder()
             .withUrl(url)
@@ -57,8 +59,8 @@ export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto)
                 await conn.start();
                 setStatus('connected'); dbg('connected');
                 if (exited) conn.stop();
-            } catch {
-                dbg('catch');
+            } catch (error) {
+                dbg('catch: ' + JSON.stringify(error));
                 setStatus('disconnected');
                 conn.stop();
                 await new Promise(r => setTimeout(r, 10_000));
