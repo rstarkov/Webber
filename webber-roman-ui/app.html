@@ -5,6 +5,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Webber" />
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;700&family=Open+Sans:wght@300;400;700&display=block" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <link rel="icon" href="icons/favicon.ico">
     <link rel="icon" href="icons/favicon-256x256.png" type="image/png">
     <link rel="apple-touch-icon" href="icons/favicon-180x180.png">
@@ -12,10 +15,10 @@
     <title>Webber</title>
 </head>
 
-<body style="padding: 0; margin: 0">
+<body>
     <noscript>This website requires JavaScript to run.</noscript>
-    <!-- having it in the iframe allows a full reload without losing full screen state -->
-    <iframe id="appframe" src="/app.html" style="display: block; border: none; width: 100vw; height: 100vh"></iframe>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
 </body>
 
 </html>
