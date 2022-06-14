@@ -62,8 +62,10 @@ const DueSpan = styled.span<{ overdue: boolean }>`
 
 function Task(p: { task: RemilkTask }): JSX.Element {
     const overdue = p.task.dueUtc < DateTime.utc();
-    return <TaskDiv style={{ borderLeftColor: PrioColors[p.task.priority], color: overdue ? 'red' : 'inherit' }}>
-        {p.task.hasDueTime && <DueSpan overdue={overdue}>{p.task.dueUtc.toLocal().toFormat('HH:mm')}</DueSpan>}{p.task.description}
+    return <TaskDiv style={{ borderLeftColor: PrioColors[p.task.priority] }}>
+        {p.task.hasDueTime && <DueSpan overdue={overdue}>{p.task.dueUtc.toLocal().toFormat('HH:mm')}</DueSpan>}
+        {!p.task.hasDueTime && overdue && <DueSpan overdue={overdue}>late</DueSpan>}
+        {p.task.description}
     </TaskDiv>;
 }
 
@@ -98,7 +100,8 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
 
     function tagFilter(t: RemilkTask) { return !t.tags.includes('easy'); }
     const tasksNeglected = tasks.filter(t => tagFilter(t) && t.dueUtc <= cutoffNeglected).sort(byPriority);
-    const tasksToday = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffNeglected && t.dueUtc <= cutoffEndOfToday).sort(byPriority);
+    const tasksTodayPrio = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffNeglected && t.dueUtc <= cutoffEndOfToday && t.priority == 1).sort(byPriority);
+    const tasksToday = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffNeglected && t.dueUtc <= cutoffEndOfToday && t.priority != 1).sort(byPriority);
     const tasksTomorrow = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffEndOfToday && t.dueUtc <= cutoffTomorrow).sort(byPriority);
     const tasksSoon = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffTomorrow && t.dueUtc <= cutoffSoon).sort(byDueDate);
     const tasksEasy = tasks.filter(t => t.tags.includes('easy') && t.dueUtc <= cutoffEndOfToday).sort(byPriority);
@@ -110,6 +113,9 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
         <OverflowFaderDiv>
             {tasksEasy.length > 0 && <TaskSectionDiv style={{ color: '#73ff73' }}>
                 {tasksEasy.map(t => <Task key={t.id} task={t} />)}
+            </TaskSectionDiv>}
+            {tasksTodayPrio.length > 0 && <TaskSectionDiv style={{ color: PrioColors[1] }}>
+                {tasksTodayPrio.map(t => <Task key={t.id} task={t} />)}
             </TaskSectionDiv>}
             {tasksNeglected.length > 0 && <TaskSectionDiv style={{ color: '#f0f' }}>
                 {tasksNeglected.slice(0, 1).map(t => <Task key={t.id} task={t} />)}
