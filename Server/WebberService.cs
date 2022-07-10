@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Topshelf;
 using Webber.Server.Blocks;
 using Webber.Server.Services;
@@ -24,15 +24,7 @@ class WebberService : ServiceControl
             throw new ArgumentException("The '-config' command line variable is required");
         this._configPath = configPath;
 
-        Directory.SetCurrentDirectory(AppContext.BaseDirectory);
-
-        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
-        {
-            // blazor static files are broken for any other value of EnvironmentName. Use --config to load a custom appsettings.json instead.
-            EnvironmentName = "Development",
-            /*Args = args,*/
-            ContentRootPath = AppContext.BaseDirectory, // arrg
-        });
+        var builder = WebApplication.CreateBuilder();
 
         builder.Configuration.AddJsonFile(_configPath, optional: false);
 
