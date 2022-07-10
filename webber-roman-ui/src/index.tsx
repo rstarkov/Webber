@@ -7,12 +7,13 @@ import { WeatherBlockProvider } from './blocks/WeatherBlock';
 import { TimeUntilBlockProvider } from './blocks/TimeUntilBlock';
 import { RemilkBlockProvider } from './blocks/RemilkBlock';
 import { DebugBlockProvider } from './blocks/DebugBlock';
+import { ReloadBlockProvider } from './blocks/ReloadBlock';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <GlobalStyle />
-        <DebugBlockProvider><PingBlockProvider><WeatherBlockProvider><TimeUntilBlockProvider><RemilkBlockProvider>
+        <DebugBlockProvider><ReloadBlockProvider><PingBlockProvider><WeatherBlockProvider><TimeUntilBlockProvider><RemilkBlockProvider>
             <App />
-        </RemilkBlockProvider></TimeUntilBlockProvider></WeatherBlockProvider></PingBlockProvider></DebugBlockProvider>
+        </RemilkBlockProvider></TimeUntilBlockProvider></WeatherBlockProvider></PingBlockProvider></ReloadBlockProvider></DebugBlockProvider>
     </React.StrictMode>
 );
