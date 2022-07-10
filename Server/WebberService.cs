@@ -1,4 +1,5 @@
-using System.Reflection;
+﻿using System.Reflection;
+using Newtonsoft.Json.Linq;
 using Topshelf;
 using Webber.Server.Blocks;
 using Webber.Server.Services;
@@ -8,6 +9,7 @@ namespace Webber.Server;
 class AppConfig
 {
     public string DbFilePath { get; init; }
+    public string WebRootPath { get; init; }
     public string LocalTimezoneName { get; init; }
     public string[] CorsOrigins { get; init; }
     public bool DisableCaching { get; init; }
@@ -24,7 +26,8 @@ class WebberService : ServiceControl
             throw new ArgumentException("The '-config' command line variable is required");
         this._configPath = configPath;
 
-        var builder = WebApplication.CreateBuilder();
+        var appConfig = JObject.Parse(File.ReadAllText(configPath))["App"].ToObject<AppConfig>(); // we need this before the ASP config API gets to load the file...
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { WebRootPath = appConfig.WebRootPath });
 
         builder.Configuration.AddJsonFile(_configPath, optional: false);
 

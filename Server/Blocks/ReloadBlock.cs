@@ -15,7 +15,7 @@ class ReloadBlockServer : BlockServerBase<ReloadBlockDto>
     public ReloadBlockServer(IServiceProvider sp, IWebHostEnvironment env)
         : base(sp)
     {
-        _path = env.ContentRootPath;
+        _path = env.WebRootPath ?? env.ContentRootPath;
     }
 
     public override void Start()
@@ -60,6 +60,10 @@ class ReloadBlockServer : BlockServerBase<ReloadBlockDto>
                 // Enforce a minimum wait time in case the watcher breaks and starts firing endlessly for whatever reason
                 if (DateTime.UtcNow < minimumWait)
                     Thread.Sleep(minimumWait - DateTime.UtcNow);
+
+                // Wait for 5 sec of no changes
+                while (_event.WaitOne(TimeSpan.FromSeconds(5)))
+                    ;
             }
 #if !DEBUG
             catch (Exception ex)
