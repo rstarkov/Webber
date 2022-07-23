@@ -7,11 +7,23 @@ import { DashboardPage } from "./dashboard/_page";
 export function App(): JSX.Element {
     const reload = useReloadBlock();
     const [prevHash, setPrevHash] = useState(reload.dto?.serverHash);
+    const navigate = useNavigate();
+    const loc = useLocation();
     useEffect(() => {
         if (prevHash && prevHash != reload.dto?.serverHash) {
             location.reload();
         }
         setPrevHash(reload.dto?.serverHash); // save the initial hash on first update
+
+        if (!window.parent.document.getElementById('appframe')) {
+            // redirect to the wrapper if not wrapped
+            window.location.replace('/wrapper.html' + (window.location.pathname === '/' ? '' : `#${window.location.pathname}`));
+        } else {
+            // navigate to the hash if it doesn't match curret route
+            const hash = window.parent.location.hash.substring(1);
+            if (loc.pathname !== hash)
+                navigate(hash);
+        }
     }, [reload.dto?.serverHash]);
 
     return (
