@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useReloadBlock } from "./blocks/ReloadBlock";
 import { ClassicPage } from "./classic/_page";
 import { DashboardPage } from "./dashboard/_page";
@@ -13,5 +14,10 @@ export function App(): JSX.Element {
         setPrevHash(reload.dto?.serverHash); // save the initial hash on first update
     }, [reload.dto?.serverHash]);
 
-    return <DashboardPage />
+    return (
+        <Routes>
+            <Route path='/' element={<DashboardPage />} />
+            <Route path='/classic' element={<ClassicPage />} />
+        </Routes>
+    );
 }
