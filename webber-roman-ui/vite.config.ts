@@ -8,8 +8,8 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        app: fileURLToPath(new URL('./app.html', import.meta.url)),
-        wrapper: fileURLToPath(new URL('./index.html', import.meta.url)),
+        app: fileURLToPath(new URL('./index.html', import.meta.url)),
+        wrapper: fileURLToPath(new URL('./wrapper.html', import.meta.url)),
       },
     },
   },
