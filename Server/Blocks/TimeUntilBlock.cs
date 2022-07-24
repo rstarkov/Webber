@@ -117,7 +117,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             .Where(i => !string.IsNullOrWhiteSpace(i.Summary)) // no title?
             .OrderBy(i => i.Start.DateTime)
             .DistinctBy(i => i.RecurringEventId ?? i.Id)
-            .Select(i => new CalendarEvent() { DisplayName = i.Summary, StartTimeUtc = i.Start.DateTime.Value.ToUniversalTime(), IsRecurring = i.RecurringEventId != null })
+            .Select(i => new CalendarEvent() { Id = i.Id, DisplayName = i.Summary, StartTimeUtc = i.Start.DateTime.Value.ToUniversalTime(), IsRecurring = i.RecurringEventId != null })
             .Concat(synthetic)
             .OrderBy(i => i.StartTimeUtc)
             .Distinct() // this uses the 'record' equality logic to filter out events that might be added to more than one calendar

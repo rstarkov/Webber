@@ -1,4 +1,5 @@
 import { DateTime } from "luxon";
+import { Fragment } from "react";
 import styled from "styled-components";
 import { useTimeUntilBlock } from "../blocks/TimeUntilBlock";
 import { endOfLocalDay } from "../util/util";
@@ -95,29 +96,29 @@ export function TimeUntilPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>
                 const totalMinutes = left.as('minutes');
                 const startHHmm = start.toFormat('HH:mm');
                 if (totalMinutes < 60)
-                    return <>
+                    return <Fragment key={e.id}>
                         <DivMins newGroup={newGroup}><SpanTime>{startHHmm}</SpanTime><SpanLeft>{`${Math.floor(totalMinutes).toFixed(0)}min`}</SpanLeft></DivMins>
                         <DivMins newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivMins>
-                    </>;
+                    </Fragment>;
                 if (start < endOfToday)
-                    return <>
+                    return <Fragment key={e.id}>
                         <DivHrs newGroup={newGroup}><SpanTime>{startHHmm}</SpanTime><SpanLeft>{`${totalHours.toFixed(1)}hr`}</SpanLeft></DivHrs>
                         <DivHrs newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivHrs>
-                    </>;
+                    </Fragment>;
                 if (start < endOfToday.plus({ days: 1 }))
-                    return <>
+                    return <Fragment key={e.id}>
                         <DivTmrw newGroup={newGroup}><SpanTime>{startHHmm}</SpanTime><SpanLeft>{`${totalHours.toFixed(1)}hr`}</SpanLeft></DivTmrw>
                         <DivTmrw newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivTmrw>
-                    </>;
+                    </Fragment>;
                 if (start < endOfToday.plus({ days: 7 }))
-                    return <>
+                    return <Fragment key={e.id}>
                         <DivWeek newGroup={newGroup}><SpanTime>{startHHmm}</SpanTime><SpanLeft>{start.toFormat("ccc")}</SpanLeft></DivWeek>
                         <DivWeek newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivWeek>
-                    </>;
-                return <>
+                    </Fragment>;
+                return <Fragment key={e.id}>
                     <DivLong newGroup={newGroup}><SpanTime>{`${endOfLocalDay(start, true).diff(endOfToday).as('days').toFixed(0)} days`}</SpanTime></DivLong>
                     <DivLong newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivLong>
-                </>;
+                </Fragment>;
             })}
         </CalContentDiv>}
     </BlockPanelContainer>

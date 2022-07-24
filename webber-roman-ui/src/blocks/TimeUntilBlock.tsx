@@ -8,6 +8,7 @@ export interface TimeUntilBlockDto extends BaseDto {
 }
 
 interface CalendarEvent {
+    id: string;
     displayName: string;
     startTimeUtc: DateTime;
     hasStarted: boolean;
