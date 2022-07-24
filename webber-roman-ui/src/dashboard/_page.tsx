@@ -1,6 +1,5 @@
 import { DateTime } from "luxon";
 import styled from "styled-components";
-import { usePingBlock } from '../blocks/PingBlock';
 import { useWeatherBlock } from '../blocks/WeatherBlock';
 import { RemilkPanel } from "./RemilkPanel";
 import { TimeUntilPanel } from "./TimeUntilPanel";
@@ -41,23 +40,6 @@ function MainClock(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     return <MainClockDiv {...props}>
         {DateTime.local().toFormat('HH:mm')}
     </MainClockDiv>;
-}
-
-const BigTemperatureDiv = styled.div`
-    font-size: 350%;
-    font-weight: bold;
-`;
-const Degrees = styled.span`
-    font-size: 70%;
-    position: relative;
-    top: -2.0vw;
-    margin-left: 1.0vw;
-`;
-function BigTemperature({ style, ...rest }: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
-    const weather = useWeatherBlock();
-    return <BigTemperatureDiv style={{ ...style, color: weather.dto?.curTemperatureColor }} {...rest}>
-        {weather.dto?.curTemperature.toFixed(0)}<Degrees>°C</Degrees>
-    </BigTemperatureDiv>
 }
 
 const RecentTemperaturesDiv = styled(BlockPanelContainer)`
@@ -116,18 +98,15 @@ function DebugLog(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
 
 export function DashboardPage(): JSX.Element {
     const overlay = useNavOverlayState();
-    const ping = usePingBlock();
 
     return (
         <>
-            <BigTemperature style={{ position: 'absolute', left: '41vw', top: '47vh' }} />
             <SunTimes style={{ position: 'absolute', left: '0vw', top: '53vh' }} />
             <MainClock style={{ position: 'absolute', left: '41vw', top: '-5vh', width: '27vw' }} onClick={overlay.show} />
             <ZonesClock style={{ position: 'absolute', left: '41vw', top: '18vh', width: '27vw' }} />
             <RecentTemperatures style={{ position: 'absolute', left: '41vw', top: '35vh', width: '27vw' }} />
             <TimeUntilPanel style={{ position: 'absolute', left: '0vw', top: '0vh', width: '40vw', height: '50vh', overflow: 'hidden' }} />
             <RemilkPanel style={{ position: 'absolute', right: 0, top: 0, width: '28vw', height: '80vh' }} />
-            <BlockPanelContainer state={ping} style={{ position: 'absolute', right: '0vw', top: '80vh', width: '7vw' }}>{ping.dto?.last}</BlockPanelContainer>
 
             <NavOverlay state={overlay} />
         </>

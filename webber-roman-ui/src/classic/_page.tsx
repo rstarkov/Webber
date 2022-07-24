@@ -8,6 +8,7 @@ import { DateTime } from "luxon";
 import { BarChart, BarChartPt, ModifiedLog, ScaleY } from "../components/BarChart";
 import { RouterHistoryPoint, useRouterBlock } from "../blocks/RouterBlock";
 import { NavOverlay, useNavOverlayState } from "../components/NavOverlay";
+import { useEffect, useState } from "react";
 
 
 const WeatherBlockDiv = styled(BlockPanelBorderedContainer)`
@@ -59,7 +60,16 @@ const TimeBlockDiv = styled(BlockPanelBorderedContainer)`
     grid-template-columns: 1fr min-content min-content 1fr;
 `;
 function TimeBlock(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
-    return <TimeBlockDiv state={{ status: 'connected', updates: 0 }} {...props}>
+    const [updates, setUpdates] = useState(0);
+    useEffect(() => {
+        let timer = 0;
+        function setTimer() { timer = setTimeout(() => { setUpdates(u => u + 1); setTimer(); }, 60500 - Date.now() % 60000); }
+        setTimer();
+        return () => {
+            clearTimeout(timer);
+        }
+    }, []);
+    return <TimeBlockDiv state={{ status: 'connected', updates }} {...props}>
         <div style={{ gridColumnEnd: 'span 4', textAlign: 'center', fontSize: '280%', fontWeight: 'bold', marginTop: '-1.7vw', marginBottom: '0.8vw' }}>{DateTime.local().toFormat('HH:mm')}</div>
 
         <div></div>
