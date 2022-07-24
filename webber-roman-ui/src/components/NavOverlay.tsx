@@ -33,6 +33,7 @@ export function NavOverlay(props: { state: DialogState }): JSX.Element {
         <NavOverlayDiv>
             <button onClick={() => navigate('/')}>Page: Main</button>
             <button onClick={() => navigate('/classic')}>Page: Classic</button>
+            <button onClick={() => navigate('/unused')}>Page: Unused</button>
             <div></div>
             <div></div>
             <button onClick={props.state.hide}>Dismiss</button>

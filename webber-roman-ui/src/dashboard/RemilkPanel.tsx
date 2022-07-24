@@ -44,7 +44,6 @@ function byDueDate(a: RemilkTask, b: RemilkTask): number {
 
 const PrioColors = ['', '#EA5200', '#0060BF', '#359AFF', '#555'];
 const TaskDiv = styled.div`
-    font-size:90%;
     padding-left: 0.3rem;
     line-height: 1.0;
     margin: 0.3rem 0;
@@ -54,8 +53,8 @@ const NonTaskDiv = styled(TaskDiv)`
     border-left-color: rgba(0,0,0,0);
 `;
 const DueSpan = styled.span<{ overdue: boolean }>`
-    margin-right: 0.33rem;
-    font-size: 75%;
+    margin-right: 0.35rem;
+    font-size: 83%;
     font-weight: bold;
     color: ${p => p.overdue ? 'red' : '#359AFF'};
 `;
@@ -135,7 +134,7 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
             </TaskSectionDiv>}
         </OverflowFaderDiv>
         <TaskCountContainerDiv>
-            <div>{dayCount} now</div><div>{weekCount} wk</div><div>{monthCount} mth</div>
+            <div>{dayCount} now</div><div>{weekCount} week</div><div>{monthCount} month</div>
         </TaskCountContainerDiv>
     </RemilkPanelContainer >;
 }

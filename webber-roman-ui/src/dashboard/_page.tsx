@@ -101,14 +101,25 @@ export function DashboardPage(): JSX.Element {
 
     return (
         <>
-            <SunTimes style={{ position: 'absolute', left: '0vw', top: '53vh' }} />
-            <MainClock style={{ position: 'absolute', left: '41vw', top: '-5vh', width: '27vw' }} onClick={overlay.show} />
-            <ZonesClock style={{ position: 'absolute', left: '41vw', top: '18vh', width: '27vw' }} />
-            <RecentTemperatures style={{ position: 'absolute', left: '41vw', top: '35vh', width: '27vw' }} />
-            <TimeUntilPanel style={{ position: 'absolute', left: '0vw', top: '0vh', width: '40vw', height: '50vh', overflow: 'hidden' }} />
-            <RemilkPanel style={{ position: 'absolute', right: 0, top: 0, width: '28vw', height: '80vh' }} />
+            <TimeUntilPanel style={{ position: 'absolute', left: '0vw', top: '0vh', width: '55vw', height: '100vh', overflow: 'hidden' }} onClick={overlay.show} />
+            <RemilkPanel style={{ position: 'absolute', right: 0, top: 0, width: '42vw', height: '100vh' }} />
 
             <NavOverlay state={overlay} />
         </>
-    )
+    );
+}
+
+export function UnusedPage(): JSX.Element {
+    const overlay = useNavOverlayState();
+
+    return (
+        <>
+            <SunTimes style={{ position: 'absolute', left: '0vw', top: '53vh' }} />
+            <MainClock style={{ position: 'absolute', left: '41vw', top: '-5vh', width: '27vw' }} onClick={overlay.show} />
+            <ZonesClock style={{ position: 'absolute', left: '41vw', top: '18vh', width: '27vw' }} />
+            <RecentTemperatures style={{ position: 'absolute', left: '41vw', top: '35vh', width: '30vw' }} />
+
+            <NavOverlay state={overlay} />
+        </>
+    );
 }
