@@ -109,6 +109,9 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
     const weekCount = tasks.filter(t => tagFilter(t) && t.dueUtc <= cutoffEndOfToday.plus({ day: 7 })).length;
     const monthCount = tasks.filter(t => tagFilter(t) && t.dueUtc <= cutoffEndOfToday.plus({ day: 31 })).length;
 
+    let remainingCount = 11 - tasksEasy.length - tasksTodayPrio.length - tasksToday.length - tasksTomorrow.length - tasksSoon.length;
+    const maxNeglected = Math.max(1, remainingCount);
+
     return <RemilkPanelContainer state={remilk} {...rest}>
         <OverflowFaderDiv>
             {tasksEasy.length > 0 && <TaskSectionDiv style={{ color: '#73ff73' }}>
@@ -118,8 +121,8 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
                 {tasksTodayPrio.map(t => <Task key={t.id} task={t} />)}
             </TaskSectionDiv>}
             {tasksNeglected.length > 0 && <TaskSectionDiv style={{ color: '#f0f' }}>
-                {tasksNeglected.slice(0, 1).map(t => <Task key={t.id} task={t} />)}
-                {tasksNeglected.length > 1 && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksNeglected.length - 1} more</NonTaskDiv>}
+                {tasksNeglected.slice(0, maxNeglected).map(t => <Task key={t.id} task={t} />)}
+                {tasksNeglected.length > maxNeglected && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksNeglected.length - maxNeglected} more</NonTaskDiv>}
             </TaskSectionDiv>}
             {tasksToday.length > 0 && <TaskSectionDiv>
                 {tasksToday.map(t => <Task key={t.id} task={t} />)}

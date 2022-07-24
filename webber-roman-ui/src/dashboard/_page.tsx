@@ -119,12 +119,12 @@ export function DashboardPage(): JSX.Element {
     return (
         <>
             <BigTemperature style={{ position: 'absolute', left: '41vw', top: '47vh' }} />
-            <SunTimes style={{ position: 'absolute', left: '79vw', top: '53vh' }} />
+            <SunTimes style={{ position: 'absolute', left: '0vw', top: '53vh' }} />
             <MainClock style={{ position: 'absolute', left: '41vw', top: '-5vh', width: '27vw' }} onClick={() => (window.parent.document.getElementById('appframe') ?? document.body).requestFullscreen()} />
             <ZonesClock style={{ position: 'absolute', left: '41vw', top: '18vh', width: '27vw' }} />
             <RecentTemperatures style={{ position: 'absolute', left: '41vw', top: '35vh', width: '27vw' }} />
             <TimeUntilPanel style={{ position: 'absolute', left: '0vw', top: '0vh', width: '40vw', height: '50vh', overflow: 'hidden' }} />
-            <RemilkPanel style={{ position: 'absolute', right: 0, top: 0, width: '28vw', height: '50vh' }} />
+            <RemilkPanel style={{ position: 'absolute', right: 0, top: 0, width: '28vw', height: '80vh' }} />
             <BlockPanelContainer state={ping} style={{ position: 'absolute', right: '0vw', top: '80vh', width: '7vw' }}>{ping.dto?.last}</BlockPanelContainer>
         </>
     )
