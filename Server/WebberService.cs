@@ -89,7 +89,14 @@ class WebberService : ServiceControl
         dbService.Initialise();
 
         foreach (var service in app.Services.GetServices<IBlockServer>())
-            service.Start();
+        {
+            new Thread(() =>
+            {
+                var start = DateTime.UtcNow;
+                service.Start();
+                app.Logger.LogInformation($"Service {service.GetType().Name} started in {(DateTime.UtcNow - start).TotalSeconds:0.0} seconds");
+            }).Start();
+        }
 
         app.Start();
         return true;
