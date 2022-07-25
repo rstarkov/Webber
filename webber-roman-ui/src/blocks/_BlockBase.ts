@@ -26,6 +26,9 @@ function basePatcher(dto: BaseDto) {
     dto.validUntilUtc = DateTime.fromISO(dto.validUntilUtc as any);
 }
 
+let timeDiffs: number[] = [];
+export let timeCorrectionMs: number = 0;
+
 export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto) => void): BlockStateDto<TDto> {
     const [dto, setDto] = useState<TDto | null>(null);
     const [status, setStatus] = useState<BlockConnectionStatus>('disconnected');
@@ -35,7 +38,7 @@ export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto)
     useEffect(() => {
         let exited = false;
         const instance = Math.random();
-        function dbg(str: string) { console.log(`[wbbr ${instance}] ${str}`); if (url.endsWith('PingBlock')) pushLog(str); }
+        function dbg(str: string) { /* console.log(`[wbbr ${instance}] ${str}`); if (url.endsWith('PingBlock')) pushLog(str); */ }
         dbg('START ' + url);
         const conn = new HubConnectionBuilder()
             .withUrl(url)
@@ -46,6 +49,11 @@ export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto)
             patcher(dto);
             setDto(dto);
             setUpdates(u => u + 1);
+            timeDiffs.push(dto.sentUtc.diffNow('milliseconds').milliseconds);
+            if (timeDiffs.length > 20)
+                timeDiffs.shift();
+            if (timeDiffs.length >= 3)
+                timeCorrectionMs = timeDiffs.reduce(function (a, b) { return a + b; }, 0) / timeDiffs.length;
             if (dto.errorMessage)
                 console.error(dto.errorMessage);
         });
