@@ -36,7 +36,10 @@ public abstract class BlockServerBase<TDto> : IBlockServer<TDto>
         {
             //_connectedIds.Add(Context.ConnectionId);
             if (_service.LastUpdate != null)
+            {
+                _service.LastUpdate.SentUtc = DateTime.UtcNow;
                 await Clients.Caller.Update(_service.LastUpdate);
+            }
 
             await base.OnConnectedAsync();
         }
