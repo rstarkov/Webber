@@ -1,15 +1,6 @@
 import { RemilkPanel } from "../components/RemilkPanel";
 import { TimeUntilPanel } from "../components/TimeUntilPanel";
-import { useDebugBlock } from "../blocks/DebugBlock";
 import { NavOverlay, useNavOverlayState } from "../components/NavOverlay";
-
-
-function DebugLog(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
-    const { logs } = useDebugBlock();
-    return <div {...props}>
-        {logs.map(s => <p>{s}</p>)}
-    </div>
-}
 
 export function DashboardPage(): JSX.Element {
     const overlay = useNavOverlayState();
