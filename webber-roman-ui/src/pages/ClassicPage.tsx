@@ -3,7 +3,7 @@ import { usePingBlock } from '../blocks/PingBlock';
 import { useWeatherBlock } from '../blocks/WeatherBlock';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
-import { BlockPanelBorderedContainer } from "../dashboard/Container";
+import { BlockPanelBorderedContainer } from "../components/Container";
 import { DateTime } from "luxon";
 import { BarChart, BarChartPt, ModifiedLog, ScaleY } from "../components/BarChart";
 import { RouterHistoryPoint, useRouterBlock } from "../blocks/RouterBlock";

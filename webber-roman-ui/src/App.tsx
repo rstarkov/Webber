@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useReloadBlock } from "./blocks/ReloadBlock";
-import { ClassicPage } from "./classic/_page";
-import { DashboardPage, UnusedPage } from "./dashboard/_page";
+import { ClassicPage } from "./pages/ClassicPage";
+import { DashboardPage, UnusedPage } from "./pages/DashboardPage";
 
 export function App(): JSX.Element {
     const reload = useReloadBlock();

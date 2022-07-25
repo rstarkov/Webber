@@ -1,11 +1,11 @@
 import { DateTime } from "luxon";
 import styled from "styled-components";
 import { useWeatherBlock } from '../blocks/WeatherBlock';
-import { RemilkPanel } from "./RemilkPanel";
-import { TimeUntilPanel } from "./TimeUntilPanel";
+import { RemilkPanel } from "../components/RemilkPanel";
+import { TimeUntilPanel } from "../components/TimeUntilPanel";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
-import { BlockPanelContainer } from "./Container";
+import { BlockPanelContainer } from "../components/Container";
 import { useDebugBlock } from "../blocks/DebugBlock";
 import { NavOverlay, useNavOverlayState } from "../components/NavOverlay";
 
