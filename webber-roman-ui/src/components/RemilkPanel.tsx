@@ -97,19 +97,28 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
     const cutoffTomorrow = cutoffStartOfToday.plus({ day: 2 });
     const cutoffSoon = cutoffStartOfToday.plus({ day: 5 });
 
-    function tagFilter(t: RemilkTask) { return !t.tags.includes('easy'); }
+    function tagFilter(t: RemilkTask) { return !t.tags.includes('easy') && !t.tags.includes('backlog'); }
     const tasksNeglected = tasks.filter(t => tagFilter(t) && t.dueUtc <= cutoffNeglected).sort(byPriority);
     const tasksTodayPrio = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffNeglected && t.dueUtc <= cutoffEndOfToday && t.priority == 1).sort(byPriority);
     const tasksToday = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffNeglected && t.dueUtc <= cutoffEndOfToday && t.priority != 1).sort(byPriority);
     const tasksTomorrow = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffEndOfToday && t.dueUtc <= cutoffTomorrow).sort(byPriority);
     const tasksSoon = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffTomorrow && t.dueUtc <= cutoffSoon).sort(byDueDate);
     const tasksEasy = tasks.filter(t => t.tags.includes('easy') && t.dueUtc <= cutoffEndOfToday).sort(byPriority);
-    const dayCount = tasks.filter(t => tagFilter(t) && t.dueUtc <= cutoffEndOfToday).length;
-    const weekCount = tasks.filter(t => tagFilter(t) && t.dueUtc <= cutoffEndOfToday.plus({ day: 7 })).length;
-    const monthCount = tasks.filter(t => tagFilter(t) && t.dueUtc <= cutoffEndOfToday.plus({ day: 31 })).length;
+    const tasksBacklog = tasks.filter(t => t.tags.includes('backlog') && t.dueUtc <= cutoffEndOfToday).sort(byPriority);
+    const dayCount = tasks.filter(t => !t.tags.includes('easy') && t.dueUtc <= cutoffEndOfToday).length;
+    const weekCount = tasks.filter(t => !t.tags.includes('easy') && t.dueUtc <= cutoffEndOfToday.plus({ day: 7 })).length;
+    const monthCount = tasks.filter(t => !t.tags.includes('easy') && t.dueUtc <= cutoffEndOfToday.plus({ day: 31 })).length;
 
-    let remainingCount = 11 - tasksEasy.length - tasksTodayPrio.length - tasksToday.length - tasksTomorrow.length - tasksSoon.length;
-    const maxNeglected = Math.max(1, remainingCount);
+    // if all tasks don't fit then we collapse sections in the following order: soon, tomorrow, backlog, neglected
+    let remainingCount = 11 - tasksEasy.length - tasksTodayPrio.length - tasksToday.length - tasksNeglected.length - tasksBacklog.length - tasksTomorrow.length - tasksSoon.length;
+    const cSoon = Math.min(tasksSoon.length, Math.max(1, remainingCount));
+    remainingCount += tasksSoon.length - cSoon;
+    const cTomorrow = Math.min(tasksTomorrow.length, Math.max(1, remainingCount));
+    remainingCount += tasksTomorrow.length - cTomorrow;
+    const cBacklog = Math.min(tasksBacklog.length, Math.max(1, remainingCount));
+    remainingCount += tasksBacklog.length - cBacklog;
+    const cNeglected = Math.min(tasksNeglected.length, Math.max(1, remainingCount));
+    remainingCount += tasksNeglected.length - cNeglected;
 
     return <RemilkPanelContainer state={remilk} {...rest}>
         <OverflowFaderDiv>
@@ -120,17 +129,23 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
                 {tasksTodayPrio.map(t => <Task key={t.id} task={t} />)}
             </TaskSectionDiv>}
             {tasksNeglected.length > 0 && <TaskSectionDiv style={{ color: '#f0f' }}>
-                {tasksNeglected.slice(0, maxNeglected).map(t => <Task key={t.id} task={t} />)}
-                {tasksNeglected.length > maxNeglected && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksNeglected.length - maxNeglected} more</NonTaskDiv>}
+                {tasksNeglected.slice(0, cNeglected).map(t => <Task key={t.id} task={t} />)}
+                {tasksNeglected.length > cNeglected && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksNeglected.length - cNeglected} more</NonTaskDiv>}
             </TaskSectionDiv>}
             {tasksToday.length > 0 && <TaskSectionDiv>
                 {tasksToday.map(t => <Task key={t.id} task={t} />)}
             </TaskSectionDiv>}
+            {tasksBacklog.length > 0 && <TaskSectionDiv style={{ color: 'rgb(10, 139, 190)' }}>
+                {tasksBacklog.slice(0, cBacklog).map(t => <Task key={t.id} task={t} />)}
+                {tasksBacklog.length > cBacklog && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksBacklog.length - cBacklog} more</NonTaskDiv>}
+            </TaskSectionDiv>}
             {tasksTomorrow.length > 0 && <TaskSectionDiv style={{ opacity: 0.5 }}>
-                {tasksTomorrow.map(t => <Task key={t.id} task={t} />)}
+                {tasksTomorrow.slice(0, cTomorrow).map(t => <Task key={t.id} task={t} />)}
+                {tasksTomorrow.length > cTomorrow && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksTomorrow.length - cTomorrow} more</NonTaskDiv>}
             </TaskSectionDiv>}
             {tasksSoon.length > 0 && <TaskSectionDiv style={{ opacity: 0.25 }}>
-                {tasksSoon.map(t => <Task key={t.id} task={t} />)}
+                {tasksSoon.slice(0, cSoon).map(t => <Task key={t.id} task={t} />)}
+                {tasksSoon.length > cSoon && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksSoon.length - cSoon} more</NonTaskDiv>}
             </TaskSectionDiv>}
         </OverflowFaderDiv>
         <TaskCountContainerDiv>
