@@ -111,14 +111,20 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
 
     // if all tasks don't fit then we collapse sections in the following order: soon, tomorrow, backlog, neglected
     let remainingCount = 11 - tasksEasy.length - tasksTodayPrio.length - tasksToday.length - tasksNeglected.length - tasksBacklog.length - tasksTomorrow.length - tasksSoon.length;
-    const cSoon = Math.min(tasksSoon.length, Math.max(1, remainingCount));
-    remainingCount += tasksSoon.length - cSoon;
-    const cTomorrow = Math.min(tasksTomorrow.length, Math.max(1, remainingCount));
-    remainingCount += tasksTomorrow.length - cTomorrow;
+    remainingCount += tasksSoon.length;
+    const cSoon = Math.min(tasksSoon.length, Math.max(0, remainingCount)); // 0: allow it to scroll off entirely
+    remainingCount -= cSoon;
+    remainingCount += tasksTomorrow.length;
+    const cTomorrow = Math.min(tasksTomorrow.length, Math.max(0, remainingCount)); // 0: allow it to scroll off entirely
+    remainingCount -= cTomorrow;
+    remainingCount += tasksBacklog.length;
     const cBacklog = Math.min(tasksBacklog.length, Math.max(1, remainingCount));
-    remainingCount += tasksBacklog.length - cBacklog;
+    remainingCount -= cBacklog;
+    remainingCount += tasksNeglected.length;
     const cNeglected = Math.min(tasksNeglected.length, Math.max(1, remainingCount));
-    remainingCount += tasksNeglected.length - cNeglected;
+    remainingCount -= cNeglected;
+
+    function m1(v: number) { return Math.max(v, 1); }
 
     return <RemilkPanelContainer state={remilk} {...rest}>
         <OverflowFaderDiv>
@@ -140,12 +146,12 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
                 {tasksBacklog.length > cBacklog && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksBacklog.length - cBacklog} more</NonTaskDiv>}
             </TaskSectionDiv>}
             {tasksTomorrow.length > 0 && <TaskSectionDiv style={{ opacity: 0.5 }}>
-                {tasksTomorrow.slice(0, cTomorrow).map(t => <Task key={t.id} task={t} />)}
-                {tasksTomorrow.length > cTomorrow && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksTomorrow.length - cTomorrow} more</NonTaskDiv>}
+                {tasksTomorrow.slice(0, m1(cTomorrow)).map(t => <Task key={t.id} task={t} />)}
+                {tasksTomorrow.length > m1(cTomorrow) && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksTomorrow.length - m1(cTomorrow)} more</NonTaskDiv>}
             </TaskSectionDiv>}
             {tasksSoon.length > 0 && <TaskSectionDiv style={{ opacity: 0.25 }}>
-                {tasksSoon.slice(0, cSoon).map(t => <Task key={t.id} task={t} />)}
-                {tasksSoon.length > cSoon && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksSoon.length - cSoon} more</NonTaskDiv>}
+                {tasksSoon.slice(0, m1(cSoon)).map(t => <Task key={t.id} task={t} />)}
+                {tasksSoon.length > m1(cSoon) && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksSoon.length - m1(cSoon)} more</NonTaskDiv>}
             </TaskSectionDiv>}
         </OverflowFaderDiv>
         <TaskCountContainerDiv>
