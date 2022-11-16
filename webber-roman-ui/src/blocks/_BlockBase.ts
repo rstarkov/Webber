@@ -45,17 +45,21 @@ export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto)
             .withAutomaticReconnect({ nextRetryDelayInMilliseconds: () => null }) // auto reconnects mean we lose the distinction between 'connecting' and 'disconnected'; we need manual reconnect anyway because the initial connection failure is not subject to auto retries // (rc) => rc.previousRetryCount <= 2 ? 2_000 : 10_000 })
             .build();
         conn.on('Update', (dto: TDto) => {
-            basePatcher(dto);
-            patcher(dto);
-            setDto(dto);
-            setUpdates(u => u + 1);
-            timeDiffs.push(dto.sentUtc.diffNow('milliseconds').milliseconds);
-            if (timeDiffs.length > 20)
-                timeDiffs.shift();
-            if (timeDiffs.length >= 3)
-                timeCorrectionMs = timeDiffs.reduce(function (a, b) { return a + b; }, 0) / timeDiffs.length;
-            if (dto.errorMessage)
-                console.error(dto.errorMessage);
+            try {
+                basePatcher(dto);
+                patcher(dto);
+                setDto(dto);
+                setUpdates(u => u + 1);
+                timeDiffs.push(dto.sentUtc.diffNow('milliseconds').milliseconds);
+                if (timeDiffs.length > 20)
+                    timeDiffs.shift();
+                if (timeDiffs.length >= 3)
+                    timeCorrectionMs = timeDiffs.reduce(function (a, b) { return a + b; }, 0) / timeDiffs.length;
+                if (dto.errorMessage)
+                    console.error(dto.errorMessage);
+            } catch (e) {
+                console.error(e); // otherwise SignalR just swallows it and pretends everything is fine, thanks for wasting my time SignalR
+            }
         });
         conn.onreconnecting(() => { setStatus('connecting'); dbg('on reconnecting'); });
         conn.onreconnected(() => { setStatus('connected'); dbg('on reconnected'); });
