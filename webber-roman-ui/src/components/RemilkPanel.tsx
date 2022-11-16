@@ -59,11 +59,11 @@ const DueSpan = styled.span<{ overdue: boolean }>`
     color: ${p => p.overdue ? 'red' : '#359AFF'};
 `;
 
-function Task(p: { task: RemilkTask }): JSX.Element {
+function Task(p: { task: RemilkTask, nolate?: boolean }): JSX.Element {
     const overdue = p.task.dueUtc < DateTime.utc();
     return <TaskDiv style={{ borderLeftColor: PrioColors[p.task.priority] }}>
         {p.task.hasDueTime && <DueSpan overdue={overdue}>{p.task.dueUtc.toLocal().toFormat('HH:mm')}</DueSpan>}
-        {!p.task.hasDueTime && overdue && <DueSpan overdue={overdue}>late</DueSpan>}
+        {!p.task.hasDueTime && overdue && !p.nolate && <DueSpan overdue={overdue}>late</DueSpan>}
         {p.task.description}
     </TaskDiv>;
 }
@@ -110,7 +110,7 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
     const monthCount = tasks.filter(t => !t.tags.includes('easy') && t.dueUtc <= cutoffEndOfToday.plus({ day: 31 })).length;
 
     // if all tasks don't fit then we collapse sections in the following order: soon, tomorrow, backlog, neglected
-    let remainingCount = 11 - tasksEasy.length - tasksTodayPrio.length - tasksToday.length - tasksNeglected.length - tasksBacklog.length - tasksTomorrow.length - tasksSoon.length;
+    let remainingCount = 12 - tasksEasy.length - tasksTodayPrio.length - tasksToday.length - tasksNeglected.length - tasksBacklog.length - tasksTomorrow.length - tasksSoon.length;
     remainingCount += tasksSoon.length;
     const cSoon = Math.min(tasksSoon.length, Math.max(0, remainingCount)); // 0: allow it to scroll off entirely
     remainingCount -= cSoon;
@@ -142,7 +142,7 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
                 {tasksToday.map(t => <Task key={t.id} task={t} />)}
             </TaskSectionDiv>}
             {tasksBacklog.length > 0 && <TaskSectionDiv style={{ color: 'rgb(10, 139, 190)' }}>
-                {tasksBacklog.slice(0, cBacklog).map(t => <Task key={t.id} task={t} />)}
+                {tasksBacklog.slice(0, cBacklog).map(t => <Task key={t.id} task={t} nolate={true} />)}
                 {tasksBacklog.length > cBacklog && <NonTaskDiv style={{ fontSize: '70%' }}>... and {tasksBacklog.length - cBacklog} more</NonTaskDiv>}
             </TaskSectionDiv>}
             {tasksTomorrow.length > 0 && <TaskSectionDiv style={{ opacity: 0.5 }}>
