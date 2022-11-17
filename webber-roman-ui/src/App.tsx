@@ -4,6 +4,7 @@ import { useReloadBlock } from "./blocks/ReloadBlock";
 import { ClassicPage } from "./pages/ClassicPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ExperimentsPage } from "./pages/ExperimentsPage";
+import { WeatherPage } from "./pages/WeatherPage";
 
 export function App(): JSX.Element {
     const reload = useReloadBlock();
@@ -31,6 +32,7 @@ export function App(): JSX.Element {
         <Routes>
             <Route path='/' element={<DashboardPage />} />
             <Route path='/classic' element={<ClassicPage />} />
+            <Route path='/weather' element={<WeatherPage />} />
             <Route path='/experiments' element={<ExperimentsPage />} />
             <Route path='*' element={<p>Page Not Found</p>} />
         </Routes>

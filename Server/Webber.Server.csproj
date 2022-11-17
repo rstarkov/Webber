@@ -13,7 +13,9 @@
     <PackageReference Include="Google.Apis.Calendar.v3" Version="1.55.0.2500" />
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.8.9" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="6.0.0" />
+    <PackageReference Include="RT.Serialization.Xml" Version="2.0.1720" />
     <PackageReference Include="RT.Util.Core" Version="2.0.1702" />
+    <PackageReference Include="SkiaSharp" Version="2.88.3" />
     <PackageReference Include="SolarCalculator" Version="3.0.6" />
     <PackageReference Include="Topshelf" Version="4.3.0" />
   </ItemGroup>

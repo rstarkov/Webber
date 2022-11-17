@@ -10,14 +10,15 @@ import { RemilkBlockProvider } from './blocks/RemilkBlock';
 import { DebugBlockProvider } from './blocks/DebugBlock';
 import { ReloadBlockProvider } from './blocks/ReloadBlock';
 import { RouterBlockProvider } from './blocks/RouterBlock';
+import { RainCloudBlockProvider } from './blocks/RainCloudBlock';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <GlobalStyle />
-        <DebugBlockProvider><ReloadBlockProvider><PingBlockProvider><RouterBlockProvider><WeatherBlockProvider><TimeUntilBlockProvider><RemilkBlockProvider>
+        <DebugBlockProvider><ReloadBlockProvider><PingBlockProvider><RouterBlockProvider><WeatherBlockProvider><TimeUntilBlockProvider><RemilkBlockProvider><RainCloudBlockProvider>
             <BrowserRouter>
                 <App />
             </BrowserRouter>
-        </RemilkBlockProvider></TimeUntilBlockProvider></WeatherBlockProvider></RouterBlockProvider></PingBlockProvider></ReloadBlockProvider></DebugBlockProvider>
+        </RainCloudBlockProvider></RemilkBlockProvider></TimeUntilBlockProvider></WeatherBlockProvider></RouterBlockProvider></PingBlockProvider></ReloadBlockProvider></DebugBlockProvider>
     </React.StrictMode>
 );
