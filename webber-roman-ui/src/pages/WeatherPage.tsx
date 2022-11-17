@@ -139,8 +139,8 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], hoursSt
             <line key='sunset' x1={getX(sunset) + '%'} x2={getX(sunset) + '%'} y1='0%' y2={chartHeight + '%'} stroke={sunlineColor} strokeDasharray='3' />
         </g>
 
-        {hours.filter(hr => hr.hour < 9 || (hr.hour % 2) == 0).map((hr, i) => <svg key={`${i}_tx`} x={(hr.centerX - textHeight / 2) + '%'} y={(100 - textHeight) + '%'} width={textHeight + '%'} height={textHeight + '%'} viewBox='0 0 1 1'>
-            <text x='0.5' y='0' fontSize='1' fill='#ccc' textAnchor='middle' dominantBaseline='hanging'>{hr.hour}</text>
+        {hours.filter(hr => (hr.hour % 2) == 0).map((hr, i) => <svg key={`${i}_tx`} x={(hr.centerX - textHeight / 2) + '%'} y={(100 - textHeight) + '%'} width={textHeight + '%'} height={textHeight + '%'} viewBox='0 0 1 1'>
+            <text x='0.5' y='0' fontSize='1' fill='#ccc' textAnchor='middle' dominantBaseline='hanging'>{hr.hour.toLocaleString('en-US', { minimumIntegerDigits: 2 })}</text>
         </svg>)}
         {cloudPts.map((pt, i) => pt.samples.map((sm, j) => {
             const gap = pt.widthL! + pt.widthR! > 2 ? 0 : pt.widthL! + pt.widthR! > 0.4 ? 0.05 : -0.15 /* negative to make them blend together */;
@@ -181,8 +181,8 @@ function RainCloud(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
         return <></>;
 
     return <RainCloudDiv {...props}>
-        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} hoursStart={4.5} hoursTotal={24} labelScale={1} />
-        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} hoursStart={24 + 4.5} hoursTotal={24} labelScale={1} />
+        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} hoursStart={5} hoursTotal={24} labelScale={1} />
+        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} hoursStart={24 + 5} hoursTotal={24} labelScale={1} />
     </RainCloudDiv >;
 }
 
