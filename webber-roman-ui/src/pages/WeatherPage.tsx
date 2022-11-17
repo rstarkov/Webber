@@ -135,11 +135,12 @@ function RainChart(p: { data: RainCloudPtDto[], hoursStart: number, hoursTotal: 
             <text x='0.5' y='0' fontSize='1' fill='#ccc' textAnchor='middle' dominantBaseline='hanging'>{hr.hour}</text>
         </svg>)}
         {pts.map((pt, i) => pt.samples.map((sm, j) => {
+            const gap = pt.widthL! + pt.widthR! > 0.4 ? 0.05 : -0.15 /* negative to make them blend together */;
             return <rect
                 key={`${i}_${j}_1`}
-                x={`${pt.centerX - pt.widthL!}%`}
+                x={`${pt.centerX - pt.widthL! + gap}%`}
                 y={`${chartHeight / 100 * (100 - sm.y - sm.height)}%`}
-                width={`${pt.widthL! + pt.widthR! - 0.1}%`}
+                width={`${pt.widthL! + pt.widthR! - gap}%`}
                 height={`${chartHeight / 100 * sm.height}%`}
                 fill={sm.color}
                 strokeWidth='0'>
@@ -159,10 +160,10 @@ function RainCloud(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     if (!rb.dto)
         return <></>;
 
-    const rainColors = ['#000', '#0000fe', '#3265fe', '#0cbcfe', '#00a300', '#fecb00', '#fe9800', '#fe0000', '#b30000'];
+    const rainColors = ['#000', '#0000b1', '#0051dd', '#0cbcfe', '#00a300', '#fecb00', '#fe9800', '#fe0000', '#b30000'];
     const cloudColors = ['#0800ff', '#1b14f7', '#2f28ef', '#423de7', '#5551df', '#6965d6', '#7c79ce', '#8f8ec6', '#a3a2be', '#B6B6B6'];
-    const rainScales = [0, 0.5, 0.6, 0.75, 0.8, 0.85, 0.9, 0.95, 1];
-    const cloudScales = [0, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.75, 0.95, 1];
+    const rainScales = [0, 0.4, 0.6, 0.75, 0.9, 1, 1, 1, 1];
+    const cloudScales = [0, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.75, 1, 1];
 
     return <RainCloudDiv {...props}>
         <RainChart data={rb.dto.rain} hoursStart={4.5} hoursTotal={24} colormap={rainColors} scalemap={rainScales} labelScale={1} />
