@@ -9,7 +9,6 @@ import { PingBox } from "../components/PingBox";
 // TODO: these clocks don't update properly!
 // TODO: share the times axis between rain and clouds
 // TODO: switches to next day too early
-// TODO: darker cloud chart
 
 const ZonesClockDiv = styled.div`
     display: grid;
@@ -45,8 +44,7 @@ function MainClock(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
 
 const RainCloudDiv = styled.div`
     display: grid;
-    grid-auto-flow: column;
-    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     grid-gap: 2vw 1vw;
 `;
 
@@ -63,7 +61,7 @@ interface barSample {
     color: string;
 }
 
-function RainChart(p: { data: RainCloudPtDto[], hoursStart: number, hoursTotal: number, colormap: string[], scalemap: number[], labelScale: number }): JSX.Element {
+function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], hoursStart: number, hoursTotal: number, labelScale: number }): JSX.Element {
     const wb = useWeatherBlock();
     if (!wb.dto)
         return <></>;
@@ -81,27 +79,37 @@ function RainChart(p: { data: RainCloudPtDto[], hoursStart: number, hoursTotal: 
     const gridColor = '#444';
 
     function getX(dt: DateTime): number { return 100 * (dt.diff(fr)).as('hours') / p.hoursTotal; }
-    function getSamples(counts: number[]): barSample[] {
-        let total = counts.reduce((a, b) => a + b, 0);
-        let y = 0;
-        let result: barSample[] = [];
-        for (let i = counts.length - 1; i >= 0; i--) {
-            if (counts[i] > 0 && p.colormap[i] != '#000') {
-                let height = 100 * counts[i] * p.scalemap[i] / total;
-                result.push({ y, height, color: p.colormap[i] });
-                y += height;
+
+    function getPts(data: RainCloudPtDto[], colormap: string[], scalemap: number[]) {
+        function getSamples(counts: number[]): barSample[] {
+            let total = counts.reduce((a, b) => a + b, 0);
+            let y = 0;
+            let result: barSample[] = [];
+            for (let i = counts.length - 1; i >= 0; i--) {
+                if (counts[i] > 0 && colormap[i] != '#000') {
+                    let height = 100 * counts[i] * scalemap[i] / total;
+                    result.push({ y, height, color: colormap[i] });
+                    y += height;
+                }
             }
+            return result;
         }
-        return result;
+        let pts: bar[] = data.filter(pt => pt.counts != null).map(pt => ({ pt, centerX: getX(pt.atUtc), samples: getSamples(pt.counts) })).filter(pt => pt.centerX >= 0 && pt.centerX <= 100);
+        for (let i = 1; i < pts.length; i++) {
+            let mX = (pts[i - 1].centerX + pts[i].centerX) / 2;
+            pts[i - 1].widthR = mX - pts[i - 1].centerX;
+            pts[i].widthL = pts[i].centerX - mX;
+        }
+        pts[0].widthL = pts[0].widthR;
+        pts[pts.length - 1].widthR = pts[pts.length - 1].widthL;
+        return pts;
     }
-    let pts: bar[] = p.data.filter(pt => pt.counts != null).map(pt => ({ pt, centerX: getX(pt.atUtc), samples: getSamples(pt.counts) })).filter(pt => pt.centerX >= 0 && pt.centerX <= 100);
-    for (let i = 1; i < pts.length; i++) {
-        let mX = (pts[i - 1].centerX + pts[i].centerX) / 2;
-        pts[i - 1].widthR = mX - pts[i - 1].centerX;
-        pts[i].widthL = pts[i].centerX - mX;
-    }
-    pts[0].widthL = pts[0].widthR;
-    pts[pts.length - 1].widthR = pts[pts.length - 1].widthL;
+    const rainPts = getPts(p.rain,
+        ['#000', '#0000fe', '#0660fe', '#0cbcfe', '#00a300', '#fecb00', '#fe9800', '#fe0000', '#b30000'],
+        [0, 0.4, 0.6, 0.75, 0.9, 1, 1, 1, 1]);
+    const cloudPts = getPts(p.cloud,
+        ['#aaa0', '#aaa2', '#aaa2', '#aaa2', '#aaa3', '#aaa4', '#aaa5', '#aaa5', '#aaa6', '#aaa7'],
+        [0, 0.1, 0.15, 0.2, 0.3, 0.5, 0.7, 1, 1, 1]);
 
     let firstHour = fr.startOf('hour');
     let hours = Array.from(Array(p.hoursTotal + 1), (_, i) => firstHour.plus({ hours: i })).map(h => ({ hour: h.hour, centerX: getX(h) })).filter(h => h.centerX > 0 && h.centerX < 100);
@@ -134,10 +142,22 @@ function RainChart(p: { data: RainCloudPtDto[], hoursStart: number, hoursTotal: 
         {hours.filter(hr => hr.hour < 9 || (hr.hour % 2) == 0).map((hr, i) => <svg key={`${i}_tx`} x={(hr.centerX - textHeight / 2) + '%'} y={(100 - textHeight) + '%'} width={textHeight + '%'} height={textHeight + '%'} viewBox='0 0 1 1'>
             <text x='0.5' y='0' fontSize='1' fill='#ccc' textAnchor='middle' dominantBaseline='hanging'>{hr.hour}</text>
         </svg>)}
-        {pts.map((pt, i) => pt.samples.map((sm, j) => {
-            const gap = pt.widthL! + pt.widthR! > 0.4 ? 0.05 : -0.15 /* negative to make them blend together */;
+        {cloudPts.map((pt, i) => pt.samples.map((sm, j) => {
+            const gap = pt.widthL! + pt.widthR! > 2 ? 0 : pt.widthL! + pt.widthR! > 0.4 ? 0.05 : -0.15 /* negative to make them blend together */;
             return <rect
                 key={`${i}_${j}_1`}
+                x={`${pt.centerX - pt.widthL! + gap}%`}
+                y={`${chartHeight / 100 * (100 - sm.y - sm.height)}%`}
+                width={`${pt.widthL! + pt.widthR! - gap}%`}
+                height={`${chartHeight / 100 * sm.height}%`}
+                fill={sm.color}
+                strokeWidth='0'>
+            </rect>;
+        }))}
+        {rainPts.map((pt, i) => pt.samples.map((sm, j) => {
+            const gap = pt.widthL! + pt.widthR! > 0.4 ? 0.05 : -0.15 /* negative to make them blend together */;
+            return <rect
+                key={`${i}_${j}_2`}
                 x={`${pt.centerX - pt.widthL! + gap}%`}
                 y={`${chartHeight / 100 * (100 - sm.y - sm.height)}%`}
                 width={`${pt.widthL! + pt.widthR! - gap}%`}
@@ -160,16 +180,9 @@ function RainCloud(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     if (!rb.dto)
         return <></>;
 
-    const rainColors = ['#000', '#0000b1', '#0051dd', '#0cbcfe', '#00a300', '#fecb00', '#fe9800', '#fe0000', '#b30000'];
-    const cloudColors = ['#0800ff', '#1b14f7', '#2f28ef', '#423de7', '#5551df', '#6965d6', '#7c79ce', '#8f8ec6', '#a3a2be', '#B6B6B6'];
-    const rainScales = [0, 0.4, 0.6, 0.75, 0.9, 1, 1, 1, 1];
-    const cloudScales = [0, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.75, 1, 1];
-
     return <RainCloudDiv {...props}>
-        <RainChart data={rb.dto.rain} hoursStart={4.5} hoursTotal={24} colormap={rainColors} scalemap={rainScales} labelScale={1} />
-        <RainChart data={rb.dto.cloud} hoursStart={4.5} hoursTotal={24} colormap={cloudColors} scalemap={cloudScales} labelScale={1} />
-        <RainChart data={rb.dto.rain} hoursStart={24 + 4.5} hoursTotal={24} colormap={rainColors} scalemap={rainScales} labelScale={1} />
-        <RainChart data={rb.dto.cloud} hoursStart={24 + 4.5} hoursTotal={24} colormap={cloudColors} scalemap={cloudScales} labelScale={1} />
+        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} hoursStart={4.5} hoursTotal={24} labelScale={1} />
+        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} hoursStart={24 + 4.5} hoursTotal={24} labelScale={1} />
     </RainCloudDiv >;
 }
 
@@ -182,7 +195,7 @@ export function WeatherPage(): JSX.Element {
             <ZonesClock style={{ position: 'absolute', left: '38vw', top: '18vh', width: '27vw' }} />
             <PingBox style={{ position: 'absolute', top: '0vw', right: '0', width: '34vw', height: '26vw' }} />
             <WeatherBox style={{ position: 'absolute', top: '0vw', left: '0vw', width: '37vw', height: '26vw' }} />
-            <RainCloud style={{ position: 'absolute', left: '0vw', top: '50vh', width: '100vw', height: '50vh' }} />
+            <RainCloud style={{ position: 'absolute', left: '0vw', top: '75vh', width: '100vw', height: '25vh' }} />
 
             <NavOverlay state={overlay} />
         </>
