@@ -5,8 +5,7 @@ import { NavOverlay, useNavOverlayState } from "../components/NavOverlay";
 import { RainCloudPtDto, useRainCloudBlock } from "../blocks/RainCloudBlock";
 import { WeatherBox } from "../components/WeatherBox";
 import { PingBox } from "../components/PingBox";
-
-// TODO: these clocks don't update properly!
+import { useTime } from "../util/useTime";
 
 const ZonesClockDiv = styled.div`
     display: grid;
@@ -21,10 +20,11 @@ const ZoneTime = styled.div`
 `;
 
 function ZonesClock(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+    const { time } = useTime();
     return <ZonesClockDiv {...props}>
-        <ZoneName>Ukr</ZoneName><ZoneTime>{DateTime.utc().setZone('Europe/Kiev').toFormat('HH:mm')}</ZoneTime>
-        <ZoneName style={{ fontWeight: 'bold' }}>UTC</ZoneName><ZoneTime style={{ fontWeight: 'bold' }}>{DateTime.utc().toFormat('HH:mm')}</ZoneTime>
-        <ZoneName>Can</ZoneName><ZoneTime>{DateTime.utc().setZone('Canada/Mountain').toFormat('HH:mm')}</ZoneTime>
+        <ZoneName>Ukr</ZoneName><ZoneTime>{time.setZone('Europe/Kiev').toFormat('HH:mm')}</ZoneTime>
+        <ZoneName style={{ fontWeight: 'bold' }}>UTC</ZoneName><ZoneTime style={{ fontWeight: 'bold' }}>{time.toFormat('HH:mm')}</ZoneTime>
+        <ZoneName>Can</ZoneName><ZoneTime>{time.setZone('Canada/Mountain').toFormat('HH:mm')}</ZoneTime>
     </ZonesClockDiv>;
 }
 
@@ -35,8 +35,9 @@ const MainClockDiv = styled.div`
 `;
 
 function MainClock(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+    const { time } = useTime();
     return <MainClockDiv {...props}>
-        {DateTime.local().toFormat('HH:mm')}
+        {time.toLocal().toFormat('HH:mm')}
     </MainClockDiv>;
 }
 
@@ -103,7 +104,7 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
         [0, 0.4, 0.6, 0.75, 0.9, 1, 1, 1, 1]);
     const cloudPts = getPts(p.cloud,
         ['#aaa0', '#aaa2', '#aaa2', '#aaa2', '#aaa3', '#aaa4', '#aaa5', '#aaa5', '#aaa5', '#aaa5'],
-        [0, 0.1, 0.15, 0.2, 0.3, 0.5, 0.7, 1, 1, 1]);
+        [0, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.7, 0.9, 1]);
 
     let firstHour = p.from.startOf('hour');
     let hours = Array.from(Array(p.hoursTotal + 1), (_, i) => firstHour.plus({ hours: i })).map(h => ({ hour: h.hour, centerX: getX(h) })).filter(h => h.centerX > 0 && h.centerX < 100);
