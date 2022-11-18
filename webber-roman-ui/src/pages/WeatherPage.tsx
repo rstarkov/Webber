@@ -7,8 +7,6 @@ import { WeatherBox } from "../components/WeatherBox";
 import { PingBox } from "../components/PingBox";
 
 // TODO: these clocks don't update properly!
-// TODO: share the times axis between rain and clouds
-// TODO: switches to next day too early
 
 const ZonesClockDiv = styled.div`
     display: grid;
@@ -61,24 +59,20 @@ interface barSample {
     color: string;
 }
 
-function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], hoursStart: number, hoursTotal: number, labelScale: number }): JSX.Element {
+function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: DateTime, hoursTotal: number, labelScale: number }): JSX.Element {
     const wb = useWeatherBlock();
     if (!wb.dto)
         return <></>;
 
-    const fr = DateTime.now().startOf('day').plus({ hours: p.hoursStart });
-    let sunrise = DateTime.fromISO(wb.dto.sunriseTime);
-    let sunset = DateTime.fromISO(wb.dto.sunsetTime);
-    if (p.hoursStart >= 24) {
-        sunrise = sunrise.plus({ days: 1 });
-        sunset = sunset.plus({ days: 1 });
-    }
+    let sunrise = DateTime.fromISO(wb.dto.sunriseTime).set({ year: p.from.year, month: p.from.month, day: p.from.day });
+    let sunset = DateTime.fromISO(wb.dto.sunsetTime).set({ year: p.from.year, month: p.from.month, day: p.from.day });;
+
     const nightColor = '#013'; // #081133
     const dayColor = '#330';
     const sunlineColor = '#880'; // sunrise & sunset line
     const gridColor = '#777';
 
-    function getX(dt: DateTime): number { return 100 * (dt.diff(fr)).as('hours') / p.hoursTotal; }
+    function getX(dt: DateTime): number { return 100 * (dt.diff(p.from)).as('hours') / p.hoursTotal; }
 
     function getPts(data: RainCloudPtDto[], colormap: string[], scalemap: number[]) {
         function getSamples(counts: number[]): barSample[] {
@@ -111,7 +105,7 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], hoursSt
         ['#aaa0', '#aaa2', '#aaa2', '#aaa2', '#aaa3', '#aaa4', '#aaa5', '#aaa5', '#aaa5', '#aaa5'],
         [0, 0.1, 0.15, 0.2, 0.3, 0.5, 0.7, 1, 1, 1]);
 
-    let firstHour = fr.startOf('hour');
+    let firstHour = p.from.startOf('hour');
     let hours = Array.from(Array(p.hoursTotal + 1), (_, i) => firstHour.plus({ hours: i })).map(h => ({ hour: h.hour, centerX: getX(h) })).filter(h => h.centerX > 0 && h.centerX < 100);
 
     const textHeight = 15 * p.labelScale;
@@ -190,9 +184,15 @@ function RainCloud(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     if (!rb.dto)
         return <></>;
 
+    const startHour = 5;
+    let from = DateTime.now();
+    if (from < from.startOf('day').plus({ hours: startHour }))
+        from = from.plus({ days: -1 });
+    from = from.startOf('day').plus({ hours: startHour });
+
     return <RainCloudDiv {...props}>
-        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} hoursStart={5} hoursTotal={24} labelScale={1} />
-        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} hoursStart={24 + 5} hoursTotal={24} labelScale={1} />
+        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} from={from} hoursTotal={24} labelScale={1} />
+        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} from={from.plus({ days: 1 })} hoursTotal={24} labelScale={1} />
     </RainCloudDiv >;
 }
 
