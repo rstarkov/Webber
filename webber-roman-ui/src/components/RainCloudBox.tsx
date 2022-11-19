@@ -41,20 +41,20 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
     function getX(dt: DateTime): number { return 100 * (dt.diff(p.from)).as('hours') / p.hoursTotal; }
 
     function getPts(data: RainCloudPtDto[], colormap: string[], scalemap: number[]) {
-        function getSamples(counts: number[]): barSample[] {
-            let total = counts.reduce((a, b) => a + b, 0);
+        function getSamples(p: RainCloudPtDto): barSample[] {
+            let total = p.counts.reduce((a, b) => a + b, 0);
             let y = 0;
             let result: barSample[] = [];
-            for (let i = counts.length - 1; i >= 0; i--) {
-                if (counts[i] > 0 && colormap[i] != '#000') {
-                    let height = 100 * counts[i] * scalemap[i] / total;
+            for (let i = p.counts.length - 1; i >= 0; i--) {
+                if (p.counts[i] > 0 && colormap[i] != '#000') {
+                    let height = 100 * p.counts[i] * (p.isForecast ? scalemap[i] : 1) / total;
                     result.push({ y, height, color: colormap[i] });
                     y += height;
                 }
             }
             return result;
         }
-        let pts: bar[] = data.filter(pt => pt.counts != null).map(pt => ({ pt, centerX: getX(pt.atUtc), samples: getSamples(pt.counts) })).filter(pt => pt.centerX >= 0 && pt.centerX <= 100);
+        let pts: bar[] = data.filter(pt => pt.counts != null).map(pt => ({ pt, centerX: getX(pt.atUtc), samples: getSamples(pt) })).filter(pt => pt.centerX >= 0 && pt.centerX <= 100);
         for (let i = 1; i < pts.length; i++) {
             let mX = (pts[i - 1].centerX + pts[i].centerX) / 2;
             pts[i - 1].widthR = mX - pts[i - 1].centerX;

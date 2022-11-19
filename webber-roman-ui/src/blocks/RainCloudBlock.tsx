@@ -11,6 +11,7 @@ export interface RainCloudBlockDto extends BaseDto {
 export interface RainCloudPtDto {
     atUtc: DateTime;
     counts: number[];
+    isForecast: boolean;
 }
 
 function dtoPatcher(dto: RainCloudBlockDto) {

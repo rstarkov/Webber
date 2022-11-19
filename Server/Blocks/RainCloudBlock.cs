@@ -79,8 +79,8 @@ class RainCloudBlockServer : SimpleBlockServerBase<RainCloudBlockDto>
 
         var dto = new RainCloudBlockDto { ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromMinutes(30) };
         var maxPast = rainPast.Max(r => r.Time);
-        dto.Rain = rainPast.Select(p => GetPt(p, newPoints, _cRain)).Concat(rainFore.Where(r => r.Time > maxPast).Select(p => GetPt(p, newPoints, _cRain))).ToArray();
-        dto.Cloud = cloudFore.Select(p => GetPt(p, newPoints, _cCloud)).ToArray();
+        dto.Rain = rainPast.Select(p => GetPt(p, newPoints, _cRain, false)).Concat(rainFore.Where(r => r.Time > maxPast).Select(p => GetPt(p, newPoints, _cRain, true))).ToArray();
+        dto.Cloud = cloudFore.Select(p => GetPt(p, newPoints, _cCloud, true)).ToArray();
 
         _havePoints = newPoints;
         if (_config.CachePath != null)
@@ -89,7 +89,7 @@ class RainCloudBlockServer : SimpleBlockServerBase<RainCloudBlockDto>
         return dto;
     }
 
-    private RainCloudPtDto GetPt(MetOfficeMapsService.Timestep ts, Dictionary<string, RainCloudPtDto> newPoints, Dictionary<SKColor, int> colormap)
+    private RainCloudPtDto GetPt(MetOfficeMapsService.Timestep ts, Dictionary<string, RainCloudPtDto> newPoints, Dictionary<SKColor, int> colormap, bool isForecast)
     {
         RainCloudPtDto result;
 
@@ -97,7 +97,7 @@ class RainCloudBlockServer : SimpleBlockServerBase<RainCloudBlockDto>
             result = _havePoints[ts.Url];
         else
         {
-            result = new RainCloudPtDto { AtUtc = ts.Time, Counts = null };
+            result = new RainCloudPtDto { AtUtc = ts.Time, Counts = null, IsForecast = isForecast };
             // download and decode bitmap
             SKBitmap bmp = null;
             try
