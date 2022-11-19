@@ -2,9 +2,7 @@ import styled from "styled-components";
 import { useWeatherForecastBlock, WeatherForecastDayDto } from "../blocks/WeatherForecastBlock";
 import { WeatherTypeIcon } from "../components/WeatherTypeIcon";
 
-// TODO: min temp for today and maybe wind speed
 // TODO: colors for temperatures
-// TODO: better wind image
 // TODO: connection/update status indicator
 
 const weekdays = [null, 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -17,6 +15,7 @@ const ForecastDayDiv = styled.div`
     display: grid;
     border: 1px solid #444;
     justify-items: center;
+    position: relative;
 `;
 
 const HeadingDiv = styled.div`
@@ -41,6 +40,13 @@ const RainProbDiv = styled.div`
     font-size: 2.3vw;
     font-weight: bold;
 `;
+const BottomDetailDiv = styled.div`
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    align-items: end;
+    padding: 0 0.5vw;
+`;
 
 
 function ForecastDay(p: { dto: WeatherForecastDayDto, mode: 'today' | 'big' | 'small' }): JSX.Element {
@@ -48,10 +54,13 @@ function ForecastDay(p: { dto: WeatherForecastDayDto, mode: 'today' | 'big' | 's
     const cellBack = p.dto.date.weekday >= 6 ? '#333' : '#181818';
     const cellBorder = p.dto.date.weekday >= 6 ? '#777' : '#444';
     const cellMargin = p.dto.date.weekday == 7 ? '2vw' : '0';
-    const headingText = p.mode == 'today' ? 'TODAY' : weekdays[p.dto.date.weekday];
-    const wind = p.mode == 'small' ? 0 : p.dto.windMph > 27 || p.dto.gustMph > 42 ? 1 : p.dto.windMph >= 18 || p.dto.gustMph >= 31 ? 0.6 : 0;
+    const headingText = p.mode == 'today' ? 'Today' : weekdays[p.dto.date.weekday];
     const rainShowLimit = p.mode == 'today' ? 15 : p.mode == 'big' ? 20 : 999;
     const rainText = p.dto.rainProbability < rainShowLimit ? null : (p.dto.rainProbability / 10).toFixed(0);
+    const windVal = Math.max(p.dto.windMph, p.dto.gustMph / 2);
+    const wind = /*p.mode == 'small' ? 0 : */windVal > 27 ? 1 : windVal >= 18 ? 0.6 : /*windVal >= 12 ? 0.3 :*/ 0;
+    //const windText = windVal <= 3 ? 'calm' : windVal <= 7 ? 'gentle' : windVal <= 12 ? 'breeze' : windVal <= 18 ? 'wind' : windVal <= 31 ? 'gale' : 'WIMDY';
+    const windColor = windVal <= 3 ? '#555' : windVal <= 7 ? '#0f0' : windVal <= 12 ? '#009dff' : windVal <= 18 ? '#ff0' : windVal <= 31 ? '#f00' : '#f0f';
 
     return <ForecastDayDiv style={{ flex: cellSize, background: cellBack, marginRight: cellMargin, borderColor: cellBorder }}>
         <HeadingDiv>{headingText}</HeadingDiv>
@@ -60,7 +69,13 @@ function ForecastDay(p: { dto: WeatherForecastDayDto, mode: 'today' | 'big' | 's
             {!!rainText && <RainProbDiv style={{ color: '#0000', WebkitTextStroke: '0.25vw #fff' }}>{rainText}</RainProbDiv>}
             {!!rainText && <RainProbDiv style={{ color: '#000' }}>{rainText}</RainProbDiv>}
         </WeatherIconDiv>
-        <div>{p.dto.tempMaxC}°</div>
+        <div style={{ height: '2px', width: windVal + '%', background: windColor }}></div>
+        <div style={{ visibility: p.mode != 'today' ? 'visible' : 'hidden' }}>{p.dto.tempMaxC}°</div>
+        {p.mode == 'today' && <BottomDetailDiv>
+            <div style={{ flex: 1, fontSize: '1.8vw' }}>1{p.dto.windMph}</div>
+            <div style={{ flex: 1, fontSize: '3.2vw', textAlign: 'center' }}>{p.dto.tempMaxC}°</div>
+            <div style={{ flex: 1, fontSize: '2.0vw', textAlign: 'center' }}>{p.dto.tempMinC}°</div>
+        </BottomDetailDiv>}
     </ForecastDayDiv>;
 }
 
