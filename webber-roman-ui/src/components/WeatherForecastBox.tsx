@@ -5,6 +5,7 @@ import { WeatherTypeIcon } from "../components/WeatherTypeIcon";
 // TODO: min temp for today and maybe wind speed
 // TODO: colors for temperatures
 // TODO: better wind image
+// TODO: connection/update status indicator
 
 const weekdays = [null, 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
