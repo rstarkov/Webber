@@ -49,7 +49,7 @@ export function WeatherPage(): JSX.Element {
             <ZonesClock style={{ position: 'absolute', left: '38vw', top: '18vh', width: '27vw' }} />
             <PingBox style={{ position: 'absolute', top: '0vw', right: '0', width: '34vw', height: '26vw' }} />
             <WeatherBox style={{ position: 'absolute', top: '0vw', left: '0vw', width: '37vw', height: '26vw' }} />
-            <WeatherForecastBox style={{ position: 'absolute', left: '0vw', top: '49vh', width: '100vw' }} />
+            <WeatherForecastBox style={{ position: 'absolute', left: '0vw', top: '48.2vh', width: '100vw' }} />
             <RainCloudBox style={{ position: 'absolute', left: '0vw', top: '75vh', width: '100vw', height: '25vh' }} />
 
             <NavOverlay state={overlay} />
