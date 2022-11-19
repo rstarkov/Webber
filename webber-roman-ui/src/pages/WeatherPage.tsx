@@ -6,6 +6,7 @@ import { RainCloudPtDto, useRainCloudBlock } from "../blocks/RainCloudBlock";
 import { WeatherBox } from "../components/WeatherBox";
 import { PingBox } from "../components/PingBox";
 import { useTime } from "../util/useTime";
+import { WeatherForecastBox } from "../components/WeatherForecastBox";
 
 const ZonesClockDiv = styled.div`
     display: grid;
@@ -206,6 +207,8 @@ export function WeatherPage(): JSX.Element {
             <ZonesClock style={{ position: 'absolute', left: '38vw', top: '18vh', width: '27vw' }} />
             <PingBox style={{ position: 'absolute', top: '0vw', right: '0', width: '34vw', height: '26vw' }} />
             <WeatherBox style={{ position: 'absolute', top: '0vw', left: '0vw', width: '37vw', height: '26vw' }} />
+            <WeatherForecastBox style={{ position: 'absolute', left: '0vw', top: '49vh', width: '100vw' }} />
+
             <RainCloud style={{ position: 'absolute', left: '0vw', top: '75vh', width: '100vw', height: '25vh' }} />
 
             <NavOverlay state={overlay} />

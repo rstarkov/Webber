@@ -1,4 +1,6 @@
 ﻿using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Newtonsoft.Json.Linq;
 using Topshelf;
 using Webber.Server.Blocks;
@@ -34,7 +36,8 @@ class WebberService : ServiceControl
         builder.Logging.AddConsole2(); // disabled by default; enabled/configured in config JSON
         builder.Logging.AddFile(); // disabled by default; enabled/configured in config JSON
         builder.Services.AddControllers();
-        builder.Services.AddSignalR();
+        builder.Services.AddSignalR()
+            .AddJsonProtocol(opts => opts.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false)));
 
         var blockServerTypes = Assembly.GetExecutingAssembly().GetTypes().Where(t => !t.IsAbstract && t.IsAssignableTo(typeof(IBlockServer))).ToList();
         foreach (var blockServerType in blockServerTypes)
