@@ -46,8 +46,8 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
     private async Task<UserCredential> DoGoogleAuth()
     {
         using Stream stream = string.IsNullOrWhiteSpace(_config.AppCredentialsPath)
-         ? new MemoryStream(Encoding.UTF8.GetBytes(DefaultCredentialsJson))
-         : File.OpenRead(_config.AppCredentialsPath);
+            ? new MemoryStream(Encoding.UTF8.GetBytes(DefaultCredentialsJson))
+            : File.OpenRead(_config.AppCredentialsPath);
 
         using var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromMinutes(5));

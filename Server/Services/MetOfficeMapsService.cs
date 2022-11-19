@@ -46,8 +46,8 @@ public class MetOfficeMapsService
                 // merge all of them but latest model runs take precedence (lets us get forecasts for further in the past than the latest run offers)
                 var result = new Dictionary<DateTime, Timestep>();
                 foreach (var run in runs)
-                foreach (var ts in xml.Element("timesteps").Elements("timestep").Select(ts => new Timestep(ts.Value, run.Item2, $"/wms_fc/single/high-res/{submodel}/{Name}/{run.Item1}/{ts.Value}")))
-                    result[ts.Time] = ts;
+                    foreach (var ts in xml.Element("timesteps").Elements("timestep").Select(ts => new Timestep(ts.Value, run.Item2, $"/wms_fc/single/high-res/{submodel}/{Name}/{run.Item1}/{ts.Value}")))
+                        result[ts.Time] = ts;
                 return result.Values.OrderBy(ts => ts.Time).ToList();
             }
             else

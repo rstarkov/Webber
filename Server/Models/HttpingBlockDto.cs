@@ -30,4 +30,3 @@ public record struct HttpingIntervalDto
     public int TimeoutCount { get; set; }
     public int ErrorCount { get; set; }
 }
-

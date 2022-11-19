@@ -107,12 +107,12 @@ public static class TopshelfExtensions
 
             // persist the new image path
             if (!ChangeServiceConfig(serviceHandle,
-                SERVICE_NO_CHANGE,
-                SERVICE_NO_CHANGE,
-                SERVICE_NO_CHANGE,
-                newImagePath,
-                null, IntPtr.Zero,
-                null, null, null, null))
+                    SERVICE_NO_CHANGE,
+                    SERVICE_NO_CHANGE,
+                    SERVICE_NO_CHANGE,
+                    newImagePath,
+                    null, IntPtr.Zero,
+                    null, null, null, null))
                 throw new Win32Exception();
         }
         finally

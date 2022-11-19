@@ -31,6 +31,4 @@ class TimeBlockServer : SimpleBlockServerBase<TimeBlockDto>
         dto.TimeZones = _config.ExtraTimezones.Select(tz => new TimeBlockDto.TimeZoneDto { DisplayName = tz.DisplayName, OffsetHours = Util.GetUtcOffset(tz.TimezoneName) }).ToArray();
         return dto;
     }
-
-
 }
