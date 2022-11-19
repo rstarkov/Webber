@@ -80,11 +80,11 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
         dto.MaxTemperatureAtTime = $"{max.time.ToLocalTime():HH:mm}";
         dto.MaxTemperatureAtDay = max.time.ToLocalTime().Date == DateTime.Today ? "today" : "yesterday";
 
-        dto.CurTemperatureColor = getTemperatureColor(dto.CurTemperature, getTemperatureDeviation(DateTime.Now, avg));
-        dto.MinTemperatureColor = getTemperatureColor(min.temp, getTemperatureDeviation(min.time.ToLocalTime(), avg));
-        dto.MaxTemperatureColor = getTemperatureColor(max.temp, getTemperatureDeviation(max.time.ToLocalTime(), avg));
-        var high = getTemperatureDeviation(DateTime.Today.AddDays(-1).AddHours(15), avg);
-        var low = getTemperatureDeviation(DateTime.Today.AddDays(-1).AddHours(5), avg);
+        dto.CurTemperatureColor = getTemperatureColor(dto.CurTemperature, getTemperatureDeviation(DateTime.Now, TimeSpan.FromHours(1), avg));
+        dto.MinTemperatureColor = getTemperatureColor(min.temp, getTemperatureDeviation(min.time.ToLocalTime(), TimeSpan.FromHours(1), avg));
+        dto.MaxTemperatureColor = getTemperatureColor(max.temp, getTemperatureDeviation(max.time.ToLocalTime(), TimeSpan.FromHours(1), avg));
+        var high = getTemperatureDeviation(DateTime.Today.AddHours(14), TimeSpan.FromHours(3), avg);
+        var low = getTemperatureDeviation(DateTime.Today.AddHours(4.5), TimeSpan.FromHours(3), avg);
         dto.RecentHighTempMean = high.mean;
         dto.RecentHighTempStdev = high.stdev;
         dto.RecentLowTempMean = low.mean;
@@ -119,14 +119,14 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
             return result;
     }
 
-    private static (double mean, double stdev) getTemperatureDeviation(DateTime tempTime, List<(DateTime time, decimal temp)> avg)
+    private static (double mean, double stdev) getTemperatureDeviation(DateTime tempTime, TimeSpan range, List<(DateTime time, decimal temp)> avg)
     {
         var center = tempTime.ToLocalTime().AddDays(-1);
         var prevTempsAtSameTime = avg.Take(0).ToList(); // empty list of same type
         while (center.ToUniversalTime() > avg[0].time)
         {
-            var from = center.AddHours(-0.5);
-            var to = center.AddHours(0.5);
+            var from = center - range / 2;
+            var to = center + range / 2;
             var match = avg.Where(pt => pt.time >= from.ToUniversalTime() && pt.time <= to.ToUniversalTime()).MinElementOrDefault(pt => Math.Abs((pt.time - center.ToUniversalTime()).TotalSeconds));
             if (match.time != default(DateTime))
                 prevTempsAtSameTime.Add(match);
