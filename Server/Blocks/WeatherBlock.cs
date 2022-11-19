@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using Dapper;
 using Dapper.Contrib.Extensions;
 using Innovative.SolarCalculator;
@@ -34,9 +34,9 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
             using (var conn = _db.OpenConnection())
             {
                 _temperatures = conn.Query<TbWeatherTemperature>(
-                        $@"SELECT * FROM {nameof(TbWeatherTemperature)} WHERE {nameof(TbWeatherTemperature.Timestamp)} > @limit",
-                        new { limit = DateTime.UtcNow.AddDays(-8).ToDbDateTime() }
-                    ).ToDictionary(r => r.Timestamp.FromDbDateTime(), r => (decimal)r.Temperature);
+                    $@"SELECT * FROM {nameof(TbWeatherTemperature)} WHERE {nameof(TbWeatherTemperature.Timestamp)} > @limit",
+                    new { limit = DateTime.UtcNow.AddDays(-8).ToDbDateTime() }
+                ).ToDictionary(r => r.Timestamp.FromDbDateTime(), r => (decimal)r.Temperature);
             }
 
         base.Start();
@@ -80,9 +80,15 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
         dto.MaxTemperatureAtTime = $"{max.time.ToLocalTime():HH:mm}";
         dto.MaxTemperatureAtDay = max.time.ToLocalTime().Date == DateTime.Today ? "today" : "yesterday";
 
-        dto.CurTemperatureColor = getTemperatureDeviationColor(dto.CurTemperature, DateTime.Now, avg);
-        dto.MinTemperatureColor = getTemperatureDeviationColor(min.temp, min.time.ToLocalTime(), avg);
-        dto.MaxTemperatureColor = getTemperatureDeviationColor(max.temp, max.time.ToLocalTime(), avg);
+        dto.CurTemperatureColor = getTemperatureColor(dto.CurTemperature, getTemperatureDeviation(DateTime.Now, avg));
+        dto.MinTemperatureColor = getTemperatureColor(min.temp, getTemperatureDeviation(min.time.ToLocalTime(), avg));
+        dto.MaxTemperatureColor = getTemperatureColor(max.temp, getTemperatureDeviation(max.time.ToLocalTime(), avg));
+        var high = getTemperatureDeviation(DateTime.Today.AddDays(-1).AddHours(15), avg);
+        var low = getTemperatureDeviation(DateTime.Today.AddDays(-1).AddHours(5), avg);
+        dto.RecentHighTempMean = high.mean;
+        dto.RecentHighTempStdev = high.stdev;
+        dto.RecentLowTempMean = low.mean;
+        dto.RecentLowTempStdev = low.stdev;
 
         PopulateSunriseSunset(dto, DateTime.Today);
 
@@ -113,7 +119,7 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
             return result;
     }
 
-    private static string getTemperatureDeviationColor(decimal temp, DateTime tempTime, List<(DateTime time, decimal temp)> avg)
+    private static (double mean, double stdev) getTemperatureDeviation(DateTime tempTime, List<(DateTime time, decimal temp)> avg)
     {
         var center = tempTime.ToLocalTime().AddDays(-1);
         var prevTempsAtSameTime = avg.Take(0).ToList(); // empty list of same type
@@ -126,22 +132,32 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
                 prevTempsAtSameTime.Add(match);
             center = center.AddDays(-1);
         }
-        int blend(int c1, int c2, double pos) => (int)Math.Round(c1 * pos + c2 * (1 - pos));
-        ValueTuple<int, int, int> blend3(ValueTuple<int, int, int> c1, ValueTuple<int, int, int> c2, double pos) => (blend(c1.Item1, c2.Item1, pos), blend(c1.Item2, c2.Item2, pos), blend(c1.Item3, c2.Item3, pos));
-        var color = (0xDF, 0x72, 0xFF); // purple = can't color by deviation
         if (prevTempsAtSameTime.Count >= 3)
         {
             var mean = (double)prevTempsAtSameTime.Average(pt => pt.temp);
             var stdev = Math.Sqrt(prevTempsAtSameTime.Sum(pt => ((double)pt.temp - mean) * ((double)pt.temp - mean)) / (prevTempsAtSameTime.Count - 1));
+            return (mean, stdev);
+        }
+        else
+            return (double.NaN, double.NaN);
+    }
+
+    private static string getTemperatureColor(decimal temp, (double mean, double stdev) p)
+    {
+        int blend(int c1, int c2, double pos) => (int)Math.Round(c1 * pos + c2 * (1 - pos));
+        ValueTuple<int, int, int> blend3(ValueTuple<int, int, int> c1, ValueTuple<int, int, int> c2, double pos) => (blend(c1.Item1, c2.Item1, pos), blend(c1.Item2, c2.Item2, pos), blend(c1.Item3, c2.Item3, pos));
+        var color = (0xDF, 0x72, 0xFF); // purple = can't color by deviation
+        if (!double.IsNaN(p.mean))
+        {
             var cur = (double)temp;
             var coldest = (0x2F, 0x9E, 0xFF);
             var warmest = (0xFF, 0x5D, 0x2F);
-            if (cur < mean - stdev)
+            if (cur < p.mean - p.stdev)
                 color = coldest;
-            else if (cur > mean + stdev)
+            else if (cur > p.mean + p.stdev)
                 color = warmest;
             else
-                color = blend3(warmest, coldest, (cur - (mean - stdev)) / (2 * stdev));
+                color = blend3(warmest, coldest, (cur - (p.mean - p.stdev)) / (2 * p.stdev));
         }
         return $"#{color.Item1:X2}{color.Item2:X2}{color.Item3:X2}";
     }

@@ -16,4 +16,9 @@ public record WeatherBlockDto : BaseDto
     public string SolarNoonTime { get; set; }
     public string SunsetTime { get; set; }
     public string SunsetDeltaTime { get; set; }
+
+    public double? RecentHighTempMean { get; set; }
+    public double? RecentHighTempStdev { get; set; }
+    public double? RecentLowTempMean { get; set; }
+    public double? RecentLowTempStdev { get; set; }
 }

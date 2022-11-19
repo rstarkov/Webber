@@ -17,6 +17,11 @@ export interface WeatherBlockDto extends BaseDto {
     solarNoonTime: string;
     sunsetTime: string;
     sunsetDeltaTime: string;
+
+    recentHighTempMean: number | null;
+    recentHighTempStdev: number | null;
+    recentLowTempMean: number | null;
+    recentLowTempStdev: number | null;
 }
 
 function dtoPatcher(dto: WeatherBlockDto) {
