@@ -3,7 +3,6 @@ import { useWeatherBlock } from "../blocks/WeatherBlock";
 import { useWeatherForecastBlock, WeatherForecastDayDto } from "../blocks/WeatherForecastBlock";
 import { WeatherTypeIcon } from "../components/WeatherTypeIcon";
 
-// TODO: use low temp for today if it's night
 // TODO: connection/update status indicator
 
 const weekdays = [null, "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -71,13 +70,15 @@ function ForecastDay(p: { dto: WeatherForecastDayDto, mode: "today" | "big" | "s
     const cellBack = p.dto.date.weekday >= 6 ? "#333" : "#181818";
     const cellBorder = p.dto.date.weekday >= 6 ? "#777" : "#444";
     const cellMargin = p.dto.date.weekday == 7 ? "2vw" : "0";
-    const headingText = p.mode == "today" ? "Today" : weekdays[p.dto.date.weekday];
+    const headingText = p.mode == "today" ? (p.dto.night ? "Night" : "Today") : weekdays[p.dto.date.weekday];
     const rainShowLimit = p.mode == "today" ? 15 : p.mode == "big" ? 20 : 999;
-    const rainText = p.dto.rainProbability < rainShowLimit ? null : (p.dto.rainProbability / 10).toFixed(0);
+    const rainText = p.dto.rainProbability < rainShowLimit || p.dto.weatherKind == 'sun' ? null : (p.dto.rainProbability / 10).toFixed(0);
     const windVal = Math.max(p.dto.windMph, p.dto.gustMph / 2);
     const wind = windVal > 27 ? 1 : windVal >= 18 ? 0.6 : 0;
     const windColor = windVal <= 3 ? "#333" : windVal <= 7 ? "#555" : windVal <= 12 ? "#777" : windVal <= 18 ? "#ff0" : windVal <= 31 ? "#f00" : "#f0f";
-    const tempColor = !w.dto ? "#fff" : temperatureClr(p.dto.tempMaxC, w.dto.recentHighTempMean, w.dto.recentHighTempStdev);
+    const tempColor = !w.dto ? "#fff" : p.dto.night
+        ? temperatureClr(p.dto.tempMinC, w.dto.recentLowTempMean, w.dto.recentLowTempStdev)
+        : temperatureClr(p.dto.tempMaxC, w.dto.recentHighTempMean, w.dto.recentHighTempStdev);
 
     return <ForecastDayDiv style={{ flex: cellSize, background: cellBack, marginRight: cellMargin, borderColor: cellBorder }}>
         <HeadingDiv>{headingText}</HeadingDiv>
@@ -87,7 +88,7 @@ function ForecastDay(p: { dto: WeatherForecastDayDto, mode: "today" | "big" | "s
             {!!rainText && <RainProbDiv style={{ color: "#0000", WebkitTextStroke: "0.25vw #fff" }}>{rainText}</RainProbDiv>}
             {!!rainText && <RainProbDiv style={{ color: "#000" }}>{rainText}</RainProbDiv>}
         </WeatherIconDiv>
-        <div style={{ color: tempColor }}>{p.dto.tempMaxC}°</div>
+        <div style={{ color: tempColor }}>{p.dto.night ? p.dto.tempMinC : p.dto.tempMaxC}°</div>
     </ForecastDayDiv>;
 }
 
