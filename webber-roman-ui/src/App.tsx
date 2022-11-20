@@ -17,9 +17,9 @@ export function App(): JSX.Element {
         }
         setPrevHash(reload.dto?.serverHash); // save the initial hash on first update
 
-        if (!window.parent.document.getElementById('appframe')) {
+        if (!window.parent.document.getElementById("appframe")) {
             // redirect to the wrapper if not wrapped
-            window.location.replace('/wrapper.html' + (window.location.pathname === '/' ? '' : `#${window.location.pathname}`));
+            window.location.replace("/wrapper.html" + (window.location.pathname === "/" ? "" : `#${window.location.pathname}`));
         } else {
             // navigate to the hash if it doesn't match curret route
             const hash = window.parent.location.hash.substring(1);
@@ -30,11 +30,11 @@ export function App(): JSX.Element {
 
     return (
         <Routes>
-            <Route path='/' element={<DashboardPage />} />
-            <Route path='/classic' element={<ClassicPage />} />
-            <Route path='/weather' element={<WeatherPage />} />
-            <Route path='/experiments' element={<ExperimentsPage />} />
-            <Route path='*' element={<p>Page Not Found</p>} />
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/classic" element={<ClassicPage />} />
+            <Route path="/weather" element={<WeatherPage />} />
+            <Route path="/experiments" element={<ExperimentsPage />} />
+            <Route path="*" element={<p>Page Not Found</p>} />
         </Routes>
     );
 }

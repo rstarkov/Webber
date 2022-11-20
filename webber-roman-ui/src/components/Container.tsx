@@ -16,7 +16,7 @@ export const BlockPanelDot = styled.div`
     z-index: 999;
 `;
 const BlockPanelDisconnectedDot = styled(BlockPanelDot) <{ connection: BlockConnectionStatus }>`
-    background-color: ${p => p.connection == 'disconnected' ? 'red' : 'cyan'};
+    background-color: ${p => p.connection == "disconnected" ? "red" : "cyan"};
 `;
 const BlockPanelStatusDot = styled(BlockPanelDot)`
     background-color: yellow;
@@ -41,7 +41,7 @@ export function BlockPanelContainer({ state, children, ...rest }: BlockPanelProp
 
     return <BlockPanelContainerDiv {...rest}>
         {visible && <BlockPanelStatusDot />}
-        {state.status != 'connected' && <BlockPanelDisconnectedDot connection={state.status} />}
+        {state.status != "connected" && <BlockPanelDisconnectedDot connection={state.status} />}
         {children}
     </BlockPanelContainerDiv>;
 }

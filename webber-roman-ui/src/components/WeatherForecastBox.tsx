@@ -6,7 +6,7 @@ import { WeatherTypeIcon } from "../components/WeatherTypeIcon";
 // TODO: use low temp for today if it's night
 // TODO: connection/update status indicator
 
-const weekdays = [null, 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const weekdays = [null, "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const ForecastDiv = styled.div`
     display: flex;
@@ -58,34 +58,34 @@ function temperatureClr(temp: number, mean: number | null, stdev: number | null)
     }
     function hex(c: number) {
         let r = c.toString(16);
-        if (r.length == 1) r = '0' + r;
+        if (r.length == 1) r = "0" + r;
         return r;
     }
     return `#${hex(color[0])}${hex(color[1])}${hex(color[2])}`;
 }
 
-function ForecastDay(p: { dto: WeatherForecastDayDto, mode: 'today' | 'big' | 'small' }): JSX.Element {
+function ForecastDay(p: { dto: WeatherForecastDayDto, mode: "today" | "big" | "small" }): JSX.Element {
     const w = useWeatherBlock();
 
     const cellSize = 1.0; // flex size to vary by date
-    const cellBack = p.dto.date.weekday >= 6 ? '#333' : '#181818';
-    const cellBorder = p.dto.date.weekday >= 6 ? '#777' : '#444';
-    const cellMargin = p.dto.date.weekday == 7 ? '2vw' : '0';
-    const headingText = p.mode == 'today' ? 'Today' : weekdays[p.dto.date.weekday];
-    const rainShowLimit = p.mode == 'today' ? 15 : p.mode == 'big' ? 20 : 999;
+    const cellBack = p.dto.date.weekday >= 6 ? "#333" : "#181818";
+    const cellBorder = p.dto.date.weekday >= 6 ? "#777" : "#444";
+    const cellMargin = p.dto.date.weekday == 7 ? "2vw" : "0";
+    const headingText = p.mode == "today" ? "Today" : weekdays[p.dto.date.weekday];
+    const rainShowLimit = p.mode == "today" ? 15 : p.mode == "big" ? 20 : 999;
     const rainText = p.dto.rainProbability < rainShowLimit ? null : (p.dto.rainProbability / 10).toFixed(0);
     const windVal = Math.max(p.dto.windMph, p.dto.gustMph / 2);
     const wind = windVal > 27 ? 1 : windVal >= 18 ? 0.6 : 0;
-    const windColor = windVal <= 3 ? '#333' : windVal <= 7 ? '#555' : windVal <= 12 ? '#777' : windVal <= 18 ? '#ff0' : windVal <= 31 ? '#f00' : '#f0f';
-    const tempColor = !w.dto ? '#fff' : temperatureClr(p.dto.tempMaxC, w.dto.recentHighTempMean, w.dto.recentHighTempStdev);
+    const windColor = windVal <= 3 ? "#333" : windVal <= 7 ? "#555" : windVal <= 12 ? "#777" : windVal <= 18 ? "#ff0" : windVal <= 31 ? "#f00" : "#f0f";
+    const tempColor = !w.dto ? "#fff" : temperatureClr(p.dto.tempMaxC, w.dto.recentHighTempMean, w.dto.recentHighTempStdev);
 
     return <ForecastDayDiv style={{ flex: cellSize, background: cellBack, marginRight: cellMargin, borderColor: cellBorder }}>
         <HeadingDiv>{headingText}</HeadingDiv>
-        <div style={{ height: '2px', width: Math.min(100, windVal * 3) + '%', background: windColor, marginBottom: '0.4vw' }}></div>
+        <div style={{ height: "2px", width: Math.min(100, windVal * 3) + "%", background: windColor, marginBottom: "0.4vw" }}></div>
         <WeatherIconDiv>
             <WeatherIcon kind={p.dto.weatherKind} night={p.dto.night} wind={wind} />
-            {!!rainText && <RainProbDiv style={{ color: '#0000', WebkitTextStroke: '0.25vw #fff' }}>{rainText}</RainProbDiv>}
-            {!!rainText && <RainProbDiv style={{ color: '#000' }}>{rainText}</RainProbDiv>}
+            {!!rainText && <RainProbDiv style={{ color: "#0000", WebkitTextStroke: "0.25vw #fff" }}>{rainText}</RainProbDiv>}
+            {!!rainText && <RainProbDiv style={{ color: "#000" }}>{rainText}</RainProbDiv>}
         </WeatherIconDiv>
         <div style={{ color: tempColor }}>{p.dto.tempMaxC}°</div>
     </ForecastDayDiv>;
@@ -97,8 +97,8 @@ export function WeatherForecastBox(props: React.HTMLAttributes<HTMLDivElement>):
         return <></>;
 
     return <ForecastDiv {...props}>
-        <ForecastDay dto={fc.dto.days[0]} mode='today' />
-        {fc.dto.days.slice(1, 8).map(dto => <ForecastDay dto={dto} mode='big' />)}
-        {fc.dto.days.slice(8, 14).map(dto => <ForecastDay dto={dto} mode='small' />)}
+        <ForecastDay dto={fc.dto.days[0]} mode="today" />
+        {fc.dto.days.slice(1, 8).map(dto => <ForecastDay dto={dto} mode="big" />)}
+        {fc.dto.days.slice(8, 14).map(dto => <ForecastDay dto={dto} mode="small" />)}
     </ForecastDiv>;
 }

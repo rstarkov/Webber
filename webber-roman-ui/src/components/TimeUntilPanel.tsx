@@ -92,9 +92,9 @@ export function TimeUntilPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>
 
                 const start = e.startTimeUtc.toLocal();
                 const left = start.diffNow();
-                const totalHours = left.as('hours');
-                const totalMinutes = left.as('minutes');
-                const startHHmm = start.toFormat('HH:mm');
+                const totalHours = left.as("hours");
+                const totalMinutes = left.as("minutes");
+                const startHHmm = start.toFormat("HH:mm");
                 if (totalMinutes < 60)
                     return <Fragment key={e.id}>
                         <DivMins newGroup={newGroup}><SpanTime>{startHHmm}</SpanTime><SpanLeft>{`${Math.floor(totalMinutes).toFixed(0)}min`}</SpanLeft></DivMins>
@@ -116,7 +116,7 @@ export function TimeUntilPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>
                         <DivWeek newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivWeek>
                     </Fragment>;
                 return <Fragment key={e.id}>
-                    <DivLong newGroup={newGroup}><SpanTime>{`${endOfLocalDay(start, true).diff(endOfToday).as('days').toFixed(0)} days`}</SpanTime></DivLong>
+                    <DivLong newGroup={newGroup}><SpanTime>{`${endOfLocalDay(start, true).diff(endOfToday).as("days").toFixed(0)} days`}</SpanTime></DivLong>
                     <DivLong newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivLong>
                 </Fragment>;
             })}

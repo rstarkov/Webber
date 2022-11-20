@@ -1,8 +1,8 @@
-import { useDialogState, Dialog, DialogState } from 'ariakit/Dialog';
-import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faArrowsRotate, faExpand, faCompress } from '@fortawesome/free-solid-svg-icons';
+import { useDialogState, Dialog, DialogState } from "ariakit/Dialog";
+import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faXmark, faArrowsRotate, faExpand, faCompress } from "@fortawesome/free-solid-svg-icons";
 
 const NavOverlayDiv = styled.div`
     position: absolute;
@@ -32,16 +32,16 @@ export function NavOverlay(props: { state: DialogState }): JSX.Element {
         if (isFullScreen)
             void window.parent.document.exitFullscreen();
         else
-            void (window.parent.document.getElementById('appframe') ?? document.body).requestFullscreen();
+            void (window.parent.document.getElementById("appframe") ?? document.body).requestFullscreen();
         props.state.hide();
     }
 
     return <Dialog state={props.state}>
         <NavOverlayDiv>
-            <button onClick={() => navigate('/')}>Page: Tasks</button>
-            <button onClick={() => navigate('/weather')}>Page: Weather</button>
-            <button onClick={() => navigate('/classic')}>Page: Classic</button>
-            <button onClick={() => navigate('/experiments')}>Page: Experiments</button>
+            <button onClick={() => navigate("/")}>Page: Tasks</button>
+            <button onClick={() => navigate("/weather")}>Page: Weather</button>
+            <button onClick={() => navigate("/classic")}>Page: Classic</button>
+            <button onClick={() => navigate("/experiments")}>Page: Experiments</button>
 
             <button onClick={props.state.hide}><FontAwesomeIcon icon={faXmark} /></button>
             <div></div>

@@ -7,8 +7,8 @@ export function DashboardPage(): JSX.Element {
 
     return (
         <>
-            <TimeUntilPanel style={{ position: 'absolute', left: '0vw', top: '0vh', width: '55vw', height: '100vh', overflow: 'hidden' }} onClick={overlay.show} />
-            <RemilkPanel style={{ position: 'absolute', right: 0, top: 0, width: '42vw', height: '100vh' }} />
+            <TimeUntilPanel style={{ position: "absolute", left: "0vw", top: "0vh", width: "55vw", height: "100vh", overflow: "hidden" }} onClick={overlay.show} />
+            <RemilkPanel style={{ position: "absolute", right: 0, top: 0, width: "42vw", height: "100vh" }} />
 
             <NavOverlay state={overlay} />
         </>

@@ -1,26 +1,26 @@
-import iWind from '../assets/weather/Wind.png';
-import iAstroSun from '../assets/weather/AstroSun.png';
-import iAstroMoon from '../assets/weather/AstroMoon.png';
-import iAstroCloudSun from '../assets/weather/AstroCloudSun.png';
-import iAstroCloudMoon from '../assets/weather/AstroCloudMoon.png';
-import iCloudLight from '../assets/weather/CloudLight.png';
-import iCloudThick from '../assets/weather/CloudThick.png';
-import iPrecipDrizzle from '../assets/weather/PrecipDrizzle.png';
-import iPrecipHail from '../assets/weather/PrecipHail.png';
-import iPrecipRainHeavy from '../assets/weather/PrecipRainHeavy.png';
-import iPrecipRainLight from '../assets/weather/PrecipRainLight.png';
-import iPrecipSleet from '../assets/weather/PrecipSleet.png';
-import iPrecipSnowHeavy from '../assets/weather/PrecipSnowHeavy.png';
-import iPrecipSnowLight from '../assets/weather/PrecipSnowLight.png';
-import iPrecipThunder from '../assets/weather/PrecipThunder.png';
-import iMist from '../assets/weather/Mist.png'; // bad
-import iFog from '../assets/weather/Fog.png'; // bad
-import iHaze from '../assets/weather/Haze.png';
-import iSandstorm from '../assets/weather/Sandstorm.png'; // bad
-import iTropicalStorm from '../assets/weather/TropicalStorm.png';
+import iWind from "../assets/weather/Wind.png";
+import iAstroSun from "../assets/weather/AstroSun.png";
+import iAstroMoon from "../assets/weather/AstroMoon.png";
+import iAstroCloudSun from "../assets/weather/AstroCloudSun.png";
+import iAstroCloudMoon from "../assets/weather/AstroCloudMoon.png";
+import iCloudLight from "../assets/weather/CloudLight.png";
+import iCloudThick from "../assets/weather/CloudThick.png";
+import iPrecipDrizzle from "../assets/weather/PrecipDrizzle.png";
+import iPrecipHail from "../assets/weather/PrecipHail.png";
+import iPrecipRainHeavy from "../assets/weather/PrecipRainHeavy.png";
+import iPrecipRainLight from "../assets/weather/PrecipRainLight.png";
+import iPrecipSleet from "../assets/weather/PrecipSleet.png";
+import iPrecipSnowHeavy from "../assets/weather/PrecipSnowHeavy.png";
+import iPrecipSnowLight from "../assets/weather/PrecipSnowLight.png";
+import iPrecipThunder from "../assets/weather/PrecipThunder.png";
+import iMist from "../assets/weather/Mist.png"; // bad
+import iFog from "../assets/weather/Fog.png"; // bad
+import iHaze from "../assets/weather/Haze.png";
+import iSandstorm from "../assets/weather/Sandstorm.png"; // bad
+import iTropicalStorm from "../assets/weather/TropicalStorm.png";
 
-import { WeatherForecastKindDte } from '../blocks/WeatherForecastBlock';
-import styled from 'styled-components';
+import { WeatherForecastKindDte } from "../blocks/WeatherForecastBlock";
+import styled from "styled-components";
 
 function makeIconMap(day: boolean): { [k in WeatherForecastKindDte]: string[] } {
     // every single one of these exists in a night variant in the source data, but we don't have distinct images for all of those cases

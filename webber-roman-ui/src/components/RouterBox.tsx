@@ -46,18 +46,18 @@ export function RouterBox(props: React.HTMLAttributes<HTMLDivElement>): JSX.Elem
     }
 
     return <RouterBoxDiv state={router} {...props}>
-        <div style={{ display: 'grid', width: '100%', height: '100%', gap: '2vw', gridTemplateColumns: 'min-content 1fr min-content 1fr min-content', gridTemplateRows: 'min-content 1fr 1fr', alignItems: 'center', justifyItems: 'center' }}>
-            <div style={{ color: '#777' }}>KB/s</div>
+        <div style={{ display: "grid", width: "100%", height: "100%", gap: "2vw", gridTemplateColumns: "min-content 1fr min-content 1fr min-content", gridTemplateRows: "min-content 1fr 1fr", alignItems: "center", justifyItems: "center" }}>
+            <div style={{ color: "#777" }}>KB/s</div>
             <div>Recent traffic</div>
             <div></div>
             <div>Hourly traffic</div>
-            <div style={{ color: '#777' }}>KB/s</div>
+            <div style={{ color: "#777" }}>KB/s</div>
 
             <div>{rate2str(router.dto.txLast)}</div>
             <RouterChartDownDiv>
                 <BarChart Data={router.dto.historyRecent.map(getTxPt)} BarCount={24} Downwards={true} />
             </RouterChartDownDiv>
-            <div style={{ color: '#1985f3' }}>Up</div>
+            <div style={{ color: "#1985f3" }}>Up</div>
             <RouterChartDownDiv>
                 <BarChart Data={router.dto.historyHourly.map(getTxPt)} BarCount={24} Downwards={true} />
             </RouterChartDownDiv>
@@ -67,7 +67,7 @@ export function RouterBox(props: React.HTMLAttributes<HTMLDivElement>): JSX.Elem
             <RouterChartDiv>
                 <BarChart Data={router.dto.historyRecent.map(getRxPt)} BarCount={24} />
             </RouterChartDiv>
-            <div style={{ color: '#ed980d' }}>Dn</div>
+            <div style={{ color: "#ed980d" }}>Dn</div>
             <RouterChartDiv>
                 <BarChart Data={router.dto.historyHourly.map(getRxPt)} BarCount={24} />
             </RouterChartDiv>

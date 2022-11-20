@@ -13,6 +13,8 @@ module.exports = {
         'plugin:@typescript-eslint/recommended-requiring-type-checking',
     ],
     rules: {
+        'quotes': ['warn', 'double', { "avoidEscape": true }],
+        'jsx-quotes': ['warn', 'prefer-double'],
         'prefer-const': 'warn',
         '@typescript-eslint/no-unused-vars': 'off',
         '@typescript-eslint/no-empty-function': 'off',

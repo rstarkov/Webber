@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { DateTime } from "luxon";
 import { useDebugBlock } from "./DebugBlock";
 
-export type BlockConnectionStatus = 'disconnected' | 'connecting' | 'connected';
+export type BlockConnectionStatus = "disconnected" | "connecting" | "connected";
 
 export interface BaseDto {
     localOffsetHours: number;
@@ -31,7 +31,7 @@ export let timeCorrectionMs: number = 0;
 
 export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto) => void): BlockStateDto<TDto> {
     const [dto, setDto] = useState<TDto | null>(null);
-    const [status, setStatus] = useState<BlockConnectionStatus>('disconnected');
+    const [status, setStatus] = useState<BlockConnectionStatus>("disconnected");
     const [updates, setUpdates] = useState(0);
     const { pushLog } = useDebugBlock();
 
@@ -39,18 +39,18 @@ export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto)
         let exited = false;
         const instance = Math.random();
         function dbg(str: string) { /* console.log(`[wbbr ${instance}] ${str}`); if (url.endsWith('PingBlock')) pushLog(str); */ }
-        dbg('START ' + url);
+        dbg("START " + url);
         const conn = new HubConnectionBuilder()
             .withUrl(url)
             .withAutomaticReconnect({ nextRetryDelayInMilliseconds: () => null }) // auto reconnects mean we lose the distinction between 'connecting' and 'disconnected'; we need manual reconnect anyway because the initial connection failure is not subject to auto retries // (rc) => rc.previousRetryCount <= 2 ? 2_000 : 10_000 })
             .build();
-        conn.on('Update', (dto: TDto) => {
+        conn.on("Update", (dto: TDto) => {
             try {
                 basePatcher(dto);
                 patcher(dto);
                 setDto(dto);
                 setUpdates(u => u + 1);
-                timeDiffs.push(dto.sentUtc.diffNow('milliseconds').milliseconds);
+                timeDiffs.push(dto.sentUtc.diffNow("milliseconds").milliseconds);
                 if (timeDiffs.length > 20)
                     timeDiffs.shift();
                 if (timeDiffs.length >= 3)
@@ -61,19 +61,19 @@ export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto)
                 console.error(e); // otherwise SignalR just swallows it and pretends everything is fine, thanks for wasting my time SignalR
             }
         });
-        conn.onreconnecting(() => { setStatus('connecting'); dbg('on reconnecting'); });
-        conn.onreconnected(() => { setStatus('connected'); dbg('on reconnected'); });
-        conn.onclose(() => { setStatus('disconnected'); dbg('on close'); void connect(); });
+        conn.onreconnecting(() => { setStatus("connecting"); dbg("on reconnecting"); });
+        conn.onreconnected(() => { setStatus("connected"); dbg("on reconnected"); });
+        conn.onclose(() => { setStatus("disconnected"); dbg("on close"); void connect(); });
         async function connect() {
-            setStatus('connecting'); dbg('connecting');
+            setStatus("connecting"); dbg("connecting");
             try {
                 if (exited) return;
                 await conn.start();
-                setStatus('connected'); dbg('connected');
+                setStatus("connected"); dbg("connected");
                 if (exited) void conn.stop();
             } catch (error) {
-                dbg('catch: ' + JSON.stringify(error));
-                setStatus('disconnected');
+                dbg("catch: " + JSON.stringify(error));
+                setStatus("disconnected");
                 void conn.stop();
                 await new Promise(r => setTimeout(r, 10_000));
                 if (!exited)
@@ -81,7 +81,7 @@ export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto)
             }
         }
         void connect();
-        return () => { exited = true; void conn.stop(); dbg('STOP'); }
+        return () => { exited = true; void conn.stop(); dbg("STOP"); }
     }, []);
 
     return { dto, status, updates };

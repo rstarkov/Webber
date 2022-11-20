@@ -26,7 +26,7 @@ export function BarChart({ Data, BarCount, BarSpacing, Downwards }: { Data: BarC
 
     const barWidth = (100 - BarSpacing * (BarCount - 1)) / BarCount;
 
-    return <svg width='100%' height='100%'>
+    return <svg width="100%" height="100%">
         <g>
             {[...Data].reverse().map((pt, i) => {
                 return <rect
@@ -36,7 +36,7 @@ export function BarChart({ Data, BarCount, BarSpacing, Downwards }: { Data: BarC
                     width={`${barWidth}%`}
                     height={`${pt.Value * 100}%`}
                     fill={pt.Color}
-                    strokeWidth='0'>
+                    strokeWidth="0">
                 </rect>;
             })}
         </g>

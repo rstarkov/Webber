@@ -23,8 +23,8 @@ export function PingBox(props: React.HTMLAttributes<HTMLDivElement>): JSX.Elemen
     }
 
     return <PingBoxDiv state={ping} {...props}>
-        <div><div style={{ float: 'right' }}>{ping.dto.last?.toLocaleString('en-UK', { maximumFractionDigits: 0 }) ?? '∞'} ms</div>Ping</div>
-        <div style={{ padding: '0 0.5vw', borderBottom: '1px solid #999', flex: '1', minHeight: '0' }}>
+        <div><div style={{ float: "right" }}>{ping.dto.last?.toLocaleString("en-UK", { maximumFractionDigits: 0 }) ?? "∞"} ms</div>Ping</div>
+        <div style={{ padding: "0 0.5vw", borderBottom: "1px solid #999", flex: "1", minHeight: "0" }}>
             <BarChart Data={ping.dto.recent.map(pingToPt)} BarCount={ping.dto.recent.length} />
         </div>
     </PingBoxDiv>
