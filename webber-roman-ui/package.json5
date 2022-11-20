@@ -2,11 +2,10 @@
   scripts: {
     tsc: 'pnpm install && tsc',
     dev: 'pnpm install && vite',
-    build: 'pnpm install && tsc && vite build',
+    build: 'pnpm install && tsc && eslint --fix . && vite build',
     preview: 'pnpm install && vite preview',
-    format: 'prettier --write "src/**/*.{ts,tsx}"',
-    fix: 'eslint --fix .',
-    lint: 'eslint .',
+    fix: 'pnpm install && eslint --fix .',
+    lint: 'pnpm install && eslint .',
   },
   dependencies: {
     '@fortawesome/fontawesome-svg-core': '^6.2.0',

@@ -22,6 +22,7 @@ module.exports = {
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
     ],
     rules: {
+        // all auto-fixable issues are "warn" style and the build auto-fixes them instead of failing
         "quotes": ["warn", "double", { avoidEscape: true }],
         "jsx-quotes": ["warn", "prefer-double"],
         "quote-props": ["warn", "consistent-as-needed"],
