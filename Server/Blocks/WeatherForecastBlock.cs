@@ -4,6 +4,7 @@ using Dapper;
 using Dapper.Contrib.Extensions;
 using Innovative.SolarCalculator;
 using Newtonsoft.Json.Linq;
+using RT.Serialization;
 using RT.Util.ExtensionMethods;
 using Webber.Client.Models;
 
@@ -12,6 +13,7 @@ namespace Webber.Server.Blocks;
 class WeatherForecastBlockConfig
 {
     public string BbcLocationCode { get; set; }
+    public string CachePath { get; set; } = null;
 }
 
 class WeatherForecastBlockServer : SimpleBlockServerBase<WeatherForecastBlockDto>
@@ -24,6 +26,14 @@ class WeatherForecastBlockServer : SimpleBlockServerBase<WeatherForecastBlockDto
         : base(sp, TimeSpan.FromMinutes(30))
     {
         _config = config;
+    }
+
+    public override void Start()
+    {
+        if (_config.CachePath != null)
+            if (File.Exists(_config.CachePath))
+                _recentHours = ClassifyXml.DeserializeFile<Dictionary<DateTime, WeatherForecastHourDto>>(_config.CachePath);
+        base.Start();
     }
 
     protected override bool ShouldTick() => true;
@@ -51,6 +61,9 @@ class WeatherForecastBlockServer : SimpleBlockServerBase<WeatherForecastBlockDto
             }
         _recentHours.RemoveAllByKey(d => d < DateTime.Today.AddDays(-1));
         dto.Hours = _recentHours.Values.Where(h => h.DateTime.Date <= DateTime.Today.AddDays(2)).OrderBy(h => h.DateTime).ToArray();
+
+        if (_config.CachePath != null)
+            ClassifyXml.SerializeToFile(_recentHours, _config.CachePath);
 
         return dto;
     }
