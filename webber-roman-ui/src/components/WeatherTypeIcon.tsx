@@ -53,7 +53,7 @@ function makeIconMap(day: boolean): { [k in WeatherForecastKindDte]: string[] } 
         sandstorm: [iSandstorm],
         tropicalStorm: [iTropicalStorm],
     };
-};
+}
 const _dayIconMap = makeIconMap(true);
 const _nightIconMap = makeIconMap(false);
 

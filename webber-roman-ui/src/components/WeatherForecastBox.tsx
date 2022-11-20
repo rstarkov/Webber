@@ -45,10 +45,10 @@ const RainProbDiv = styled.div`
 function temperatureClr(temp: number, mean: number | null, stdev: number | null): string {
     function blend1(c1: number, c2: number, pos: number) { return Math.round(c1 * pos + c2 * (1 - pos)); }
     function blend3(c1: number[], c2: number[], pos: number) { return [blend1(c1[0], c2[0], pos), blend1(c1[1], c2[1], pos), blend1(c1[2], c2[2], pos)]; }
-    var color = [0xDF, 0x72, 0xFF]; // purple = can't color by deviation
+    let color = [0xDF, 0x72, 0xFF]; // purple = can't color by deviation
     if (mean !== null && stdev !== null) {
-        var coldest = [0x2F, 0x9E, 0xFF];
-        var warmest = [0xFF, 0x5D, 0x2F];
+        const coldest = [0x2F, 0x9E, 0xFF];
+        const warmest = [0xFF, 0x5D, 0x2F];
         if (temp < mean - stdev)
             color = coldest;
         else if (temp > mean + stdev)
@@ -60,7 +60,7 @@ function temperatureClr(temp: number, mean: number | null, stdev: number | null)
         let r = c.toString(16);
         if (r.length == 1) r = '0' + r;
         return r;
-    };
+    }
     return `#${hex(color[0])}${hex(color[1])}${hex(color[2])}`;
 }
 

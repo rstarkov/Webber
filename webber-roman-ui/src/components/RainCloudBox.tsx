@@ -38,10 +38,10 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
 
     let daynight;
     if (wb.dto) {
-        let sunrise1 = DateTime.fromISO(wb.dto.sunriseTime).set({ year: p.from.year, month: p.from.month, day: p.from.day });
-        let sunset1 = DateTime.fromISO(wb.dto.sunsetTime).set({ year: p.from.year, month: p.from.month, day: p.from.day });
-        let sunrise2 = sunrise1.plus({ day: 1 }); // should get exact times from server...
-        let sunset2 = sunset1.plus({ day: 1 });
+        const sunrise1 = DateTime.fromISO(wb.dto.sunriseTime).set({ year: p.from.year, month: p.from.month, day: p.from.day });
+        const sunset1 = DateTime.fromISO(wb.dto.sunsetTime).set({ year: p.from.year, month: p.from.month, day: p.from.day });
+        const sunrise2 = sunrise1.plus({ day: 1 }); // should get exact times from server...
+        const sunset2 = sunset1.plus({ day: 1 });
         daynight = {
             nend1: getX(sunrise1.plus({ hours: -1 })),
             rise1: getX(sunrise1),
@@ -56,21 +56,21 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
 
     function getPts(data: RainCloudPtDto[], colormap: string[], scalemap: number[]) {
         function getSamples(p: RainCloudPtDto): barSample[] {
-            let total = p.counts.reduce((a, b) => a + b, 0);
+            const total = p.counts.reduce((a, b) => a + b, 0);
             let y = 0;
-            let result: barSample[] = [];
+            const result: barSample[] = [];
             for (let i = p.counts.length - 1; i >= 0; i--) {
                 if (p.counts[i] > 0 && colormap[i] != '#000') {
-                    let height = 100 * p.counts[i] * (p.isForecast ? scalemap[i] : 1) / total;
+                    const height = 100 * p.counts[i] * (p.isForecast ? scalemap[i] : 1) / total;
                     result.push({ y, height, color: colormap[i] });
                     y += height;
                 }
             }
             return result;
         }
-        let pts: bar[] = data.filter(pt => pt.counts != null).map(pt => ({ pt, centerX: getX(pt.atUtc), samples: getSamples(pt) })).filter(pt => pt.centerX >= 0 && pt.centerX <= 100);
+        const pts: bar[] = data.filter(pt => pt.counts != null).map(pt => ({ pt, centerX: getX(pt.atUtc), samples: getSamples(pt) })).filter(pt => pt.centerX >= 0 && pt.centerX <= 100);
         for (let i = 1; i < pts.length; i++) {
-            let mX = (pts[i - 1].centerX + pts[i].centerX) / 2;
+            const mX = (pts[i - 1].centerX + pts[i].centerX) / 2;
             pts[i - 1].widthR = mX - pts[i - 1].centerX;
             pts[i].widthL = pts[i].centerX - mX;
         }
@@ -85,15 +85,15 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
         ['#aaa0', '#aaa2', '#aaa2', '#aaa2', '#aaa3', '#aaa4', '#aaa5', '#aaa5', '#aaa5', '#aaa5'],
         [0, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.7, 0.9, 1]);
 
-    let firstHour = p.from.startOf('hour');
-    let hours = Array.from(Array(hoursTotal + 1), (_, i) => firstHour.plus({ hours: i })).map(h => ({ hour: h.hour, centerX: getX(h) })).filter(h => h.centerX > 0 && h.centerX < 100);
+    const firstHour = p.from.startOf('hour');
+    const hours = Array.from(Array(hoursTotal + 1), (_, i) => firstHour.plus({ hours: i })).map(h => ({ hour: h.hour, centerX: getX(h) })).filter(h => h.centerX > 0 && h.centerX < 100);
 
     const textHeight = 15;
     const tickHeight = 11;
     const markerHeight = tickHeight * 1.3;
     const chartHeight = 100 - textHeight - tickHeight;
 
-    let rainlines = wfc.dto && wfc.dto.hours.map(h => ({ x: getX(h.dateTime), y: 100 - h.rainProbability })).filter(h => h.x >= 0 && h.x <= 100);
+    const rainlines = wfc.dto && wfc.dto.hours.map(h => ({ x: getX(h.dateTime), y: 100 - h.rainProbability })).filter(h => h.x >= 0 && h.x <= 100);
 
     return <svg width='100%' height='100%'>
         <linearGradient id="lighttime" key="lighttime" x1='0' x2='0' y1='0' y2='1'><stop key='1' offset="0%" stopColor='#fff' /><stop key='2' offset="100%" stopColor='#000' /></linearGradient>

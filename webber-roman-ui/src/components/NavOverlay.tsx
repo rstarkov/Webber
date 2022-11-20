@@ -30,9 +30,9 @@ export function NavOverlay(props: { state: DialogState }): JSX.Element {
     const isFullScreen = !!window.parent.document.fullscreenElement;
     function toggleFullScreen() {
         if (isFullScreen)
-            window.parent.document.exitFullscreen();
+            void window.parent.document.exitFullscreen();
         else
-            (window.parent.document.getElementById('appframe') ?? document.body).requestFullscreen();
+            void (window.parent.document.getElementById('appframe') ?? document.body).requestFullscreen();
         props.state.hide();
     }
 

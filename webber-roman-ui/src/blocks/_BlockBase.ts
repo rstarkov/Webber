@@ -26,7 +26,7 @@ function basePatcher(dto: BaseDto) {
     dto.validUntilUtc = DateTime.fromISO(dto.validUntilUtc as any);
 }
 
-let timeDiffs: number[] = [];
+const timeDiffs: number[] = [];
 export let timeCorrectionMs: number = 0;
 
 export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto) => void): BlockStateDto<TDto> {
@@ -63,26 +63,26 @@ export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto)
         });
         conn.onreconnecting(() => { setStatus('connecting'); dbg('on reconnecting'); });
         conn.onreconnected(() => { setStatus('connected'); dbg('on reconnected'); });
-        conn.onclose(() => { setStatus('disconnected'); dbg('on close'); connect(); });
+        conn.onclose(() => { setStatus('disconnected'); dbg('on close'); void connect(); });
         async function connect() {
             setStatus('connecting'); dbg('connecting');
             try {
                 if (exited) return;
                 await conn.start();
                 setStatus('connected'); dbg('connected');
-                if (exited) conn.stop();
+                if (exited) void conn.stop();
             } catch (error) {
                 dbg('catch: ' + JSON.stringify(error));
                 setStatus('disconnected');
-                conn.stop();
+                void conn.stop();
                 await new Promise(r => setTimeout(r, 10_000));
                 if (!exited)
-                    connect();
+                    void connect();
             }
         }
-        connect();
-        return () => { exited = true; conn.stop(); dbg('STOP'); }
+        void connect();
+        return () => { exited = true; void conn.stop(); dbg('STOP'); }
     }, []);
 
     return { dto, status, updates };
-};
+}
