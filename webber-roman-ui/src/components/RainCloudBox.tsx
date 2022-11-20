@@ -8,8 +8,7 @@ import { useWeatherForecastBlock } from "../blocks/WeatherForecastBlock";
 
 const RainCloudDiv = styled.div`
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-gap: 2vw 1vw;
+    grid-template-columns: 1fr;
 `;
 
 interface bar {
@@ -28,18 +27,31 @@ interface barSample {
 function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: DateTime, hoursTotal: number, labelScale: number }): JSX.Element {
     const wb = useWeatherBlock();
     const wfc = useWeatherForecastBlock();
-    if (!wb.dto)
-        return <></>;
 
-    let sunrise = DateTime.fromISO(wb.dto.sunriseTime).set({ year: p.from.year, month: p.from.month, day: p.from.day });
-    let sunset = DateTime.fromISO(wb.dto.sunsetTime).set({ year: p.from.year, month: p.from.month, day: p.from.day });;
+    function getX(dt: DateTime): number { return 100 * (dt.diff(p.from)).as('hours') / p.hoursTotal; }
 
     const nightColor = '#013'; // #081133
     const dayColor = '#330';
     const sunlineColor = '#880'; // sunrise & sunset line
     const gridColor = '#777';
 
-    function getX(dt: DateTime): number { return 100 * (dt.diff(p.from)).as('hours') / p.hoursTotal; }
+    let daynight;
+    if (wb.dto) {
+        let sunrise1 = DateTime.fromISO(wb.dto.sunriseTime).set({ year: p.from.year, month: p.from.month, day: p.from.day });
+        let sunset1 = DateTime.fromISO(wb.dto.sunsetTime).set({ year: p.from.year, month: p.from.month, day: p.from.day });
+        let sunrise2 = sunrise1.plus({ day: 1 }); // should get exact times from server...
+        let sunset2 = sunset1.plus({ day: 1 });
+        daynight = {
+            nend1: getX(sunrise1.plus({ hours: -1 })),
+            rise1: getX(sunrise1),
+            set1: getX(sunset1),
+            nbeg2: getX(sunset1.plus({ hours: 1 })),
+            nend2: getX(sunrise2.plus({ hours: -1 })),
+            rise2: getX(sunrise2),
+            set2: getX(sunset2),
+            nbeg3: getX(sunset2.plus({ hours: 1 })),
+        };
+    }
 
     function getPts(data: RainCloudPtDto[], colormap: string[], scalemap: number[]) {
         function getSamples(p: RainCloudPtDto): barSample[] {
@@ -93,15 +105,19 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
         </mask>
         <linearGradient id="twilight1gr" key='twilight1gr'><stop key='1' offset="0%" stopColor={nightColor} /><stop key='2' offset="100%" stopColor={dayColor} /></linearGradient>
         <linearGradient id="twilight2gr" key='twilight2gr'><stop key='1' offset="0%" stopColor={dayColor} /><stop key='2' offset="100%" stopColor={nightColor} /></linearGradient>
-        <linearGradient id="rainlinegr" key='rainlinegr' x1='0' x2='0' y1='1' y2='0'><stop key='1' offset="20%" stopColor='#777' /><stop key='2' offset="70%" stopColor='#ff0' /><stop key='2' offset="100%" stopColor='#f00' /></linearGradient>
+        <linearGradient id="rainlinegr" key='rainlinegr' x1='0' x2='0' y1='1' y2='0'><stop key='1' offset="20%" stopColor='#777' /><stop key='2' offset="70%" stopColor='#ff0' /><stop key='3' offset="100%" stopColor='#f00' /></linearGradient>
 
-        <g key='glight' mask='url(#lightmask)'>
-            <rect key='night1' x='0%' y='0%' height='100%' width={getX(sunrise.plus({ hours: -1 })) + '%'} fill={nightColor} />
-            <rect key='twi1' x={getX(sunrise.plus({ hours: -1 })) + '%'} y='0%' height='100%' width={(100 / p.hoursTotal) + '%'} fill='url(#twilight1gr)' />
-            <rect key='day' x={getX(sunrise) + '%'} y='0%' height='100%' width={(getX(sunset) - getX(sunrise)) + '%'} fill={dayColor} />
-            <rect key='twi2' x={getX(sunset) + '%'} y='0%' height='100%' width={(100 / p.hoursTotal) + '%'} fill='url(#twilight2gr)' />
-            <rect key='night2' x={getX(sunset.plus({ hours: 1 })) + '%'} y='0%' height='100%' width={(100 - getX(sunset.plus({ hours: 1 }))) + '%'} fill={nightColor} />
-        </g>
+        {daynight && <g key='glight' mask='url(#lightmask)'>
+            <rect key='night1' x='0%' y='0%' height='100%' width={daynight.nend1 + '%'} fill={nightColor} />
+            <rect key='twi1r' x={daynight.nend1 + '%'} y='0%' height='100%' width={(daynight.rise1 - daynight.nend1) + '%'} fill='url(#twilight1gr)' />
+            <rect key='day1' x={daynight.rise1 + '%'} y='0%' height='100%' width={(daynight.set1 - daynight.rise1) + '%'} fill={dayColor} />
+            <rect key='twi1s' x={daynight.set1 + '%'} y='0%' height='100%' width={(daynight.nbeg2 - daynight.set1) + '%'} fill='url(#twilight2gr)' />
+            <rect key='night2' x={daynight.nbeg2 + '%'} y='0%' height='100%' width={(daynight.nend2 - daynight.nbeg2) + '%'} fill={nightColor} />
+            <rect key='twi2r' x={daynight.nend2 + '%'} y='0%' height='100%' width={(daynight.rise2 - daynight.nend2) + '%'} fill='url(#twilight1gr)' />
+            <rect key='day2' x={daynight.rise2 + '%'} y='0%' height='100%' width={(daynight.set2 - daynight.rise2) + '%'} fill={dayColor} />
+            <rect key='twi2s' x={daynight.set2 + '%'} y='0%' height='100%' width={(daynight.nbeg3 - daynight.set2) + '%'} fill='url(#twilight2gr)' />
+            <rect key='night3' x={daynight.nbeg3 + '%'} y='0%' height='100%' width={(100 - daynight.nbeg3) + '%'} fill={nightColor} />
+        </g>}
 
         {hours.filter(hr => (hr.hour % 2) == 0).map((hr, i) => <svg key={`${i}_tx`} x={(hr.centerX - textHeight / 2) + '%'} y={(100 - textHeight) + '%'} width={textHeight + '%'} height={textHeight + '%'} viewBox='0 0 1 1'>
             <text x='0.5' y='0' fontSize='1' fill='#ccc' textAnchor='middle' dominantBaseline='hanging'>{hr.hour.toLocaleString('en-US', { minimumIntegerDigits: 2 })}</text>
@@ -120,10 +136,12 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
                 </rect>;
             }))}
         </g>
-        <g key='grise'>
-            <line key='sunrise' x1={getX(sunrise) + '%'} x2={getX(sunrise) + '%'} y1='0%' y2={chartHeight + '%'} stroke={sunlineColor} strokeDasharray='3' />
-            <line key='sunset' x1={getX(sunset) + '%'} x2={getX(sunset) + '%'} y1='0%' y2={chartHeight + '%'} stroke={sunlineColor} strokeDasharray='3' />
-        </g>
+        {daynight && <g key='grise'>
+            <line key='sunrise1' x1={daynight.rise1 + '%'} x2={daynight.rise1 + '%'} y1='0%' y2={chartHeight + '%'} stroke={sunlineColor} strokeDasharray='3' />
+            <line key='sunset1' x1={daynight.set1 + '%'} x2={daynight.set1 + '%'} y1='0%' y2={chartHeight + '%'} stroke={sunlineColor} strokeDasharray='3' />
+            <line key='sunrise2' x1={daynight.rise2 + '%'} x2={daynight.rise2 + '%'} y1='0%' y2={chartHeight + '%'} stroke={sunlineColor} strokeDasharray='3' />
+            <line key='sunset2' x1={daynight.set2 + '%'} x2={daynight.set2 + '%'} y1='0%' y2={chartHeight + '%'} stroke={sunlineColor} strokeDasharray='3' />
+        </g>}
         {rainPts.map((pt, i) => pt.samples.map((sm, j) => {
             const gap = pt.widthL! + pt.widthR! > 0.4 ? 0.05 : -0.15 /* negative to make them blend together */;
             return <rect
@@ -166,7 +184,6 @@ export function RainCloudBox(props: React.HTMLAttributes<HTMLDivElement>): JSX.E
     from = from.startOf('day').plus({ hours: startHour });
 
     return <RainCloudDiv {...props}>
-        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} from={from} hoursTotal={24} labelScale={1} />
-        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} from={from.plus({ days: 1 })} hoursTotal={24} labelScale={1} />
+        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} from={from} hoursTotal={48} labelScale={1} />
     </RainCloudDiv >;
 }
