@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -41,7 +41,7 @@ class WeatherForecastBlockServer : SimpleBlockServerBase<WeatherForecastBlockDto
             .OfType<JObject>()
             .Select(j => GetDayForecast((JObject)j["summary"]["report"]))
             .ToArray();
-        double? nanNull(double v) => double.IsNaN(v) ? null : v;
+
 
         return dto;
     }

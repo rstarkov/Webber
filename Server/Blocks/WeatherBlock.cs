@@ -85,10 +85,11 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
         dto.MaxTemperatureColor = getTemperatureColor(max.temp, getTemperatureDeviation(max.time.ToLocalTime(), TimeSpan.FromHours(1), avg));
         var high = getTemperatureDeviation(DateTime.Today.AddHours(14), TimeSpan.FromHours(3), avg);
         var low = getTemperatureDeviation(DateTime.Today.AddHours(4.5), TimeSpan.FromHours(3), avg);
-        dto.RecentHighTempMean = high.mean;
-        dto.RecentHighTempStdev = high.stdev;
-        dto.RecentLowTempMean = low.mean;
-        dto.RecentLowTempStdev = low.stdev;
+        double? nanNull(double v) => double.IsNaN(v) ? null : v;
+        dto.RecentHighTempMean = nanNull(high.mean);
+        dto.RecentHighTempStdev = nanNull(high.stdev);
+        dto.RecentLowTempMean = nanNull(low.mean);
+        dto.RecentLowTempStdev = nanNull(low.stdev);
 
         PopulateSunriseSunset(dto, DateTime.Today);
 

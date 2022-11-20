@@ -44,12 +44,6 @@ class RainCloudBlockServer : SimpleBlockServerBase<RainCloudBlockDto>
         [new SKColor(0xf0ededed)] = 8,
     };
 
-    private class Pt
-    {
-        public MetOfficeMapsService.Timestep Step;
-        public RainCloudPtDto Dto;
-    }
-
     public RainCloudBlockServer(IServiceProvider sp, RainCloudBlockConfig config)
         : base(sp, TimeSpan.FromMinutes(5))
     {
