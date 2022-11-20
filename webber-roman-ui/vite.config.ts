@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'
-import { fileURLToPath } from 'url'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite"
+import { fileURLToPath } from "url"
+import react from "@vitejs/plugin-react"
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -8,8 +8,8 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        app: fileURLToPath(new URL('./index.html', import.meta.url)),
-        wrapper: fileURLToPath(new URL('./wrapper.html', import.meta.url)),
+        app: fileURLToPath(new URL("./index.html", import.meta.url)),
+        wrapper: fileURLToPath(new URL("./wrapper.html", import.meta.url)),
       },
     },
   },
