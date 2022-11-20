@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Dapper;
 using Dapper.Contrib.Extensions;
@@ -18,6 +18,7 @@ class WeatherForecastBlockServer : SimpleBlockServerBase<WeatherForecastBlockDto
 {
     private WeatherForecastBlockConfig _config;
     private HttpClient _httpClient = new();
+    private Dictionary<DateTime, WeatherForecastHourDto> _recentHours = new(); // the API does not return predictions for today that are now in the past but we want to chart them
 
     public WeatherForecastBlockServer(IServiceProvider sp, WeatherForecastBlockConfig config)
         : base(sp, TimeSpan.FromMinutes(30))
@@ -42,6 +43,14 @@ class WeatherForecastBlockServer : SimpleBlockServerBase<WeatherForecastBlockDto
             .Select(j => GetDayForecast((JObject)j["summary"]["report"]))
             .ToArray();
 
+        foreach (var day in json["forecasts"].OfType<JObject>())
+            foreach (var hour in (JArray)day["detailed"]["reports"])
+            {
+                var hdto = GetHourForecast((JObject)hour);
+                _recentHours[hdto.DateTime] = hdto;
+            }
+        _recentHours.RemoveAllByKey(d => d < DateTime.Today.AddDays(-1));
+        dto.Hours = _recentHours.Values.Where(h => h.DateTime.Date <= DateTime.Today.AddDays(2)).OrderBy(h => h.DateTime).ToArray();
 
         return dto;
     }
@@ -94,5 +103,14 @@ class WeatherForecastBlockServer : SimpleBlockServerBase<WeatherForecastBlockDto
         if (!Enum.IsDefined(result.WeatherKind))
             throw new Exception($"Unknown weather kind: {(int)result.WeatherKind}");
         return result;
+    }
+
+    private WeatherForecastHourDto GetHourForecast(JObject json)
+    {
+        return new WeatherForecastHourDto
+        {
+            DateTime = DateTime.Parse(json["localDate"].Value<string>() + "T" + json["timeslot"].Value<string>() + ":00"),
+            RainProbability = json["precipitationProbabilityInPercent"].Value<int>(),
+        };
     }
 }

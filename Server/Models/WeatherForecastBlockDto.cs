@@ -3,6 +3,7 @@
 public record WeatherForecastBlockDto : BaseDto
 {
     public WeatherForecastDayDto[] Days { get; set; }
+    public WeatherForecastHourDto[] Hours { get; set; }
 }
 
 public record WeatherForecastDayDto
@@ -15,6 +16,12 @@ public record WeatherForecastDayDto
     public int GustMph { get; set; }
     public WeatherForecastKindDte WeatherKind { get; set; }
     public bool Night { get; set; }
+}
+
+public record WeatherForecastHourDto
+{
+    public DateTime DateTime { get; set; }
+    public int RainProbability { get; set; }
 }
 
 public enum WeatherForecastKindDte

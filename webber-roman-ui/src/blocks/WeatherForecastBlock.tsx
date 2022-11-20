@@ -5,6 +5,7 @@ import { BaseDto, useBlock } from "./_BlockBase";
 
 export interface WeatherForecastBlockDto extends BaseDto {
     days: WeatherForecastDayDto[];
+    hours: WeatherForecastHourDto[];
 }
 
 export interface WeatherForecastDayDto {
@@ -16,6 +17,11 @@ export interface WeatherForecastDayDto {
     gustMph: number;
     weatherKind: WeatherForecastKindDte;
     night: boolean;
+}
+
+export interface WeatherForecastHourDto {
+    dateTime: DateTime;
+    rainProbability: number;
 }
 
 export type WeatherForecastKindDte =
@@ -47,6 +53,9 @@ export type WeatherForecastKindDte =
 function dtoPatcher(dto: WeatherForecastBlockDto) {
     for (let i = 0; i < dto.days.length; i++) {
         dto.days[i].date = DateTime.fromISO(dto.days[i].date as any);
+    }
+    for (let k = 0; k < dto.hours.length; k++) {
+        dto.hours[k].dateTime = DateTime.fromISO(dto.hours[k].dateTime as any);
     }
 }
 

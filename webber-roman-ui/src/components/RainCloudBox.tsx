@@ -2,8 +2,8 @@ import { DateTime } from "luxon";
 import styled from "styled-components";
 import { useWeatherBlock } from '../blocks/WeatherBlock';
 import { RainCloudPtDto, useRainCloudBlock } from "../blocks/RainCloudBlock";
+import { useWeatherForecastBlock } from "../blocks/WeatherForecastBlock";
 
-// TODO: use WeatherForecast data to augment rain probability
 // TODO: connection/update status indicator
 
 const RainCloudDiv = styled.div`
@@ -27,6 +27,7 @@ interface barSample {
 
 function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: DateTime, hoursTotal: number, labelScale: number }): JSX.Element {
     const wb = useWeatherBlock();
+    const wfc = useWeatherForecastBlock();
     if (!wb.dto)
         return <></>;
 
@@ -77,6 +78,8 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
     const textHeight = 15 * p.labelScale;
     const tickHeight = 11 * p.labelScale;
     const chartHeight = 100 - textHeight - tickHeight;
+
+    let rainlines = wfc.dto && wfc.dto.hours.map(h => ({ x: getX(h.dateTime), y: 100 - h.rainProbability })).filter(h => h.x >= 0 && h.x <= 100);
 
     return <svg width='100%' height='100%'>
         <linearGradient id="lighttime" key="lighttime" x1='0' x2='0' y1='0' y2='1'><stop key='1' offset="0%" stopColor='#fff' /><stop key='2' offset="100%" stopColor='#000' /></linearGradient>
@@ -136,6 +139,10 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
         <line key='xaxis' x1='0%' x2='100%' y1={chartHeight + '%'} y2={chartHeight + '%'} stroke={gridColor} />
         <line key='topb' x1='0%' x2='100%' y1='0%' y2='0%' stroke={gridColor} />
         {hours.map((hr, i) => <line key={`${i}_hr`} x1={hr.centerX + '%'} x2={hr.centerX + '%'} y1={chartHeight + '%'} y2={(chartHeight + tickHeight * 0.7) + '%'} stroke={gridColor} strokeWidth={(hr.hour % 2) == 0 ? 3 : 1} />)}
+
+        {rainlines && <svg key='rpch' x='0' y='0' width='100%' height={chartHeight + '%'} viewBox='0 0 100 100' preserveAspectRatio='none'>
+            <path stroke='#777' strokeWidth='0.2vw' fill='none' d={'M ' + rainlines.map(pt => `${pt.x} ${pt.y} `).join()} vectorEffect='non-scaling-stroke' />
+        </svg>}
 
         <svg key='tick' x={(getX(DateTime.now()) - tickHeight * 1.3 / 2) + '%'} y={chartHeight - tickHeight * 1.3 * 0.45 + '%'} width={tickHeight * 1.3 + '%'} height={tickHeight * 1.3 + '%'} viewBox='-0.1 -0.2 1.2 1.2'>
             <path d='M 0 1 .5 0 1 1 z' fill='red' stroke='#000' strokeWidth='0.15' strokeLinejoin='miter' />
