@@ -93,6 +93,7 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
         </mask>
         <linearGradient id="twilight1gr" key='twilight1gr'><stop key='1' offset="0%" stopColor={nightColor} /><stop key='2' offset="100%" stopColor={dayColor} /></linearGradient>
         <linearGradient id="twilight2gr" key='twilight2gr'><stop key='1' offset="0%" stopColor={dayColor} /><stop key='2' offset="100%" stopColor={nightColor} /></linearGradient>
+        <linearGradient id="rainlinegr" key='rainlinegr' x1='0' x2='0' y1='1' y2='0'><stop key='1' offset="20%" stopColor='#777' /><stop key='2' offset="70%" stopColor='#ff0' /><stop key='2' offset="100%" stopColor='#f00' /></linearGradient>
 
         <g key='glight' mask='url(#lightmask)'>
             <rect key='night1' x='0%' y='0%' height='100%' width={getX(sunrise.plus({ hours: -1 })) + '%'} fill={nightColor} />
@@ -141,7 +142,7 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
         {hours.map((hr, i) => <line key={`${i}_hr`} x1={hr.centerX + '%'} x2={hr.centerX + '%'} y1={chartHeight + '%'} y2={(chartHeight + tickHeight * 0.7) + '%'} stroke={gridColor} strokeWidth={(hr.hour % 2) == 0 ? 3 : 1} />)}
 
         {rainlines && <svg key='rpch' x='0' y='0' width='100%' height={chartHeight + '%'} viewBox='0 0 100 100' preserveAspectRatio='none'>
-            <path stroke='#777' strokeWidth='0.2vw' fill='none' d={'M ' + rainlines.map(pt => `${pt.x} ${pt.y} `).join()} vectorEffect='non-scaling-stroke' />
+            <path stroke='url(#rainlinegr)' strokeWidth='0.2vw' fill='none' d={'M ' + rainlines.map(pt => `${pt.x} ${pt.y} `).join()} vectorEffect='non-scaling-stroke' />
         </svg>}
 
         <svg key='tick' x={(getX(DateTime.now()) - tickHeight * 1.3 / 2) + '%'} y={chartHeight - tickHeight * 1.3 * 0.45 + '%'} width={tickHeight * 1.3 + '%'} height={tickHeight * 1.3 + '%'} viewBox='-0.1 -0.2 1.2 1.2'>
