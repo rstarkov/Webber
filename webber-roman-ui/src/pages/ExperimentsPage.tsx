@@ -2,7 +2,7 @@ import { DateTime } from "luxon";
 import styled from "styled-components";
 import { useWeatherBlock } from "../blocks/WeatherBlock";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
+import { faMoon, faSun } from "@fortawesome/free-solid-svg-icons";
 import { BlockPanelContainer } from "../components/Container";
 import { NavOverlay, useNavOverlayState } from "../components/NavOverlay";
 

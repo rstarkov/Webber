@@ -1,8 +1,8 @@
-import { useDialogState, Dialog, DialogState } from "ariakit/Dialog";
+import { Dialog, DialogState, useDialogState } from "ariakit/Dialog";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faArrowsRotate, faExpand, faCompress } from "@fortawesome/free-solid-svg-icons";
+import { faArrowsRotate, faCompress, faExpand, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 const NavOverlayDiv = styled.div`
     position: absolute;
