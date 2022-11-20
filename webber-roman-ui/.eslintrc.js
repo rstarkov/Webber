@@ -25,6 +25,7 @@ module.exports = {
         "quotes": ["warn", "double", { avoidEscape: true }],
         "jsx-quotes": ["warn", "prefer-double"],
         "quote-props": ["warn", "consistent-as-needed"],
+        "indent": ["warn", 4],
         "prefer-const": "warn",
         "@typescript-eslint/no-unused-vars": "off",
         "@typescript-eslint/no-empty-function": "off",
