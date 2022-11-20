@@ -90,6 +90,7 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
 
     const textHeight = 15;
     const tickHeight = 11;
+    const markerHeight = tickHeight * 1.3;
     const chartHeight = 100 - textHeight - tickHeight;
 
     let rainlines = wfc.dto && wfc.dto.hours.map(h => ({ x: getX(h.dateTime), y: 100 - h.rainProbability })).filter(h => h.x >= 0 && h.x <= 100);
@@ -164,12 +165,9 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
             <path stroke='url(#rainlinegr)' strokeWidth='0.2vw' fill='none' d={'M ' + rainlines.map(pt => `${pt.x} ${pt.y} `).join()} vectorEffect='non-scaling-stroke' />
         </svg>}
 
-        <svg key='tick' x={(getX(DateTime.now()) - tickHeight * 1.3 / 2) + '%'} y={chartHeight - tickHeight * 1.3 * 0.45 + '%'} width={tickHeight * 1.3 + '%'} height={tickHeight * 1.3 + '%'} viewBox='-0.1 -0.2 1.2 1.2'>
+        <svg key='marker' x={(getX(DateTime.now()) - markerHeight / 2) + '%'} y={(chartHeight - markerHeight + tickHeight * 0.7 / 2) + '%'} width={markerHeight + '%'} height={markerHeight + '%'} viewBox='-0.1 -0.2 1.2 1.1'>
             <path d='M 0 1 .5 0 1 1 z' fill='red' stroke='#000' strokeWidth='0.15' strokeLinejoin='miter' />
         </svg>
-        {/* {<svg opacity='0.5' x={(getX(DateTime.now()) - tickHeight / 2) + '%'} y={chartHeight - tickHeight * 0.3 + '%'} width={tickHeight + '%'} height={tickHeight + '%'} viewBox='0 0 1 1'>
-            <path d='M 0 1 .5 0 1 1 z' fill='green' />
-        </svg>} */}
     </svg>;
 }
 
