@@ -24,11 +24,12 @@ interface barSample {
     color: string;
 }
 
-function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: DateTime, hoursTotal: number, labelScale: number }): JSX.Element {
+function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: DateTime }): JSX.Element {
     const wb = useWeatherBlock();
     const wfc = useWeatherForecastBlock();
 
-    function getX(dt: DateTime): number { return 100 * (dt.diff(p.from)).as('hours') / p.hoursTotal; }
+    const hoursTotal = 48;
+    function getX(dt: DateTime): number { return 100 * (dt.diff(p.from)).as('hours') / hoursTotal; }
 
     const nightColor = '#013'; // #081133
     const dayColor = '#330';
@@ -85,10 +86,10 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
         [0, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.7, 0.9, 1]);
 
     let firstHour = p.from.startOf('hour');
-    let hours = Array.from(Array(p.hoursTotal + 1), (_, i) => firstHour.plus({ hours: i })).map(h => ({ hour: h.hour, centerX: getX(h) })).filter(h => h.centerX > 0 && h.centerX < 100);
+    let hours = Array.from(Array(hoursTotal + 1), (_, i) => firstHour.plus({ hours: i })).map(h => ({ hour: h.hour, centerX: getX(h) })).filter(h => h.centerX > 0 && h.centerX < 100);
 
-    const textHeight = 15 * p.labelScale;
-    const tickHeight = 11 * p.labelScale;
+    const textHeight = 15;
+    const tickHeight = 11;
     const chartHeight = 100 - textHeight - tickHeight;
 
     let rainlines = wfc.dto && wfc.dto.hours.map(h => ({ x: getX(h.dateTime), y: 100 - h.rainProbability })).filter(h => h.x >= 0 && h.x <= 100);
@@ -184,6 +185,6 @@ export function RainCloudBox(props: React.HTMLAttributes<HTMLDivElement>): JSX.E
     from = from.startOf('day').plus({ hours: startHour });
 
     return <RainCloudDiv {...props}>
-        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} from={from} hoursTotal={48} labelScale={1} />
+        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} from={from} />
     </RainCloudDiv >;
 }
