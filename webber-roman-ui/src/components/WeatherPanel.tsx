@@ -14,7 +14,7 @@ const RecentMinMaxDiv = styled.div`
     color: #777;
 `;
 
-export function WeatherBox(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function WeatherPanel(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     const weather = useWeatherBlock();
     if (!weather.dto)
         return <WeatherBoxDiv state={weather} {...props} />;

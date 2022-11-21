@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { useWeatherBlock } from "../blocks/WeatherBlock";
 import { useWeatherForecastBlock, WeatherForecastDayDto } from "../blocks/WeatherForecastBlock";
-import { WeatherTypeIcon } from "../components/WeatherTypeIcon";
+import { WeatherTypeIcon } from "./WeatherTypeIcon";
 import { BlockPanelContainer } from "./Container";
 
 const weekdays = [null, "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -91,7 +91,7 @@ function ForecastDay(p: { dto: WeatherForecastDayDto, mode: "today" | "big" | "s
     </ForecastDayDiv>;
 }
 
-export function WeatherForecastBox(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function WeatherForecastPanel(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     const fc = useWeatherForecastBlock();
     if (!fc.dto)
         return <ForecastDiv state={fc} {...props} />;

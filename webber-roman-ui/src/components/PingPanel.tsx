@@ -8,7 +8,7 @@ const PingBoxDiv = styled(BlockPanelBorderedContainer)`
     flex-direction: column;
 `;
 
-export function PingBox(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function PingPanel(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     const ping = usePingBlock();
     if (!ping.dto)
         return <PingBoxDiv state={ping} {...props} />;

@@ -22,7 +22,7 @@ const RouterChartDownDiv = styled(RouterChartDiv)`
     border-top: 1px solid #999;
 `;
 
-export function RouterBox(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function RouterPanel(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     const router = useRouterBlock();
     if (!router.dto)
         return <RouterBoxDiv state={router} {...props} />;

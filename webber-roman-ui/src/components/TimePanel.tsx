@@ -7,7 +7,7 @@ const TimeBoxDiv = styled(BlockPanelBorderedContainer)`
     grid-template-columns: 1fr min-content min-content 1fr;
 `;
 
-export function TimeBox(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function TimePanel(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     const { time, updates } = useTime();
     return <TimeBoxDiv state={makeState({ updates })} {...props}>
         <div style={{ gridColumnEnd: "span 4", textAlign: "center", fontSize: "280%", fontWeight: "bold", marginTop: "-1.7vw", marginBottom: "0.8vw" }}>{time.toFormat("HH:mm")}</div>

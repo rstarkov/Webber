@@ -170,7 +170,7 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
     </svg>;
 }
 
-export function RainCloudBox(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function RainCloudPanel(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     const rb = useRainCloudBlock();
     if (!rb.dto)
         return <RainCloudDiv state={rb} {...props} />;
