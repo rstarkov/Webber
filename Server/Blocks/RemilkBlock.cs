@@ -67,7 +67,7 @@ class RemilkBlockServer : SimpleBlockServerBase<RemilkBlockDto>
         var xml = XDocument.Parse(str);
         var elements = xml.Element("rsp").Element("tasks").Element("list").Elements("taskseries").ToList();
         var tasks = elements.Select(e => new RemilkTask(e)).ToArray();
-        return new RemilkBlockDto { Tasks = tasks };
+        return new RemilkBlockDto { Tasks = tasks, ValidUntilUtc = DateTime.UtcNow.AddMinutes(3) };
 
         //callRtm("https://api.rememberthemilk.com/services/auth/", ("api_key", _apiKey), ("perms", "read"));
         //callRtm("https://api.rememberthemilk.com/services/rest/", ("method", "rtm.auth.getToken"), ("api_key", _apiKey), ("frob", _apiFrob));

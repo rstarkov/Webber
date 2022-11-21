@@ -15,9 +15,10 @@ export interface BaseDto {
 export interface BlockState {
     status: BlockConnectionStatus;
     updates: number;
+    dto: { validUntilUtc: DateTime } | null;
 }
 
-export interface BlockStateDto<TDto> extends BlockState {
+export interface BlockStateDto<TDto extends BaseDto> extends BlockState {
     dto: TDto | null;
 }
 
