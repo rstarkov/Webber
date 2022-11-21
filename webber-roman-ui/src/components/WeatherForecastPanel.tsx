@@ -15,6 +15,9 @@ const ForecastDayDiv = styled.div`
     border: 1px solid #444;
     justify-items: center;
     position: relative;
+    &:last-child {
+        margin-right: 0 !important;
+    }
 `;
 
 const HeadingDiv = styled.div`
@@ -62,6 +65,27 @@ function temperatureClr(temp: number, mean: number | null, stdev: number | null)
     return `#${hex(color[0])}${hex(color[1])}${hex(color[2])}`;
 }
 
+const WindDiv = styled.div`
+    display: flex;
+    height: 0.15vw;
+    margin-bottom: 0.4vw;
+    justify-content: center;
+`;
+const WindDash = styled.div`
+    flex: 1;
+    height: 0.15vw;
+`;
+function WindLine(p: { windMph: number }): JSX.Element {
+    const beaufort = [1, 3, 7, 12, 18, 24, 31, 38, 46, 54, 63, 73, 999]; // Beaufort Wind Scale; levels 11-12 only at sea; level 10 is "rare on land"
+    const b = beaufort.findIndex(v => p.windMph <= v);
+    const color = ["#333", "#555", "#666", "#777", "#ccc", "#ff0", "#ff6738", "#f00", "#f0f", "#f0f", "#f0f", "#f0f", "#f0f"][b];
+    const width = [0, 15, 30, 40, 50, 60, 70, 80, 90, 90, 90, 90, 90][b] + "%";
+    const gap = [15, 15, 15, 12, 10, 7, 6, 6, 5, 3, 0, 0, 0][b] + "%";
+    return <WindDiv style={{ width, gap }}>
+        {new Array(b).fill(0).map((_, i) => <WindDash key={i} style={{ background: color }} />)}
+    </WindDiv>
+}
+
 function ForecastDay(p: { dto: WeatherForecastDayDto, mode: "today" | "big" | "small" }): JSX.Element {
     const w = useWeatherBlock();
 
@@ -74,14 +98,13 @@ function ForecastDay(p: { dto: WeatherForecastDayDto, mode: "today" | "big" | "s
     const rainText = p.dto.rainProbability < rainShowLimit || p.dto.weatherKind == "sun" ? null : (p.dto.rainProbability / 10).toFixed(0);
     const windVal = Math.max(p.dto.windMph, p.dto.gustMph / 2);
     const wind = windVal > 27 ? 1 : windVal >= 18 ? 0.6 : 0;
-    const windColor = windVal <= 3 ? "#333" : windVal <= 7 ? "#555" : windVal <= 12 ? "#777" : windVal <= 18 ? "#ff0" : windVal <= 31 ? "#f00" : "#f0f";
     const tempColor = !w.dto ? "#fff" : p.dto.night
         ? temperatureClr(p.dto.tempMinC, w.dto.recentLowTempMean, w.dto.recentLowTempStdev)
         : temperatureClr(p.dto.tempMaxC, w.dto.recentHighTempMean, w.dto.recentHighTempStdev);
 
     return <ForecastDayDiv style={{ flex: cellSize, background: cellBack, marginRight: cellMargin, borderColor: cellBorder }}>
         <HeadingDiv>{headingText}</HeadingDiv>
-        <div style={{ height: "2px", width: Math.min(100, windVal * 3) + "%", background: windColor, marginBottom: "0.4vw" }}></div>
+        <WindLine windMph={windVal} />
         <WeatherIconDiv>
             <WeatherIcon kind={p.dto.weatherKind} night={p.dto.night} wind={wind} />
             {!!rainText && <RainProbDiv style={{ color: "#0000", WebkitTextStroke: "0.25vw #fff" }}>{rainText}</RainProbDiv>}
