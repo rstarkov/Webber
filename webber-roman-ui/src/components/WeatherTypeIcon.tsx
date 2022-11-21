@@ -78,7 +78,7 @@ const IconDiv = styled.div<{ img: string }>`
 export function WeatherTypeIcon({ kind, night, wind, ...rest }: WeatherTypeProps): JSX.Element {
     const layers = night ? _nightIconMap[kind] : _dayIconMap[kind];
     return <ContainerDiv {...rest}>
-        {layers.map(src => <IconDiv img={src} />)}
-        <IconDiv img={iWind} style={{ opacity: wind }} />
+        {layers.map(src => <IconDiv key={src} img={src} />)}
+        {wind > 0 && <IconDiv key={iWind} img={iWind} style={{ opacity: wind }} />}
     </ContainerDiv>;
 }

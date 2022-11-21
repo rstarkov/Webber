@@ -71,7 +71,7 @@ function ForecastDay(p: { dto: WeatherForecastDayDto, mode: "today" | "big" | "s
     const cellMargin = p.dto.date.weekday == 7 ? "2vw" : "0";
     const headingText = p.mode == "today" ? (p.dto.night ? "Night" : "Today") : weekdays[p.dto.date.weekday];
     const rainShowLimit = p.mode == "today" ? 15 : p.mode == "big" ? 20 : 999;
-    const rainText = p.dto.rainProbability < rainShowLimit || p.dto.weatherKind == 'sun' ? null : (p.dto.rainProbability / 10).toFixed(0);
+    const rainText = p.dto.rainProbability < rainShowLimit || p.dto.weatherKind == "sun" ? null : (p.dto.rainProbability / 10).toFixed(0);
     const windVal = Math.max(p.dto.windMph, p.dto.gustMph / 2);
     const wind = windVal > 27 ? 1 : windVal >= 18 ? 0.6 : 0;
     const windColor = windVal <= 3 ? "#333" : windVal <= 7 ? "#555" : windVal <= 12 ? "#777" : windVal <= 18 ? "#ff0" : windVal <= 31 ? "#f00" : "#f0f";
@@ -97,8 +97,8 @@ export function WeatherForecastBox(props: React.HTMLAttributes<HTMLDivElement>):
         return <ForecastDiv state={fc} {...props} />;
 
     return <ForecastDiv state={fc} {...props}>
-        <ForecastDay dto={fc.dto.days[0]} mode="today" />
-        {fc.dto.days.slice(1, 8).map(dto => <ForecastDay dto={dto} mode="big" />)}
-        {fc.dto.days.slice(8, 14).map(dto => <ForecastDay dto={dto} mode="small" />)}
+        <ForecastDay key="d1" dto={fc.dto.days[0]} mode="today" />
+        {fc.dto.days.slice(1, 8).map(dto => <ForecastDay key={dto.date.toString()} dto={dto} mode="big" />)}
+        {fc.dto.days.slice(8, 14).map(dto => <ForecastDay key={dto.date.toString()} dto={dto} mode="small" />)}
     </ForecastDiv>;
 }
