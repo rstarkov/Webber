@@ -2,12 +2,11 @@ import styled from "styled-components";
 import { useWeatherBlock } from "../blocks/WeatherBlock";
 import { useWeatherForecastBlock, WeatherForecastDayDto } from "../blocks/WeatherForecastBlock";
 import { WeatherTypeIcon } from "../components/WeatherTypeIcon";
-
-// TODO: connection/update status indicator
+import { BlockPanelContainer } from "./Container";
 
 const weekdays = [null, "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-const ForecastDiv = styled.div`
+const ForecastDiv = styled(BlockPanelContainer)`
     display: flex;
 `;
 const ForecastDayDiv = styled.div`
@@ -95,9 +94,9 @@ function ForecastDay(p: { dto: WeatherForecastDayDto, mode: "today" | "big" | "s
 export function WeatherForecastBox(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     const fc = useWeatherForecastBlock();
     if (!fc.dto)
-        return <></>;
+        return <ForecastDiv state={fc} {...props} />;
 
-    return <ForecastDiv {...props}>
+    return <ForecastDiv state={fc} {...props}>
         <ForecastDay dto={fc.dto.days[0]} mode="today" />
         {fc.dto.days.slice(1, 8).map(dto => <ForecastDay dto={dto} mode="big" />)}
         {fc.dto.days.slice(8, 14).map(dto => <ForecastDay dto={dto} mode="small" />)}

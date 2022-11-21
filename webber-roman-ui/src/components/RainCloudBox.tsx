@@ -3,10 +3,9 @@ import styled from "styled-components";
 import { useWeatherBlock } from "../blocks/WeatherBlock";
 import { RainCloudPtDto, useRainCloudBlock } from "../blocks/RainCloudBlock";
 import { useWeatherForecastBlock } from "../blocks/WeatherForecastBlock";
+import { BlockPanelContainer } from "./Container";
 
-// TODO: connection/update status indicator
-
-const RainCloudDiv = styled.div`
+const RainCloudDiv = styled(BlockPanelContainer)`
     display: grid;
     grid-template-columns: 1fr;
 `;
@@ -174,7 +173,7 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
 export function RainCloudBox(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     const rb = useRainCloudBlock();
     if (!rb.dto)
-        return <></>;
+        return <RainCloudDiv state={rb} {...props} />;
 
     const startHour = 5;
     let from = DateTime.now();
@@ -182,7 +181,7 @@ export function RainCloudBox(props: React.HTMLAttributes<HTMLDivElement>): JSX.E
         from = from.plus({ days: -1 });
     from = from.startOf("day").plus({ hours: startHour });
 
-    return <RainCloudDiv {...props}>
+    return <RainCloudDiv state={rb} {...props}>
         <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} from={from} />
     </RainCloudDiv >;
 }
