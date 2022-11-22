@@ -129,7 +129,7 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
     return <RemilkPanelContainer state={remilk} {...rest}>
         <OverflowFaderDiv>
             {tasksEasy.length > 0 && <TaskSectionDiv style={{ color: "#73ff73" }}>
-                {tasksEasy.map(t => <Task key={t.id} task={t} />)}
+                {tasksEasy.map(t => <Task key={t.id} task={t} nolate={true} />)}
             </TaskSectionDiv>}
             {tasksTodayPrio.length > 0 && <TaskSectionDiv style={{ color: PrioColors[1] }}>
                 {tasksTodayPrio.map(t => <Task key={t.id} task={t} />)}
