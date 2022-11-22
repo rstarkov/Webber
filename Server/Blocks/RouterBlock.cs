@@ -177,6 +177,15 @@ class RouterBlockServer : SimpleBlockServerBase<RouterBlockDto>
         dto.TxLast = (int)Math.Round(txRate);
         dto.RxAverageRecent = (int)Math.Round(avgRx);
         dto.TxAverageRecent = (int)Math.Round(avgTx);
+        var pt5min = _history.Where(p => p.Timestamp > DateTime.UtcNow.AddMinutes(-5)).MinElement(p => p.Timestamp);
+        dto.RxAverage5min = (int)Math.Round((pt.RxTotal - pt5min.RxTotal) / (pt.Timestamp - pt5min.Timestamp).TotalSeconds);
+        dto.TxAverage5min = (int)Math.Round((pt.TxTotal - pt5min.TxTotal) / (pt.Timestamp - pt5min.Timestamp).TotalSeconds);
+        var pt30min = _history.Where(p => p.Timestamp > DateTime.UtcNow.AddMinutes(-30)).MinElement(p => p.Timestamp);
+        dto.RxAverage30min = (int)Math.Round((pt.RxTotal - pt30min.RxTotal) / (pt.Timestamp - pt30min.Timestamp).TotalSeconds);
+        dto.TxAverage30min = (int)Math.Round((pt.TxTotal - pt30min.TxTotal) / (pt.Timestamp - pt30min.Timestamp).TotalSeconds);
+        var pt60min = _history.Where(p => p.Timestamp > DateTime.UtcNow.AddMinutes(-60)).MinElement(p => p.Timestamp);
+        dto.RxAverage60min = (int)Math.Round((pt.RxTotal - pt60min.RxTotal) / (pt.Timestamp - pt60min.Timestamp).TotalSeconds);
+        dto.TxAverage60min = (int)Math.Round((pt.TxTotal - pt60min.TxTotal) / (pt.Timestamp - pt60min.Timestamp).TotalSeconds);
         dto.HistoryRecent = recentHistory.Select(h => new RouterBlockDto.HistoryPoint { TxRate = h.txRate, RxRate = h.rxRate }).ToArray();
         dto.HistoryHourly = Enumerable.Range(1, 24).Select(h =>
         {

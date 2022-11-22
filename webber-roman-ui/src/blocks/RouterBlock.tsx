@@ -12,6 +12,12 @@ export interface RouterBlockDto extends BaseDto {
     txLast: number;
     rxAverageRecent: number;
     txAverageRecent: number;
+    rxAverage5min: number;
+    txAverage5min: number;
+    rxAverage30min: number;
+    txAverage30min: number;
+    rxAverage60min: number;
+    txAverage60min: number;
     historyRecent: (RouterHistoryPoint | null)[];
     historyHourly: (RouterHistoryPoint | null)[];
 }
