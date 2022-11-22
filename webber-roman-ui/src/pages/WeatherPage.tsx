@@ -1,10 +1,11 @@
 import styled from "styled-components";
 import { NavOverlay, useNavOverlayState } from "../components/NavOverlay";
 import { WeatherPanel } from "../components/WeatherPanel";
-import { PingPanel } from "../components/PingPanel";
+import { MiniPingPanel } from "../components/PingPanel";
 import { useTime } from "../util/useTime";
 import { WeatherForecastPanel } from "../components/WeatherForecastPanel";
 import { RainCloudPanel } from "../components/RainCloudPanel";
+import { MiniRouterPanel } from "../components/RouterPanel";
 
 const ZonesClockDiv = styled.div`
     display: grid;
@@ -45,10 +46,12 @@ export function WeatherPage(): JSX.Element {
 
     return (
         <>
+            <WeatherPanel style={{ position: "absolute", top: "0vw", left: "0vw", width: "37vw", height: "26vw" }} />
             <MainClock style={{ position: "absolute", left: "38vw", top: "-5vh", width: "27vw" }} onClick={overlay.show} />
             <ZonesClock style={{ position: "absolute", left: "38vw", top: "18vh", width: "27vw" }} />
-            <PingPanel style={{ position: "absolute", top: "0vw", right: "0", width: "34vw", height: "26vw" }} />
-            <WeatherPanel style={{ position: "absolute", top: "0vw", left: "0vw", width: "37vw", height: "26vw" }} />
+            <MiniPingPanel style={{ position: "absolute", top: "0vw", right: "0", width: "33vw", height: "18vh" }} />
+            <MiniRouterPanel style={{ position: "absolute", top: "18vh", right: "0", width: "33vw", bottom: "55.8vh" }} />
+
             <WeatherForecastPanel style={{ position: "absolute", left: "0vw", top: "48.2vh", width: "100vw" }} />
             <RainCloudPanel style={{ position: "absolute", left: "0vw", top: "75vh", width: "100vw", height: "25vh" }} />
 
