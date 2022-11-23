@@ -11,6 +11,7 @@ class RainCloudBlockConfig
     public double LocationX { get; set; }
     public double LocationY { get; set; }
     public string CachePath { get; set; } = null;
+    public string DumpImagesPath { get; set; } = null;
 }
 
 class RainCloudBlockServer : SimpleBlockServerBase<RainCloudBlockDto>
@@ -99,31 +100,38 @@ class RainCloudBlockServer : SimpleBlockServerBase<RainCloudBlockDto>
                 var bytes = _metoffice.DownloadImage(ts).GetAwaiter().GetResult();
                 Thread.Sleep(200);
                 bmp = SKBitmap.Decode(bytes);
+                if (_config.DumpImagesPath != null)
+                    if (ts.ModelName == "rainfall_radar" || ts.ModelName == "total_precipitation_rate")
+                        File.WriteAllBytes(Path.Combine(_config.DumpImagesPath, $@"{ts.Time:yyyy-MM-dd'T'HH'.'mm}--{(isForecast ? $"fc--{(ts.Time - ts.ModelRun).TotalMinutes:0000}" : "ob")}.png"), bytes);
             }
             catch { } // download and decode can fail for various benign reasons; expect and ignore this, we'll retry later
 
             // count forecast pixels - errors here should propagate so that we know about them
             if (bmp != null)
-            {
-                int x = (int)Math.Round(bmp.Width * _config.LocationX);
-                int y = (int)Math.Round(bmp.Height * _config.LocationY);
-                result.Counts = new int[colormap.Values.Max() + 1];
-                for (int cy = y - 1; cy <= y + 1; cy++)
-                for (int cx = x - 1; cx <= x + 1; cx++)
-                {
-                    var clr = bmp.GetPixel(cx, cy);
-                    var best = colormap
-                        .Select(m => (m, diff: Math.Abs(m.Key.Alpha - clr.Alpha) + Math.Abs(m.Key.Red - clr.Red) + Math.Abs(m.Key.Green - clr.Green) + Math.Abs(m.Key.Blue - clr.Blue)))
-                        .MinElement(el => el.diff);
-                    if (best.diff > 6)
-                        throw new Exception();
-                    result.Counts[best.m.Value]++;
-                }
-            }
+                result.Counts = GetCounts(bmp, _config.LocationX, _config.LocationY, colormap);
         }
 
         if (result.Counts != null) // cache only successful results so that we retry failures on next refresh
             newPoints[ts.Url] = result;
         return result;
+    }
+
+    public static int[] GetCounts(SKBitmap bmp, double locX, double locY, Dictionary<SKColor, int> colormap)
+    {
+        int x = (int)Math.Round(bmp.Width * locX);
+        int y = (int)Math.Round(bmp.Height * locY);
+        var counts = new int[colormap.Values.Max() + 1];
+        for (int cy = y - 1; cy <= y + 1; cy++)
+        for (int cx = x - 1; cx <= x + 1; cx++)
+        {
+            var clr = bmp.GetPixel(cx, cy);
+            var best = colormap
+                .Select(m => (m, diff: Math.Abs(m.Key.Alpha - clr.Alpha) + Math.Abs(m.Key.Red - clr.Red) + Math.Abs(m.Key.Green - clr.Green) + Math.Abs(m.Key.Blue - clr.Blue)))
+                .MinElement(el => el.diff);
+            if (best.diff > 6)
+                throw new Exception();
+            counts[best.m.Value]++;
+        }
+        return counts;
     }
 }

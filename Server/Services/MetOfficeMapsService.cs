@@ -46,13 +46,13 @@ public class MetOfficeMapsService
                 // merge all of them but latest model runs take precedence (lets us get forecasts for further in the past than the latest run offers)
                 var result = new Dictionary<DateTime, Timestep>();
                 foreach (var run in runs)
-                    foreach (var ts in xml.Element("timesteps").Elements("timestep").Select(ts => new Timestep(ts.Value, run.Item2, $"/wms_fc/single/high-res/{submodel}/{Name}/{run.Item1}/{ts.Value}")))
+                    foreach (var ts in xml.Element("timesteps").Elements("timestep").Select(ts => new Timestep(ts.Value, run.Item2, $"/wms_fc/single/high-res/{submodel}/{Name}/{run.Item1}/{ts.Value}", Name)))
                         result[ts.Time] = ts;
                 return result.Values.OrderBy(ts => ts.Time).ToList();
             }
             else
             {
-                return runs.Select(r => new Timestep("PT0S", r.Item2, $"/wms_ob/single/high-res/{Name}/{r.Item1}")).ToList();
+                return runs.Select(r => new Timestep("PT0S", r.Item2, $"/wms_ob/single/high-res/{Name}/{r.Item1}", Name)).ToList();
             }
         }
 
@@ -66,13 +66,15 @@ public class MetOfficeMapsService
     public class Timestep
     {
         public string Url { get; set; }
+        public string ModelName { get; set; }
         public DateTime ModelRun { get; init; }
         public DateTime Time { get; init; }
 
-        public Timestep(string ts, DateTime modelRun, string url)
+        public Timestep(string ts, DateTime modelRun, string url, string modelName)
         {
             Url = url;
             ModelRun = modelRun;
+            ModelName = modelName;
             // PT0S, PT15M, PT2H, PT2H15M, PT108H, P5D,
             var match = Regex.Match(ts, @"PT?((?<d>\d+)D)?((?<h>\d+)H)?((?<m>\d+)M)?((?<s>\d+)S)?");
             if (!match.Success)
