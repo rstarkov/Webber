@@ -3,6 +3,7 @@ using System.Xml.Linq;
 using Dapper;
 using Dapper.Contrib.Extensions;
 using Innovative.SolarCalculator;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RT.Serialization;
 using RT.Util.ExtensionMethods;
@@ -14,6 +15,7 @@ class WeatherForecastBlockConfig
 {
     public string BbcLocationCode { get; set; }
     public string CachePath { get; set; } = null;
+    public string DumpPath { get; set; } = null;
 }
 
 class WeatherForecastBlockServer : SimpleBlockServerBase<WeatherForecastBlockDto>
@@ -64,6 +66,14 @@ class WeatherForecastBlockServer : SimpleBlockServerBase<WeatherForecastBlockDto
 
         if (_config.CachePath != null)
             ClassifyXml.SerializeToFile(_recentHours, _config.CachePath);
+        if (_config.DumpPath != null)
+        {
+            var issue = json["issueDate"].ToString(Formatting.None).Replace(":", ".").Replace("\"", "");
+            var lastUpdated = json["lastUpdated"].ToString(Formatting.None).Replace(":", ".").Replace("\"", "");
+            var dumpFile = Path.Combine(_config.DumpPath, $"{_config.BbcLocationCode}--{issue}--{lastUpdated}.json");
+            if (!File.Exists(dumpFile))
+                File.WriteAllText(dumpFile, content);
+        }
 
         return dto;
     }
