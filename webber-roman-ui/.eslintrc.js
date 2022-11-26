@@ -30,6 +30,8 @@ module.exports = {
         "comma-dangle": ["warn", "always-multiline"],
         "prefer-const": "warn",
         "sort-imports": ["warn", { ignoreCase: true, ignoreDeclarationSort: true }], // auto-sorting import statements is not safe :(
+        "eol-last": ["warn", "always"],
+        "no-trailing-spaces": "warn",
         "@typescript-eslint/no-unused-vars": "off",
         "@typescript-eslint/no-empty-function": "off",
         "@typescript-eslint/no-explicit-any": "off",
