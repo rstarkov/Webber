@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { useWeatherBlock } from "../blocks/WeatherBlock";
 import { RainCloudPtDto, useRainCloudBlock } from "../blocks/RainCloudBlock";
 import { useWeatherForecastBlock } from "../blocks/WeatherForecastBlock";
-import { BlockPanelContainer } from "./Container";
+import { BlockPanelContainer, joinState } from "./Container";
 
 const RainCloudDiv = styled(BlockPanelContainer)`
     display: grid;
@@ -23,9 +23,10 @@ interface barSample {
     color: string;
 }
 
-function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: DateTime }): JSX.Element {
-    const wb = useWeatherBlock();
+function RainChart(p: { from: DateTime }): JSX.Element {
+    const rb = useRainCloudBlock();
     const wfc = useWeatherForecastBlock();
+    const wb = useWeatherBlock();
 
     const hoursTotal = 48;
     function getX(dt: DateTime): number { return 100 * (dt.diff(p.from)).as("hours") / hoursTotal; }
@@ -77,10 +78,10 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
         pts[pts.length - 1].widthR = pts[pts.length - 1].widthL;
         return pts;
     }
-    const rainPts = getPts(p.rain,
+    const rainPts = rb.dto && getPts(rb.dto.rain,
         ["#000", "#0000fe", "#0660fe", "#0cbcfe", "#00a300", "#fecb00", "#fe9800", "#fe0000", "#b30000"],
         [0, 0.4, 0.6, 0.75, 0.9, 1, 1, 1, 1]);
-    const cloudPts = getPts(p.cloud,
+    const cloudPts = rb.dto && getPts(rb.dto.cloud,
         ["#aaa0", "#aaa2", "#aaa2", "#aaa2", "#aaa3", "#aaa4", "#aaa5", "#aaa5", "#aaa5", "#aaa5"],
         [0, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.7, 0.9, 1]);
 
@@ -123,7 +124,7 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
         {hours.filter(hr => (hr.hour % 2) == 0).map((hr, i) => <svg key={`${i}_tx`} x={(hr.centerX - textHeight / 2) + "%"} y={(100 - textHeight) + "%"} width={textHeight + "%"} height={textHeight + "%"} viewBox="0 0 1 1">
             <text x="0.5" y="0" fontSize="1" fill="#ccc" textAnchor="middle" dominantBaseline="hanging">{hr.hour.toLocaleString("en-US", { minimumIntegerDigits: 2 })}</text>
         </svg>)}
-        <g key="clouds" mask="url(#cloudmask)">
+        {cloudPts && <g key="clouds" mask="url(#cloudmask)">
             {cloudPts.map((pt, i) => pt.samples.map((sm, j) => {
                 const gap = pt.widthL! + pt.widthR! > 2 ? 0 : pt.widthL! + pt.widthR! > 0.4 ? 0.05 : -0.15 /* negative to make them blend together */;
                 return <rect
@@ -136,14 +137,14 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
                     strokeWidth="0">
                 </rect>;
             }))}
-        </g>
+        </g>}
         {daynight && <g key="grise">
             <line key="sunrise1" x1={daynight.rise1 + "%"} x2={daynight.rise1 + "%"} y1="0%" y2={chartHeight + "%"} stroke={sunlineColor} strokeDasharray="3" />
             <line key="sunset1" x1={daynight.set1 + "%"} x2={daynight.set1 + "%"} y1="0%" y2={chartHeight + "%"} stroke={sunlineColor} strokeDasharray="3" />
             <line key="sunrise2" x1={daynight.rise2 + "%"} x2={daynight.rise2 + "%"} y1="0%" y2={chartHeight + "%"} stroke={sunlineColor} strokeDasharray="3" />
             <line key="sunset2" x1={daynight.set2 + "%"} x2={daynight.set2 + "%"} y1="0%" y2={chartHeight + "%"} stroke={sunlineColor} strokeDasharray="3" />
         </g>}
-        {rainPts.map((pt, i) => pt.samples.map((sm, j) => {
+        {rainPts && rainPts.map((pt, i) => pt.samples.map((sm, j) => {
             const gap = pt.widthL! + pt.widthR! > 0.4 ? 0.05 : -0.15 /* negative to make them blend together */;
             return <rect
                 key={`${i}_${j}_2`}
@@ -172,8 +173,7 @@ function RainChart(p: { rain: RainCloudPtDto[], cloud: RainCloudPtDto[], from: D
 
 export function RainCloudPanel(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     const rb = useRainCloudBlock();
-    if (!rb.dto)
-        return <RainCloudDiv state={rb} {...props} />;
+    const wfc = useWeatherForecastBlock();
 
     const startHour = 5;
     let from = DateTime.now();
@@ -181,7 +181,7 @@ export function RainCloudPanel(props: React.HTMLAttributes<HTMLDivElement>): JSX
         from = from.plus({ days: -1 });
     from = from.startOf("day").plus({ hours: startHour });
 
-    return <RainCloudDiv state={rb} {...props}>
-        <RainChart rain={rb.dto.rain} cloud={rb.dto.cloud} from={from} />
+    return <RainCloudDiv state={joinState(rb, wfc)} {...props}>
+        <RainChart from={from} />
     </RainCloudDiv >;
 }

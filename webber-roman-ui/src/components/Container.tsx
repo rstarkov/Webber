@@ -83,3 +83,20 @@ export function makeState(s: { status?: BlockConnectionStatus, updates?: number,
         },
     };
 }
+
+export function joinState(s1: BlockState, s2: BlockState): BlockState {
+    const result: BlockState = {
+        status: (s1.status == s2.status) ? s1.status : (s1.status == "disconnected" || s2.status == "disconnected") ? "disconnected" : "connecting",
+        updates: s1.updates + s2.updates,
+        dto: null,
+    };
+    // dto null indicates component is waiting for first data; we want the result to have null only if neither part has loaded
+    if (s1.dto)
+        result.dto = { validUntilUtc: s1.dto.validUntilUtc };
+    if (s2.dto)
+        if (!result.dto)
+            result.dto = { validUntilUtc: s2.dto.validUntilUtc };
+        else
+            result.dto.validUntilUtc = result.dto.validUntilUtc < s2.dto.validUntilUtc ? result.dto.validUntilUtc : s2.dto.validUntilUtc;
+    return result;
+}
