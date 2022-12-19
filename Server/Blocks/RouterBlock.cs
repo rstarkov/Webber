@@ -1,4 +1,6 @@
-﻿using Dapper;
+﻿using System.Net;
+using System.Text.RegularExpressions;
+using Dapper;
 using Dapper.Contrib.Extensions;
 using RT.Util.ExtensionMethods;
 using Webber.Client.Models;
@@ -11,19 +13,18 @@ class RouterBlockConfig
     public int QueryIntervalMs { get; set; } = 3000;
     public double AverageDecay { get; set; } = 0.85;
     public double AverageDecayFast { get; set; } = 0.50;
+    public string LoginAuth { get; set; } = "base64(user:pass)";
+    public int SleepOnParallelSec { get; set; } = 5 * 60;
+    public int SleepOnErrorSec { get; set; } = 60;
 }
 
-abstract class RouterBlockServerBase<TDto, TConfig> : SimpleBlockServerBase<TDto>
-    where TDto : RouterBlockDto, new()
-    where TConfig : RouterBlockConfig
+class RouterBlockServer : SimpleBlockServerBase<RouterBlockDto>
 {
-    protected TConfig Config => _config;
-
-    private TConfig _config;
+    private RouterBlockConfig _config;
     private IDbService _db;
     private Queue<RouterHistoryPoint> _history = new Queue<RouterHistoryPoint>();
 
-    public RouterBlockServerBase(IServiceProvider sp, TConfig config, IDbService db)
+    public RouterBlockServer(IServiceProvider sp, RouterBlockConfig config, IDbService db)
         : base(sp, config.QueryIntervalMs)
     {
         _config = config;
@@ -48,6 +49,36 @@ abstract class RouterBlockServerBase<TDto, TConfig> : SimpleBlockServerBase<TDto
         base.Start();
     }
 
+    private HttpClient _httpClient;
+
+    private void login()
+    {
+        Logger.LogDebug("Logging in to router UI");
+        var handler = new HttpClientHandler();
+        _httpClient = new HttpClient(handler); // we got logged out, so start from scratch just in case
+        var req = new HttpRequestMessage(HttpMethod.Post, _config.BaseUrl + "/login.cgi");
+        req.Headers.Referrer = new Uri(_config.BaseUrl + "/Main_Login.asp");
+        req.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["group_id"] = "",
+            ["action_mode"] = "",
+            ["action_script"] = "",
+            ["action_wait"] = "5",
+            ["current_page"] = "Main_Login.asp",
+            ["next_page"] = "index.asp",
+            ["login_authorization"] = _config.LoginAuth,
+        });
+        var resp = _httpClient.Send(req);
+        if (!resp.IsSuccessStatusCode)
+            throw new TellUserException("Router login failed");
+        var cookies = handler.CookieContainer.GetCookies(new Uri(_config.BaseUrl + "/login.cgi"));
+        if (cookies.Count == 0)
+            throw new TellUserException("Router login failed");
+        handler.CookieContainer.Add(new Uri(_config.BaseUrl), new Cookie("asus_token", handler.CookieContainer.GetCookies(new Uri(_config.BaseUrl + "/login.cgi"))[0].Value));
+        handler.CookieContainer.Add(new Uri(_config.BaseUrl), new Cookie("bw_rtab", "INTERNET"));
+        handler.CookieContainer.Add(new Uri(_config.BaseUrl), new Cookie("traffic_warning_0", "2017.7:1"));
+    }
+
     protected override bool ShouldTick() => true;
     RouterHistoryPoint ptPrev;
     double avgRx = 0;
@@ -56,8 +87,52 @@ abstract class RouterBlockServerBase<TDto, TConfig> : SimpleBlockServerBase<TDto
     double avgTxFast = 0;
     Queue<(double txRate, double rxRate)> recentHistory = new();
 
-    protected virtual TDto ProcessHistoryPoint(RouterHistoryPoint pt)
+    protected override RouterBlockDto Tick()
     {
+        if (_httpClient == null)
+            login();
+
+        var pt = new RouterHistoryPoint();
+
+        try
+        {
+            var req = new HttpRequestMessage(HttpMethod.Post, _config.BaseUrl + "/update.cgi");
+            req.Headers.Referrer = new Uri(_config.BaseUrl + "/Main_TrafficMonitor_realtime.asp");
+            req.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["output"] = "netdev",
+                ["_http_id"] = "TIDe855a6487043d70a",
+            });
+            var resp = _httpClient.Send(req).EnsureSuccessStatusCode();
+            var respStr = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+            pt.Timestamp = DateTime.UtcNow;
+
+            // When kicked out, the response looks something like this: <HTML><HEAD><script>top.location.href='/Main_Login.asp';</script></HEAD></HTML>
+            if (respStr.Contains("location.href='/Main_Login.asp'"))
+            {
+                Logger.LogInformation("Parallel login detected; sleeping.");
+                SendUpdate(LastUpdate with { ErrorMessage = "Parallel login detected; sleeping." });
+                Thread.Sleep(TimeSpan.FromSeconds(_config.SleepOnParallelSec));
+                login();
+                return null;
+            }
+
+            var match = Regex.Match(respStr, @"'INTERNET':{rx:0x(?<rx>.*?),tx:0x(?<tx>.*?)}");
+            if (!match.Success)
+                throw new Exception();
+
+            pt.TxTotal = Convert.ToInt64(match.Groups["tx"].Value, 16);
+            pt.RxTotal = Convert.ToInt64(match.Groups["rx"].Value, 16);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogDebug(ex, "Pausing due to exception while screen scraping:");
+            Thread.Sleep(TimeSpan.FromSeconds(_config.SleepOnErrorSec));
+            login();
+            return null;
+        }
+
         _history.Enqueue(pt);
         while (_history.Peek().Timestamp < DateTime.UtcNow.AddHours(-24))
             _history.Dequeue();
@@ -96,7 +171,7 @@ abstract class RouterBlockServerBase<TDto, TConfig> : SimpleBlockServerBase<TDto
         if (Math.Min(avgTx, avgTxFast) / Math.Max(avgTx, avgTxFast) < 0.5)
             avgTx = avgTxFast = txRate;
 
-        var dto = new TDto { ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromSeconds(10) };
+        var dto = new RouterBlockDto { ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromSeconds(10) };
 
         dto.RxLast = (int)Math.Round(rxRate);
         dto.TxLast = (int)Math.Round(txRate);
@@ -149,7 +224,7 @@ abstract class RouterBlockServerBase<TDto, TConfig> : SimpleBlockServerBase<TDto
         });
     }
 
-    protected class RouterHistoryPoint
+    class RouterHistoryPoint
     {
         public DateTime Timestamp;
         public long TxTotal;

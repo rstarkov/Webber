@@ -3,6 +3,7 @@ import "./App.css";
 import HwInfoBlock from './HwInfoBlock';
 import ClockBlock from './ClockBlock';
 import PingBlock from './PingBlock';
+import SynologyRouterBlock from './SynologyRouterBlock';
 import WeatherBlock from './WeatherBlock';
 import TimeUntilBlock from './TimeUntilBlock';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -20,6 +21,9 @@ function App() {
             </div>
             <div className="l1t2 w4h1">
                 <PingBlock />
+            </div>
+            <div className="l1t3 w4h4">
+                <SynologyRouterBlock />
             </div>
             <div className="l5t1 w4h4">
                 <ClockBlock />

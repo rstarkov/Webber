@@ -62,12 +62,12 @@ class PingBlockServer : SimpleBlockServerBase<PingBlockDto>
             using (var conn = _db.OpenConnection())
                 conn.Insert(new TbPingHistoryEntry { Timestamp = sentUtc.ToDbDateTime(), Ping = dto.Last });
 
-        _recentPings.EnqueueWithMaxCapacity((dto.Last, sentUtc), _config.RecentLength);
+        dto.Recent = _recentPings.EnqueueWithMaxCapacity((dto.Last, sentUtc), _config.RecentLength).Select(c => c.Item1).ToArray();
 
-        var recent = new List<int?>();
-        for (var ts = sentUtc.AddMilliseconds(-_config.IntervalMs * (_config.RecentLength - 0.5)); ts < sentUtc; ts = ts.AddMilliseconds(_config.IntervalMs))
-            recent.Add(_recentPings.Where(r => r.utc >= ts && r.utc < ts.AddMilliseconds(_config.IntervalMs)).Select(r => (int?)(r.ms ?? -1)).FirstOrDefault());
-        dto.Recent = recent.ToArray();
+        //var recent = new List<int?>();
+        //for (var ts = sentUtc.AddMilliseconds(-_config.IntervalMs * (_config.RecentLength - 0.5)); ts < sentUtc; ts = ts.AddMilliseconds(_config.IntervalMs))
+        //    recent.Add(_recentPings.Where(r => r.utc >= ts && r.utc < ts.AddMilliseconds(_config.IntervalMs)).Select(r => (int?)(r.ms ?? -1)).FirstOrDefault());
+        //dto.Recent = recent.ToArray();
 
         return dto;
     }
