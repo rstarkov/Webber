@@ -14,7 +14,7 @@ function reload() {
 function App() {
     return (
         <div className="box">
-            <div className="l1t1 w4h6">
+            <div className="l1t1 w4h1">
                 <HwInfoBlock />
             </div>
             <div className="l5t1 w4h4">

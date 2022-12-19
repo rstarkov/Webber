@@ -1,72 +1,45 @@
 import * as _ from 'lodash';
 import * as React from 'react';
 import { withSubscription, BaseDto } from './util';
-import { HwLoadGraph, HwNetworkGraph } from "./HwGraphs";
-
-interface TimedMetric {
-    timeUtc: string;
-    value: number;
-}
 
 interface HwInfoDto extends BaseDto {
-    cpuCoreHeatmap: number[];
-    cpuTotalLoadHistory: TimedMetric[];
-    cpuPackageTempHistory: TimedMetric[];
+    memoryUtilization: number;
     cpuTotalLoad: number;
-    cpuPackageTemp: number;
+    cpuMaxCoreLoad: number;
+    cpuMaxCoreName: string;
     gpuLoad: number;
-    gpuLoadHistory: TimedMetric[];
-    gpuTemp: number;
-    gpuTempHistory: TimedMetric[];
-    networkDown: number;
-    networkDownHistory: TimedMetric[];
-    networkUp: number;
-    networkUpHistory: TimedMetric[];
-    networkPing: number;
-    networkPingHistory: TimedMetric[];
-    memoryUtiliZation: number;
+}
+
+const MiniBlock: React.FunctionComponent<{ perc: number, title: string, className: string }> = ({ perc, title, className }) => {
+
+    let blueColor = "rgb(0,149,255)";
+    let redColor = "red";
+
+    var blueOpacity = Math.min(1, perc / 0.7);
+    var redOpacity = Math.max(0, Math.min(1, (perc - 0.7) / 0.3));
+
+    return (
+        <div className={className}>
+            <div style={{ position: "absolute", top: 2, left: 2, right: 2, bottom: 2, backgroundColor: blueColor, opacity: blueOpacity }}></div>
+            <div style={{ position: "absolute", top: 2, left: 2, right: 2, bottom: 2, backgroundColor: redColor, opacity: redOpacity }}></div>
+            <div style={{ position: "relative", color: "rgba(255, 255, 255, 0.7)", textAlign: "center", fontSize: 18, marginTop: 8, marginBottom: -4 }}>{title}</div>
+            <div style={{ position: "relative", color: "rgba(255, 255, 255, 0.9)", textAlign: "center", fontSize: 40 }}>{(perc * 100).toFixed(0)}</div>
+        </div>
+    )
 }
 
 const HwInfoBlock: React.FunctionComponent<{ data: HwInfoDto }> = ({ data }) => {
     // cpu heat label {Math.ceil(l)}
     let memColor = "#7AF57C";
-    if (data.memoryUtiliZation > 0.5) memColor = "orange";
-    if (data.memoryUtiliZation > 0.9) memColor = "red";
+    if (data.memoryUtilization > 0.5) memColor = "orange";
+    if (data.memoryUtilization > 0.9) memColor = "red";
 
     return (
         <React.Fragment>
-            <div className="cpu-heatmap" style={{ position: "absolute", left: 0, top: 0, width: 60, height: 4 * 90 }}>
-                {_.map(data.cpuCoreHeatmap, (l, i) => <div key={i} className="cpu-block" style={{ backgroundColor: `rgba(0,149,255,${l / 100})`, color: "rgba(255,255,255,0.7)" }}></div>)}
-            </div>
-            <div style={{ position: "absolute", left: 47, bottom: 90 * 2, width: 10, backgroundColor: memColor, height: 4 * 90 * data.memoryUtiliZation }} />
-            <div className="w4h2">
-                <HwLoadGraph
-                    packageTemp={data.cpuPackageTemp}
-                    packageTempHistory={data.cpuPackageTempHistory}
-                    totalLoad={data.cpuTotalLoad}
-                    totalLoadHistory={data.cpuTotalLoadHistory}
-                    label={"CPU"}
-                />
-            </div>
-            <div className="l1t3 w4h2">
-                <HwLoadGraph
-                    packageTemp={data.gpuTemp}
-                    packageTempHistory={data.gpuTempHistory}
-                    totalLoad={data.gpuLoad}
-                    totalLoadHistory={data.gpuLoadHistory}
-                    label={"GPU"}
-                />
-            </div>
-            <div className="l1t5 w4h2">
-                <HwNetworkGraph
-                    down={data.networkDown}
-                    downHistory={data.networkDownHistory}
-                    up={data.networkUp}
-                    upHistory={data.networkUpHistory}
-                    ping={data.networkPing}
-                    pingHistory={data.networkPingHistory}
-                />
-            </div>
+            <MiniBlock className="l1t1 w1h1" title="CPU" perc={data.cpuTotalLoad} />
+            <MiniBlock className="l2t1 w1h1" title={data.cpuMaxCoreName} perc={data.cpuMaxCoreLoad} />
+            <MiniBlock className="l3t1 w1h1" title="GPU" perc={data.gpuLoad} />
+            <MiniBlock className="l4t1 w1h1" title="RAM" perc={data.memoryUtilization} />
         </React.Fragment>
     );
 }
