@@ -11,29 +11,21 @@ interface HwInfoDto extends BaseDto {
 }
 
 const MiniBlock: React.FunctionComponent<{ perc: number, title: string, className: string }> = ({ perc, title, className }) => {
-
     let blueColor = "rgb(0,149,255)";
     let redColor = "red";
-
     var blueOpacity = Math.min(1, perc / 0.7);
     var redOpacity = Math.max(0, Math.min(1, (perc - 0.7) / 0.3));
-
     return (
         <div className={className}>
             <div style={{ position: "absolute", top: 2, left: 2, right: 2, bottom: 2, backgroundColor: blueColor, opacity: blueOpacity }}></div>
             <div style={{ position: "absolute", top: 2, left: 2, right: 2, bottom: 2, backgroundColor: redColor, opacity: redOpacity }}></div>
-            <div style={{ position: "relative", color: "rgba(255, 255, 255, 0.7)", textAlign: "center", fontSize: 18, marginTop: 8, marginBottom: -4 }}>{title}</div>
+            <div style={{ position: "relative", color: "rgba(255, 255, 255, 0.7)", textAlign: "center", fontSize: 18, marginTop: 8, marginBottom: -4 }}>{title} %</div>
             <div style={{ position: "relative", color: "rgba(255, 255, 255, 0.9)", textAlign: "center", fontSize: 40 }}>{(perc * 100).toFixed(0)}</div>
         </div>
     )
 }
 
 const HwInfoBlock: React.FunctionComponent<{ data: HwInfoDto }> = ({ data }) => {
-    // cpu heat label {Math.ceil(l)}
-    let memColor = "#7AF57C";
-    if (data.memoryUtilization > 0.5) memColor = "orange";
-    if (data.memoryUtilization > 0.9) memColor = "red";
-
     return (
         <React.Fragment>
             <MiniBlock className="l1t1 w1h1" title="CPU" perc={data.cpuTotalLoad} />

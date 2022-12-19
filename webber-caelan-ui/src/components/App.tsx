@@ -2,6 +2,7 @@ import * as React from 'react';
 import "./App.css";
 import HwInfoBlock from './HwInfoBlock';
 import ClockBlock from './ClockBlock';
+import PingBlock from './PingBlock';
 import WeatherBlock from './WeatherBlock';
 import TimeUntilBlock from './TimeUntilBlock';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -16,6 +17,9 @@ function App() {
         <div className="box">
             <div className="l1t1 w4h1">
                 <HwInfoBlock />
+            </div>
+            <div className="l1t2 w4h1">
+                <PingBlock />
             </div>
             <div className="l5t1 w4h4">
                 <ClockBlock />
