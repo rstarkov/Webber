@@ -16,7 +16,7 @@ Set-Location "$PSScriptRoot\Server"
 &dotnet add reference "..\Client\Webber.Client.csproj"
 
 Write-Host "Build obs-express" -ForegroundColor Magenta
-Set-Location "$PSScriptRoot\webber-react-ui"
+Set-Location "$PSScriptRoot\webber-caelan-ui"
 &npm install
 &npm run build
 Copy-Item "build" -Destination "$PSScriptRoot\publish\wwwroot" -Recurse
