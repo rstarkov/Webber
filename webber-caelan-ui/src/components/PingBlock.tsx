@@ -13,7 +13,7 @@ const PingBubble = styled.div`
     width: 24px;
     height: 24px;
     border-radius: 6px;
-    margin: 15px;
+    margin: 4px;
     display: block;
     flex-grow: 0;
     flex-shrink: 1;
@@ -67,9 +67,9 @@ const PingBlock: React.FunctionComponent<{ data: PingBlockDto }> = ({ data }) =>
     const vMax = Math.max(30, _.max(recent));
     const barW = 4;
     const barS = 2;
-    const getH = (ping: number) => (ping / vMax) * 90;
+    const getH = (ping: number) => (ping / vMax) * 50;
     const getR = (idx: number) => (idx * (barW + barS));
-    const bars = _.map(recent, (v, i) => (<div style={{ position: "absolute", width: barW, height: getH(v), left: getR(i), bottom: 0, backgroundColor: pingColor(v) }}></div>));
+    const bars = _.map(recent, (v, i) => (<div key={i} style={{ position: "absolute", width: barW, height: getH(v), left: getR(i), bottom: 0, backgroundColor: pingColor(v) }}></div>));
 
     // calculate the average distance between each ping value
     let jitter = 0;

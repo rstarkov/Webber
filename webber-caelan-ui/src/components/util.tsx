@@ -111,9 +111,18 @@ export function round2places(num: number): number {
     return Math.round((num + Number.EPSILON) * 100) / 100;
 }
 
+export function roundStrAuto(num: number): string {
+    num = round2places(num);
+    if (num > 1000)
+        return Math.round(num).toFixed(0);
+    // if (num > 100)
+    return (Math.round((num + Number.EPSILON) * 10) / 10).toFixed(1)
+    // return (Math.round((num + Number.EPSILON) * 100) / 100).toFixed(2);
+}
+
 export function formatBytes(bytes: number, div: number = 1024): string {
-    if (bytes < div) return round2places(bytes).toFixed(2) + "b";
-    if (bytes < div * div) return round2places(bytes / div).toFixed(2) + "kb";
-    if (bytes < div * div * div) return round2places(bytes / (div * div)).toFixed(2) + "mb";
-    return round2places(bytes / (div * div * div)).toFixed(2) + "gb";
+    if (bytes < div) return roundStrAuto(bytes) + "b";
+    if (bytes < div * div) return roundStrAuto(bytes / div) + "kb";
+    if (bytes < div * div * div) return roundStrAuto(bytes / (div * div)) + "mb";
+    return roundStrAuto(bytes / (div * div * div)) + "gb";
 }
