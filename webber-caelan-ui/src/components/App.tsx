@@ -6,6 +6,7 @@ import PingBlock from './PingBlock';
 import SynologyRouterBlock from './SynologyRouterBlock';
 import WeatherBlock from './WeatherBlock';
 import TimeUntilBlock from './TimeUntilBlock';
+import WeatherForecastBlock from './WeatherForecastBlock';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSyncAlt } from '@fortawesome/free-solid-svg-icons'
 
@@ -22,14 +23,17 @@ function App() {
             <div className="l1t2 w4h1">
                 <PingBlock />
             </div>
-            <div className="l1t3 w4h4">
+            <div className="l1t3 w4h3">
                 <SynologyRouterBlock />
             </div>
-            <div className="l5t1 w4h4">
+            <div className="l5t1 w4h3">
                 <ClockBlock />
             </div>
-            <div className="l5t5 w4h2">
+            <div className="l5t4 w4h2">
                 <WeatherBlock />
+            </div>
+            <div className="l1t6 w8h1">
+                <WeatherForecastBlock />
             </div>
             <div className="l1t7 w8h2" style={{ overflow: 'hidden' }}>
                 <TimeUntilBlock />

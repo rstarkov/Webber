@@ -6,7 +6,7 @@ import moment from 'moment';
 
 const TimeLabel = styled.div`
     height: 40px;
-    margin-top: 20px;
+    margin-top: 10px;
     line-height: 40px;
     text-align: center;
     font-weight: bold;
@@ -25,7 +25,7 @@ const Time = styled.div`
 
 const SecondaryTime = styled(Time)`
     font-size: 60px;
-    line-height: 80px;
+    line-height: 70px;
     opacity: 0.6;
 `;
 
@@ -57,7 +57,7 @@ const ClockBlock: React.FunctionComponent<{ data: ClockBlockDto }> = ({ data }) 
             <Time>{getTimeString(data.localOffsetHours)}</Time>
             {_.map(data.timeZones, t => (
                 <React.Fragment key={t.displayName}>
-                    <TimeLabel style={{ marginTop: 30 }}>{t.displayName}</TimeLabel>
+                    <TimeLabel style={{ marginTop: 0, fontSize: 30 }}>{t.displayName}</TimeLabel>
                     <SecondaryTime>{getTimeString(t.offsetHours)}</SecondaryTime>
                 </React.Fragment>
             ))}
