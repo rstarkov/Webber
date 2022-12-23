@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { withSubscription, BaseDto } from './util';
 import { formatBytes } from './util';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faMoon, faSun, faCaretSquareUp, faCaretSquareDown } from '@fortawesome/free-solid-svg-icons'
+import { faCaretSquareUp, faCaretSquareDown, faEthernet, faNetworkWired, faWifi } from '@fortawesome/free-solid-svg-icons'
 
 interface SynologyRouterBlockDto extends BaseDto {
     rx: number;
@@ -13,6 +13,29 @@ interface SynologyRouterBlockDto extends BaseDto {
     tx: number;
     txMax: number;
     txHistory: number[];
+    topDevices: TxRxDevicePairGroup;
+    wan1: boolean;
+    wan2: boolean;
+    wifiClientCount: number;
+    lanClientCount: number;
+}
+
+interface TxRxPair {
+    timestamp: string;
+    txRate: number;
+    rxRate: number;
+}
+
+interface TxRxDevicePair extends TxRxPair {
+    deviceId: string;
+    deviceIpv4: string;
+    deviceHostname: string;
+    isWireless: boolean;
+}
+
+interface TxRxDevicePairGroup {
+    timestamp: string;
+    pairs: TxRxDevicePair[];
 }
 
 const PingBubble = styled.div`
@@ -46,21 +69,12 @@ const LabelContainer = styled.div`
 
 const PingText = styled.span`
     align-self: center;
-    font-size: 24px;
-    opacity: 0.9;
+    font-size: 30px;
+    opacity: 1;
     padding: 0px 4px;
     margin-right: 10px;
     background-color: rgba(0,0,0,0.7);
 `
-
-function pingColor(ping: number) {
-    let color = "lime";
-    if (ping > 12)
-        color = "yellow";
-    if (ping > 24)
-        color = "red";
-    return color;
-}
 
 function getClr(v: number, warn: number, danger: number, defaultClr: string = "rgb(0,149,255)"): string {
     if (v >= danger) return "red";
@@ -88,7 +102,7 @@ function getBars(series: number[], minHeight: number, warn: number, danger: numb
 
     const lineNums = _.range(0, range - 1, 1);
     const lines = _.map(lineNums, (i) => (
-        <div style={{height: 1, position: "absolute", left: 8, right: 8, backgroundColor: "rgba(255, 255, 255, 0.3)", top: 40 + (50 / range * i)}} />
+        <div style={{ height: 1, position: "absolute", left: 8, right: 8, backgroundColor: "rgba(255, 255, 255, 0.4)", top: 40 + (50 / range * i) }} />
     ));
 
     return (
@@ -99,16 +113,20 @@ function getBars(series: number[], minHeight: number, warn: number, danger: numb
     );
 }
 
+function getDevices(devices: TxRxDevicePairGroup) {
+
+}
+
 const SynologyRouterBlock: React.FunctionComponent<{ data: SynologyRouterBlockDto }> = ({ data }) => {
 
-    const { rx, rxMax, tx, txMax } = data;
+    const { rx, rxMax, tx, txMax, topDevices } = data;
 
     const rxIconClr = getClr(rx, rxMax * 0.5, rxMax * 0.75);
-    const rxTextClr = getClr(rx, rxMax * 0.5, rxMax * 0.75, "rgba(255, 255, 255, 0.9)");
+    const rxTextClr = getClr(rx, rxMax * 0.5, rxMax * 0.75, "rgba(255, 255, 255, 1)");
     const txIconClr = getClr(tx, txMax * 0.5, txMax * 0.75, "#FF6A00");
-    const txTextClr = getClr(tx, txMax * 0.5, txMax * 0.75, "rgba(255, 255, 255, 0.9)");
+    const txTextClr = getClr(tx, txMax * 0.5, txMax * 0.75, "rgba(255, 255, 255, 1)");
 
-    const _10MB = 1 * 1000 * 1000;
+    // const _10MB = 1 * 1000 * 1000;
 
     return (
         <React.Fragment>
@@ -129,6 +147,18 @@ const SynologyRouterBlock: React.FunctionComponent<{ data: SynologyRouterBlockDt
                     </PingBubble>
                     <PingText style={{ color: txTextClr }}>{formatBytes(tx)}</PingText>
                 </LabelContainer>
+            </div>
+            <div className="l1t2 w4h2">
+            {_.map(data.topDevices.pairs, (e, i) => (
+                <LabelContainer style={{ height: 60 }}>
+                    <FontAwesomeIcon icon={e.isWireless ? faWifi : faNetworkWired} style={{ alignSelf: "center", fontSize: 24, margin: 10, opacity: 0.7 }} />
+                    <div style={{ alignSelf: "center", fontSize: 24, width: 180, textOverflow: "ellipsis", whiteSpace: "nowrap", overflow: "hidden" }}>{e.deviceHostname}</div>
+                    <FontAwesomeIcon icon={(Math.max(e.rxRate, e.txRate) == e.rxRate) ? faCaretSquareDown : faCaretSquareUp} 
+                        style={{ alignSelf: "center", margin: 10, fontSize: 24, color: (Math.max(e.rxRate, e.txRate) == e.rxRate) ? "rgb(0,149,255)" : "#FF6A00" }} />
+                    <div style={{ alignSelf: "center", fontSize: 24, whiteSpace: "nowrap", width: 90, opacity: 0.7 }}>{formatBytes(Math.max(e.rxRate, e.txRate))}</div>
+                </LabelContainer>
+              
+            ))}
             </div>
         </React.Fragment>
     );

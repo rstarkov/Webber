@@ -44,10 +44,9 @@ const LabelContainer = styled.div`
 
 const PingText = styled.span`
     align-self: center;
-    font-size: 24px;
-    opacity: 0.9;
+    font-size: 30px;
+    margin-top: -2px;
     padding: 0px 4px;
-    margin-right: 10px;
     background-color: rgba(0,0,0,0.7);
 `
 
@@ -84,7 +83,7 @@ const PingBlock: React.FunctionComponent<{ data: PingBlockDto }> = ({ data }) =>
             <LabelContainer>
                 <PingBubble style={{ backgroundColor: pingColor(last) }} />
                 <PingText>{last.toFixed(0)}ms</PingText>
-                <PingText style={{ opacity: 0.8 }}>±{jitter.toFixed(1)}</PingText>
+                <PingText style={{ opacity: 0.8, fontSize: 24 }}>±{jitter.toFixed(1)}</PingText>
             </LabelContainer>
         </React.Fragment>
     );

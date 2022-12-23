@@ -133,6 +133,14 @@ class SynologyRouterBlockServer : SimpleBlockServerBase<SynologyRouterBlockDto>
                          )
                          select new TxRxDevicePairGroup { Pairs = d.Take(3).ToArray(), Timestamp = d.First().Timestamp };
 
+        var deviceOrder = topDevices
+            .Take(60 / (int)barSize.TotalSeconds)
+            .SelectMany(z => z.Pairs)
+            .GroupBy(z => z.DeviceId)
+            .OrderByDescending(g => Math.Max(g.Sum(t => t.TxRate), g.Sum(t => t.RxRate)))
+            .Select(g => g.Key)
+            .Take(3);
+
         //var topDevicesArr = topDevices.Take(historySize).ToArray();
         //Array.Reverse(topDevicesArr);
         //Array.Resize(ref topDevicesArr, historySize);
