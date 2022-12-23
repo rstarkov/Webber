@@ -36,6 +36,7 @@ public record TxRxDevicePair : TxRxPair
     public string DeviceId { get; set; }
     public string DeviceIpv4 { get; set; }
     public string DeviceHostname { get; set; }
+    public bool IsWireless { get; set; }
 }
 
 public record SynologyRouterBlockDto : BaseDto
@@ -46,7 +47,11 @@ public record SynologyRouterBlockDto : BaseDto
     public double Tx { get; set; }
     public double TxMax { get; set; }
     public double[] TxHistory { get; set; }
-    public TxRxDevicePairGroup[] TopDevices { get; set; }
+    public TxRxDevicePairGroup TopDevices { get; set; }
+    public bool Wan1 { get; set; }
+    public bool Wan2 { get; set; }
+    public int WifiClientCount { get; set; }
+    public int LanClientCount { get; set; }
 }
 
 class SynologyRouterBlockServer : SimpleBlockServerBase<SynologyRouterBlockDto>
@@ -65,12 +70,22 @@ class SynologyRouterBlockServer : SimpleBlockServerBase<SynologyRouterBlockDto>
 
     protected override SynologyRouterBlockDto Tick()
     {
-        var barSize = TimeSpan.FromSeconds(5);
+        var barSize = TimeSpan.FromSeconds(10);
         var historySize = _config.RecentHistory;
         var keepNum = historySize * ((int)barSize.TotalMilliseconds / _config.QueryIntervalMs);
 
-        var traffic = _srm.GetNgfwTraffic().GetAwaiter().GetResult();
-        var devices = _srm.GetNetworkNsmDevice().GetAwaiter().GetResult();
+        var routerResponse = _srm.GetCompoundStatus().GetAwaiter().GetResult();
+        var traffic = routerResponse.DeviceTraffic;
+        var devices = routerResponse.Devices;
+        var gateways = routerResponse.Gateways;
+
+        SynologySmartWanGateway wan1 = gateways.List.Where(g => g.InterfaceName == "ppp0").FirstOrDefault();
+        SynologySmartWanGateway wan2 = gateways.List.Where(g => g.InterfaceName == "ppp1").FirstOrDefault();
+        bool wan1Enabled = wan1?.NetStatus?.EqualsIgnoreCase("enabled") ?? false;
+        bool wan2Enabled = wan2?.NetStatus?.EqualsIgnoreCase("enabled") ?? false;
+        var lanDevices = devices.Devices.Where(d => !d.IsWireless).Count();
+        var wifiDevices = devices.Devices.Where(d => d.IsWireless).Count();
+
         var time = DateTime.UtcNow;
 
         var pairs = from dev in devices.Devices
@@ -84,6 +99,7 @@ class SynologyRouterBlockServer : SimpleBlockServerBase<SynologyRouterBlockDto>
                         RxRate = tr.Download,
                         TxRate = tr.Upload,
                         Timestamp = time,
+                        IsWireless = dev.IsWireless,
                     };
 
         var pairsArr = pairs.ToArray();
@@ -117,9 +133,9 @@ class SynologyRouterBlockServer : SimpleBlockServerBase<SynologyRouterBlockDto>
                          )
                          select new TxRxDevicePairGroup { Pairs = d.Take(3).ToArray(), Timestamp = d.First().Timestamp };
 
-        var topDevicesArr = topDevices.Take(historySize).ToArray();
-        Array.Reverse(topDevicesArr);
-        Array.Resize(ref topDevicesArr, historySize);
+        //var topDevicesArr = topDevices.Take(historySize).ToArray();
+        //Array.Reverse(topDevicesArr);
+        //Array.Resize(ref topDevicesArr, historySize);
 
         var totalrx = traffic.Sum(k => k.Download);
         var totaltx = traffic.Sum(k => k.Upload);
@@ -132,7 +148,11 @@ class SynologyRouterBlockServer : SimpleBlockServerBase<SynologyRouterBlockDto>
             Rx = totalrx,
             RxMax = _config.RxEstimated,
             RxHistory = totalByBarSizeArr.Select(t => t?.RxRate ?? 0).ToArray(),
-            TopDevices = topDevicesArr,
+            TopDevices = topDevices.First(),
+            Wan1 = wan1Enabled,
+            Wan2 = wan2Enabled,
+            LanClientCount = lanDevices,
+            WifiClientCount = wifiDevices,
         };
 
         return dto;

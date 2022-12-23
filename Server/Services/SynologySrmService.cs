@@ -1,5 +1,6 @@
 ﻿using System.Web;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 public class SynologySrmService
 {
@@ -15,6 +16,62 @@ public class SynologySrmService
         _baseUrl = $"{(https ? "https" : "http")}://{host}:{port}/webapi/";
         _username = username;
         _password = password;
+    }
+
+    public class SynologyCompoundStatus
+    {
+        public SynologySmartWanGatewayList Gateways { get; set; }
+        public SynologyDeviceTraffic[] DeviceTraffic { get; set; }
+        public SynologyNetworkDevices Devices { get; set; }
+    }
+
+    public async Task<SynologyCompoundStatus> GetCompoundStatus()
+    {
+        List<Dictionary<string, string>> arguments = new()
+        {
+            new()
+            {
+                {"api", "SYNO.Core.Network.SmartWAN.Gateway" },
+                {"version", "1" },
+                {"method", "list" },
+                {"gatewaytype", "ipv4" },
+            },
+            new()
+            {
+                {"api", "SYNO.Core.NGFW.Traffic" },
+                {"version", "1" },
+                {"method", "get" },
+                {"mode", "net" },
+                {"interval", TrafficInterval.Live.ToString().ToLower() },
+            },
+            new()
+            {
+                {"api", "SYNO.Core.Network.NSM.Device" },
+                {"version", "5" },
+                {"info", "basic" },
+                {"method", "get" },
+            },
+        };
+
+        var compound = JsonConvert.SerializeObject(arguments);
+        var response = await DoRequest<JToken>("entry.cgi", new()
+        {
+            {"api", "SYNO.Entry.Request" },
+            {"stop_when_error", "false" },
+            {"version", "1" },
+            {"method", "request" },
+            {"compound", compound },
+        }, true);
+
+        var results = response["result"].ToArray();
+        var status = new SynologyCompoundStatus
+        {
+            Gateways = results[0]["data"].ToObject<SynologySmartWanGatewayList>(),
+            DeviceTraffic = results[1]["data"].ToObject<SynologyDeviceTraffic[]>(),
+            Devices = results[2]["data"].ToObject<SynologyNetworkDevices>(),
+        };
+
+        return status;
     }
 
     public Task<Dictionary<string, SynologyQueryInfoObject>> GetApiEndpoints() => DoRequest<Dictionary<string, SynologyQueryInfoObject>>("query.cgi", new()
@@ -40,6 +97,34 @@ public class SynologySrmService
         {"method", "get" },
     });
 
+    public Task<SynologySmartWanGatewayList> GetSmartWanGateway() => DoRequest<SynologySmartWanGatewayList>("entry.cgi", new()
+    {
+        {"api", "SYNO.Core.Network.SmartWAN.Gateway" },
+        {"version", "1" },
+        {"method", "list" },
+        {"gatewaytype", "ipv4" },
+    });
+
+    public Task<JToken> GetRouterConnectionStatus() => DoRequest<JToken>("entry.cgi", new()
+    {
+        {"api", "SYNO.Core.Network.Router.ConnectionStatus" },
+        {"version", "1" },
+        {"method", "get" },
+    });
+
+    public Task<JToken> GetNetworkPPPoE() => DoRequest<JToken>("entry.cgi", new()
+    {
+        {"api", "SYNO.Core.Network.PPPoE" },
+        {"version", "2" },
+        {"method", "list" },
+    });
+
+    public Task<JToken> GetNetworkMape() => DoRequest<JToken>("entry.cgi", new()
+    {
+        {"api", "SYNO.Core.Network.Mape" },
+        {"version", "1" },
+        {"method", "get" },
+    });
 
     public Task<object> GetNgfwTrafficDomain(TrafficInterval interval = TrafficInterval.Live) => DoRequest<object>("entry.cgi", new()
     {
@@ -114,34 +199,75 @@ public class SynologySrmService
         return obj.Data.Sid;
     }
 
-    private async Task<T> DoRequest<T>(string endpoint, Dictionary<string, string> data)
+    private async Task<T> DoRequest<T>(string endpoint, Dictionary<string, string> queryData, bool postForm = false)
     {
         if (_badPassword) throw new InvalidOperationException("Please re-instantiate SynologySrmService with valid credentials.");
 
         var url = new UriBuilder(_baseUrl + endpoint);
-        url.Query = string.Join("&", data.Select(kvp => $"{kvp.Key}={HttpUtility.UrlEncode(kvp.Value)}"));
+        HttpContent req = null;
+
+        if (postForm)
+        {
+            req = new FormUrlEncodedContent(queryData);
+        }
+        else
+        {
+            url.Query = string.Join("&", queryData.Select(kvp => $"{kvp.Key}={HttpUtility.UrlEncode(kvp.Value)}"));
+        }
 
         using var http = new SynologyHttpClient();
-
         bool canRetry = true;
 
     retry:
+        var json = await http.SendJsonRequestAsync(url.Uri, req, _sid);
 
-        var obj = await http.GetJsonAsync<SynologyResponse<T>>(url.Uri, _sid);
-        if (obj?.Success != true)
+        List<SynologyError> errors = new();
+        var root = JObject.Parse(json);
+        var success = root["success"].ToObject<bool>();
+        if (!success)
         {
-            // if session missing/expired, try to login and then retry the request.
-            if (canRetry && obj.Error != null && obj.Error.Code is 119 or 106 or 107)
+            var rootError = root["error"].ToObject<SynologyError>();
+            errors.Add(rootError);
+        }
+        else if (root.ContainsKey("data"))
+        {
+            var dataObj = root["data"] as JObject;
+            if (dataObj != null && dataObj.ContainsKey("has_fail") && root["data"]["has_fail"].ToObject<bool>())
             {
-                canRetry = false;
-                _sid = await GetAuthSid(_username, _password);
-                goto retry;
+                var dataResult = root["data"]["result"].ToArray();
+                foreach (var d in dataResult)
+                {
+                    var dataSuccess = d["success"].ToObject<bool>();
+                    if (!dataSuccess)
+                    {
+                        var dataError = d["error"].ToObject<SynologyError>();
+                        errors.Add(dataError);
+                    }
+                }
             }
-
-            throw new Exception(obj?.Error?.ToString() ?? "Unknown Error");
         }
 
-        return obj.Data;
+        if (errors.Count > 0)
+        {
+            if (canRetry)
+            {
+                foreach (var e in errors)
+                {
+                    if (e.Code is 119 or 106 or 107)
+                    {
+                        canRetry = false;
+                        _sid = await GetAuthSid(_username, _password);
+                        goto retry;
+                    }
+                }
+            }
+
+            if (errors.Count == 1)
+                throw new Exception(errors.First().ToString());
+            throw new AggregateException(errors.Select(e => new Exception(e.ToString())));
+        }
+
+        return root["data"].ToObject<T>();
     }
 
     private class SynologyResponse<T>
@@ -198,7 +324,15 @@ public class SynologySrmService
 
         public async Task<T> GetJsonAsync<T>(Uri uri, string sid = null)
         {
-            var message = new HttpRequestMessage(HttpMethod.Get, uri);
+            var content = await SendJsonRequestAsync(uri, null, sid);
+            return JsonConvert.DeserializeObject<T>(content);
+        }
+
+        public async Task<string> SendJsonRequestAsync(Uri uri, HttpContent requestContent = null, string sid = null)
+        {
+            var message = new HttpRequestMessage(requestContent != null ? HttpMethod.Post : HttpMethod.Get, uri);
+            if (requestContent != null)
+                message.Content = requestContent;
 
             if (sid != null)
                 message.Headers.Add("Cookie", "id=" + sid);
@@ -208,7 +342,7 @@ public class SynologySrmService
             if (!response.IsSuccessStatusCode)
                 throw new HttpRequestException(content);
 
-            return JsonConvert.DeserializeObject<T>(content);
+            return content;
         }
     }
 }
@@ -548,4 +682,40 @@ public class SynologyRec
 
     [JsonProperty("upload_packets")]
     public int UploadPackets { get; set; }
+}
+
+public class SynologySmartWanGatewayList
+{
+    [JsonProperty("list")]
+    public List<SynologySmartWanGateway> List { get; set; }
+}
+
+public class SynologySmartWanGateway
+{
+    [JsonProperty("displayname")]
+    public string DisplayName { get; set; }
+
+    [JsonProperty("enable_priority_check")]
+    public bool EnablePriorityCheck { get; set; }
+
+    [JsonProperty("failed_site_name")]
+    public string FailedSiteName { get; set; }
+
+    [JsonProperty("failed_site_num")]
+    public int FailedSiteNum { get; set; }
+
+    [JsonProperty("gatewayip")]
+    public string GatewayIp { get; set; }
+
+    [JsonProperty("ifname")]
+    public string InterfaceName { get; set; }
+
+    [JsonProperty("netstatus")]
+    public string NetStatus { get; set; }
+
+    [JsonProperty("ping_failed_cnt")]
+    public int PingFailedCount { get; set; }
+
+    [JsonProperty("ping_succ_cnt")]
+    public int PingSuccessCount { get; set; }
 }
