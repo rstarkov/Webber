@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-public class SynologySrmService
+public class SynologSrmService
 {
     private readonly string _baseUrl;
     private readonly string _username;
@@ -11,7 +11,7 @@ public class SynologySrmService
     private string _sid;
     private bool _badPassword;
 
-    public SynologySrmService(string host, int port, bool https, string username, string password)
+    public SynologSrmService(string host, int port, bool https, string username, string password)
     {
         _baseUrl = $"{(https ? "https" : "http")}://{host}:{port}/webapi/";
         _username = username;
@@ -73,6 +73,20 @@ public class SynologySrmService
 
         return status;
     }
+
+    public Task<JToken> GetDownloadStation2Tasks() => DoRequest<JToken>("entry.cgi", new()
+    {
+        {"api", "SYNO.DownloadStation2.Task" },
+        {"version", "2" },
+        {"method", "list" },
+        {"offset", "0" },
+        {"limit", "25" },
+        {"sort_by", "upload_rate" },
+        {"order", "DESC" },
+        {"additional", JsonConvert.SerializeObject(new string[] { "detail", "transfer" }) },
+        {"type", JsonConvert.SerializeObject(new string[] { "emule" }) },
+        {"type_inverse", "true" },
+    }, true);
 
     public Task<Dictionary<string, SynologyQueryInfoObject>> GetApiEndpoints() => DoRequest<Dictionary<string, SynologyQueryInfoObject>>("query.cgi", new()
     {
@@ -624,7 +638,7 @@ public class SynologyDevice
 }
 
 // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
-public class SynologyDeviceTraffic
+public record SynologyDeviceTraffic
 {
     [JsonProperty("deviceID")]
     public string DeviceID { get; set; }
@@ -643,9 +657,24 @@ public class SynologyDeviceTraffic
 
     [JsonProperty("upload_packets")]
     public int UploadPackets { get; set; }
+
+    public override int GetHashCode()
+    {
+        throw new NotImplementedException();
+    }
+
+    public virtual bool Equals(SynologyDeviceTraffic other)
+    {
+        return EqualityComparer<string>.Default.Equals(DeviceID, other?.DeviceID)
+            && EqualityComparer<int?>.Default.Equals(Download, other?.Download)
+            && EqualityComparer<int?>.Default.Equals(DownloadPackets, other?.DownloadPackets)
+            && EqualityComparer<int?>.Default.Equals(Upload, other?.Upload)
+            && EqualityComparer<int?>.Default.Equals(UploadPackets, other?.UploadPackets)
+            && Recs.SequenceEqual(other.Recs);
+    }
 }
 
-public class SynologyProtocolList
+public record SynologyProtocolList
 {
     [JsonProperty("download")]
     public int Download { get; set; }
@@ -661,9 +690,23 @@ public class SynologyProtocolList
 
     [JsonProperty("upload_packets")]
     public int UploadPackets { get; set; }
+
+    public override int GetHashCode()
+    {
+        throw new NotImplementedException();
+    }
+
+    public virtual bool Equals(SynologyProtocolList other)
+    {
+        return EqualityComparer<int?>.Default.Equals(Download, other?.Download)
+            && EqualityComparer<int?>.Default.Equals(DownloadPackets, other?.DownloadPackets)
+            && EqualityComparer<int?>.Default.Equals(Upload, other?.Upload)
+            && EqualityComparer<int?>.Default.Equals(UploadPackets, other?.UploadPackets)
+            && EqualityComparer<int?>.Default.Equals(Protocol, other?.Protocol);
+    }
 }
 
-public class SynologyRec
+public record SynologyRec
 {
     [JsonProperty("download")]
     public int Download { get; set; }
@@ -682,6 +725,21 @@ public class SynologyRec
 
     [JsonProperty("upload_packets")]
     public int UploadPackets { get; set; }
+
+    public override int GetHashCode()
+    {
+        throw new NotImplementedException();
+    }
+
+    public virtual bool Equals(SynologyRec other)
+    {
+        return EqualityComparer<int?>.Default.Equals(Download, other?.Download)
+            && EqualityComparer<int?>.Default.Equals(DownloadPackets, other?.DownloadPackets)
+            && EqualityComparer<int?>.Default.Equals(Upload, other?.Upload)
+            && EqualityComparer<int?>.Default.Equals(UploadPackets, other?.UploadPackets)
+            && EqualityComparer<int?>.Default.Equals(Time, other?.Time)
+            && Protocollist.SequenceEqual(other?.Protocollist);
+    }
 }
 
 public class SynologySmartWanGatewayList

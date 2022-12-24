@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { withSubscription, BaseDto } from './util';
 import { formatBytes } from './util';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCaretSquareUp, faCaretSquareDown, faEthernet, faNetworkWired, faWifi } from '@fortawesome/free-solid-svg-icons'
+import { faCaretSquareUp, faCaretSquareDown, faEthernet, faNetworkWired, faWifi, faLink } from '@fortawesome/free-solid-svg-icons'
 
 interface SynologyRouterBlockDto extends BaseDto {
     rx: number;
@@ -14,10 +14,20 @@ interface SynologyRouterBlockDto extends BaseDto {
     txMax: number;
     txHistory: number[];
     topDevices: TxRxDevicePairGroup;
+    activeTorrents: ActiveTorrentDetail[];
     wan1: boolean;
     wan2: boolean;
     wifiClientCount: number;
     lanClientCount: number;
+}
+
+interface ActiveTorrentDetail {
+    name: string;
+    size: number;
+    totalRx: number;
+    totalTx: number;
+    rx: number;
+    tx: number;
 }
 
 interface TxRxPair {
@@ -113,13 +123,21 @@ function getBars(series: number[], minHeight: number, warn: number, danger: numb
     );
 }
 
-function getDevices(devices: TxRxDevicePairGroup) {
-
+const getDeviceRow = (mainIcon: any, rowName: string, isDown: boolean, upTxt: string, dwnTxt: string) => {
+    return (
+        <LabelContainer key={rowName} style={{ height: 45 }}>
+            <FontAwesomeIcon icon={mainIcon} style={{ alignSelf: "center", fontSize: 24, margin: 10, opacity: 0.7, width: 30 }} />
+            <div style={{ alignSelf: "center", fontSize: 24, width: 180, textOverflow: "ellipsis", whiteSpace: "nowrap", overflow: "hidden" }}>{rowName}</div>
+            <FontAwesomeIcon icon={isDown ? faCaretSquareDown : faCaretSquareUp}
+                style={{ alignSelf: "center", margin: 10, fontSize: 24, color: isDown ? "rgb(0,149,255)" : "#FF6A00" }} />
+            <div style={{ alignSelf: "center", fontSize: 24, whiteSpace: "nowrap", width: 90, opacity: 0.7 }}>{isDown ? dwnTxt : upTxt}</div>
+        </LabelContainer>
+    )
 }
 
 const SynologyRouterBlock: React.FunctionComponent<{ data: SynologyRouterBlockDto }> = ({ data }) => {
 
-    const { rx, rxMax, tx, txMax, topDevices } = data;
+    const { rx, rxMax, rxHistory, tx, txMax, txHistory, topDevices, activeTorrents } = data;
 
     const rxIconClr = getClr(rx, rxMax * 0.5, rxMax * 0.75);
     const rxTextClr = getClr(rx, rxMax * 0.5, rxMax * 0.75, "rgba(255, 255, 255, 1)");
@@ -131,7 +149,7 @@ const SynologyRouterBlock: React.FunctionComponent<{ data: SynologyRouterBlockDt
     return (
         <React.Fragment>
             <div className="l1t1 w2h1">
-                {getBars(data.rxHistory, data.rxMax, data.rxMax * 0.75, data.rxMax * 0.75)}
+                {getBars(rxHistory, rxMax, rxMax * 0.75, rxMax * 0.75)}
                 <LabelContainer>
                     <PingBubble>
                         <FontAwesomeIcon icon={faCaretSquareDown} style={{ fontSize: 27, color: rxIconClr }} />
@@ -140,7 +158,7 @@ const SynologyRouterBlock: React.FunctionComponent<{ data: SynologyRouterBlockDt
                 </LabelContainer>
             </div>
             <div className="l3t1 w2h1">
-                {getBars(data.txHistory, data.txMax, data.txMax * 0.75, data.txMax * 0.75, "#FF6A00")}
+                {getBars(txHistory, txMax, txMax * 0.75, txMax * 0.75, "#FF6A00")}
                 <LabelContainer>
                     <PingBubble>
                         <FontAwesomeIcon icon={faCaretSquareUp} style={{ fontSize: 27, color: txIconClr }} />
@@ -149,16 +167,8 @@ const SynologyRouterBlock: React.FunctionComponent<{ data: SynologyRouterBlockDt
                 </LabelContainer>
             </div>
             <div className="l1t2 w4h2">
-            {_.map(data.topDevices.pairs, (e, i) => (
-                <LabelContainer style={{ height: 60 }}>
-                    <FontAwesomeIcon icon={e.isWireless ? faWifi : faNetworkWired} style={{ alignSelf: "center", fontSize: 24, margin: 10, opacity: 0.7 }} />
-                    <div style={{ alignSelf: "center", fontSize: 24, width: 180, textOverflow: "ellipsis", whiteSpace: "nowrap", overflow: "hidden" }}>{e.deviceHostname}</div>
-                    <FontAwesomeIcon icon={(Math.max(e.rxRate, e.txRate) == e.rxRate) ? faCaretSquareDown : faCaretSquareUp} 
-                        style={{ alignSelf: "center", margin: 10, fontSize: 24, color: (Math.max(e.rxRate, e.txRate) == e.rxRate) ? "rgb(0,149,255)" : "#FF6A00" }} />
-                    <div style={{ alignSelf: "center", fontSize: 24, whiteSpace: "nowrap", width: 90, opacity: 0.7 }}>{formatBytes(Math.max(e.rxRate, e.txRate))}</div>
-                </LabelContainer>
-              
-            ))}
+                {_.map(topDevices.pairs, (e, i) => getDeviceRow(e.isWireless ? faWifi : faNetworkWired, e.deviceHostname, Math.max(e.rxRate, e.txRate) == e.rxRate, formatBytes(e.txRate), formatBytes(e.rxRate)))}
+                {_.map(activeTorrents, (e, i) => getDeviceRow(faLink, e.name, e.totalRx < e.size, formatBytes(e.tx), (e.totalRx / e.size * 100).toString() + "%"))}
             </div>
         </React.Fragment>
     );
