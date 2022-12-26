@@ -13,6 +13,7 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
     List<PerformanceCounter> _cpuCoreCounters;
     List<PerformanceCounter> _gpuCounters;
     ManagementObjectSearcher _wmiObject;
+    int _gpuFailed = 0;
 
     public HwInfoBlockServer(IServiceProvider sp) : base(sp, METRIC_REFRESH_INTERVAL)
     {
@@ -43,12 +44,27 @@ internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
         var maxLoad = coreLoads[maxIdx] / 100;
         var maxName = $"Core {_cpuCoreCounters[maxIdx].InstanceName}";
 
+        float gpu = 999;
+        if (_gpuFailed < 10)
+        {
+            try
+            {
+                gpu = GetGPUUsage(_gpuCounters) / 100;
+                _gpuFailed = 0;
+            }
+            catch
+            {
+                _gpuCounters = GetGPUCounters();
+                _gpuFailed++;
+            }
+        }
+
         return new HwInfoBlockDto
         {
             CpuTotalLoad = _cpuCounter.NextValue() / 100,
             CpuMaxCoreLoad = maxLoad,
             CpuMaxCoreName = maxName,
-            GpuLoad = GetGPUUsage(_gpuCounters) / 100,
+            GpuLoad = gpu,
             MemoryUtilization = GetRAMUsage(),
         };
     }
