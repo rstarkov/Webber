@@ -2,20 +2,21 @@ Set-Location "$PSScriptRoot"
 $ErrorActionPreference = "Stop"
 
 # Ensure a clean state by removing build/package folders
-$Folders = @("$PSScriptRoot\publish", "$PSScriptRoot\bin", "$PSScriptRoot\releases")
+Write-Host "Clean old build folders" -ForegroundColor Magenta
+$Folders = @("$PSScriptRoot\publish", "$PSScriptRoot\bin", "$PSScriptRoot\releases", "$PSScriptRoot\Builds")
 foreach ($Folder in $Folders) {
     if (Test-Path $Folder) {
         Remove-Item -path "$Folder" -Recurse -Force
     }
 }
 
-Write-Host "Build Webber" -ForegroundColor Magenta
+Write-Host "Build Webber Server" -ForegroundColor Magenta
 Set-Location "$PSScriptRoot\Server"
-&dotnet remove reference "..\Client\Webber.Client.csproj"
+# &dotnet remove reference "..\Client\Webber.Client.csproj"
 &dotnet publish -p:PublishSingleFile=true --no-self-contained -c Release -r win-x64 -o "$PSScriptRoot\publish"
-&dotnet add reference "..\Client\Webber.Client.csproj"
+# &dotnet add reference "..\Client\Webber.Client.csproj"
 
-Write-Host "Build obs-express" -ForegroundColor Magenta
+Write-Host "Build caelan-ui" -ForegroundColor Magenta
 Set-Location "$PSScriptRoot\webber-caelan-ui"
 &npm install
 &npm run build
