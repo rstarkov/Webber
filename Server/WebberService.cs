@@ -29,7 +29,7 @@ class WebberService : ServiceControl
         this._configPath = configPath;
 
         var appConfig = JObject.Parse(File.ReadAllText(configPath))["App"].ToObject<AppConfig>(); // we need this before the ASP config API gets to load the file...
-        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { WebRootPath = appConfig.WebRootPath });
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { WebRootPath = appConfig.WebRootPath, ContentRootPath = AppContext.BaseDirectory });
 
         builder.Configuration.AddJsonFile(_configPath, optional: false);
 
