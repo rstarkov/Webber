@@ -18,7 +18,7 @@ Set-Location "$PSScriptRoot\Server"
 
 Write-Host "Build caelan-ui" -ForegroundColor Magenta
 Set-Location "$PSScriptRoot\webber-caelan-ui"
-&npm install
+&npm install --legacy-peer-deps
 &npm run build
 Copy-Item "build" -Destination "$PSScriptRoot\publish\wwwroot" -Recurse
 
