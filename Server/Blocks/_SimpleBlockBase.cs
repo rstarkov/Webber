@@ -26,6 +26,11 @@ public abstract class SimpleBlockServerBase<TDto> : BlockServerBase<TDto>
         new Thread(thread) { IsBackground = true }.Start();
     }
 
+    protected virtual void SleepUntilNextTick(DateTime tickStartUtc)
+    {
+        Util.SleepUntil(tickStartUtc + _interval);
+    }
+
     private void thread()
     {
         while (true)
@@ -53,7 +58,7 @@ public abstract class SimpleBlockServerBase<TDto> : BlockServerBase<TDto>
             }
 #endif
 
-            Util.SleepUntil(start + _interval);
+            SleepUntilNextTick(start);
         }
     }
 }

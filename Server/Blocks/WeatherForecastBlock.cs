@@ -1,9 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using System.Xml.Linq;
-using Dapper;
-using Dapper.Contrib.Extensions;
-using Innovative.SolarCalculator;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RT.Serialization;
 using RT.Util.ExtensionMethods;
