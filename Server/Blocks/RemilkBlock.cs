@@ -24,7 +24,7 @@ public record RemilkBlockDto : BaseDto
 public record RemilkTask
 {
     public string Id { get; set; }
-    public DateTime DueUtc { get; set; }
+    public DateTime? DueUtc { get; set; }
     public bool HasDueTime { get; set; }
     public int Priority { get; set; }
     public string Description { get; set; }
@@ -41,8 +41,6 @@ public record RemilkTask
         HasDueTime = oldest.Attribute("has_due_time").Value == "1";
         if (oldest.Attribute("due").Value != "")
             DueUtc = DateTime.Parse(oldest.Attribute("due").Value).ToUniversalTime();
-        else
-            DueUtc = DateTime.Parse(oldest.Attribute("added").Value).ToUniversalTime();
     }
 }
 

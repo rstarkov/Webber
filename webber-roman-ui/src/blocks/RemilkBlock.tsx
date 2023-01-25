@@ -19,9 +19,13 @@ export interface RemilkTask {
 
 function dtoPatcher(dto: RemilkBlockDto) {
     for (let i = 0; i < dto.tasks.length; i++) {
-        dto.tasks[i].dueUtc = DateTime.fromISO(dto.tasks[i].dueUtc as any).setZone("Europe/London");
-        if (!dto.tasks[i].hasDueTime)
-            dto.tasks[i].dueUtc = endOfLocalDay(dto.tasks[i].dueUtc, false);
+        if (dto.tasks[i].dueUtc) {
+            dto.tasks[i].dueUtc = DateTime.fromISO(dto.tasks[i].dueUtc as any).setZone("Europe/London");
+            if (!dto.tasks[i].hasDueTime)
+                dto.tasks[i].dueUtc = endOfLocalDay(dto.tasks[i].dueUtc, false);
+        } else {
+            dto.tasks[i].dueUtc = endOfLocalDay(DateTime.now(), true);
+        }
     }
 }
 

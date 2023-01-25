@@ -38,6 +38,7 @@ class WeatherDotComBlockServer : SimpleBlockServerBase<WeatherDotComBlockDto>
 
     private WeatherDotComBlockDto FetchData()
     {
+        // documentation index: https://docs.google.com/document/d/14OK6NG5GRwezb6-5C1vQJoRdStrGnXUiXBDCmQP9T9s/edit
         var url = $"https://api.weather.com/v3/wx/forecast/hourly/{_config.HourlyForecastType}?apiKey={_config.ApiKey}&format=json&language=en-US&units=m&geocode={LocStr}";
         var result = _hc.GetByteArrayAsync(url).GetAwaiter().GetResult();
         if (_config.DumpPath != null)
