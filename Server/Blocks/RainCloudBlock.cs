@@ -40,9 +40,10 @@ class RainCloudBlockServer : SimpleBlockServerBase<RainCloudBlockDto>
         [new SKColor(0x60efefef)] = 3,
         [new SKColor(0x80ececec)] = 4,
         [new SKColor(0xa0ececec)] = 5,
-        [new SKColor(0xc0ededed)] = 6,
-        [new SKColor(0xefededed)] = 7,
-        [new SKColor(0xf0ededed)] = 8,
+        [new SKColor(0xc0ededed)] = 6, // 177
+        [new SKColor(0xe0eeeeee)] = 7, // 208
+        [new SKColor(0xefededed)] = 8, // 221
+        [new SKColor(0xf0ededed)] = 8, // 222
     };
 
     public RainCloudBlockServer(IServiceProvider sp, RainCloudBlockConfig config)
