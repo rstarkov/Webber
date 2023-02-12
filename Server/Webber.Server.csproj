@@ -11,9 +11,9 @@
     <PackageReference Include="Dapper" Version="2.0.123" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
     <PackageReference Include="Google.Apis.Calendar.v3" Version="1.55.0.2500" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="6.0.0" />
-    <PackageReference Include="RT.Serialization.Xml" Version="2.0.1720" />
-    <PackageReference Include="RT.Util.Core" Version="2.0.1702" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.2" />
+    <PackageReference Include="RT.Serialization.Xml" Version="2.0.1724" />
+    <PackageReference Include="RT.Util.Core" Version="2.0.1724" />
     <PackageReference Include="SkiaSharp" Version="2.88.3" />
     <PackageReference Include="SolarCalculator" Version="3.0.6" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="7.0.0" />
