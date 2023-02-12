@@ -74,8 +74,10 @@ function RainChart(p: { from: DateTime }): JSX.Element {
             pts[i - 1].widthR = mX - pts[i - 1].centerX;
             pts[i].widthL = pts[i].centerX - mX;
         }
-        pts[0].widthL = pts[0].widthR;
-        pts[pts.length - 1].widthR = pts[pts.length - 1].widthL;
+        if (pts.length > 0) {
+            pts[0].widthL = pts[0].widthR;
+            pts[pts.length - 1].widthR = pts[pts.length - 1].widthL;
+        }
         return pts;
     }
     const rainPts = rb.dto && getPts(rb.dto.rain,

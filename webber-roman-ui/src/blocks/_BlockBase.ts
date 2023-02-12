@@ -57,7 +57,7 @@ export function useBlock<TDto extends BaseDto>(url: string, patcher: (dto: TDto)
                 if (timeDiffs.length >= 3)
                     timeCorrectionMs = timeDiffs.reduce(function (a, b) { return a + b; }, 0) / timeDiffs.length;
                 if (dto.errorMessage)
-                    console.error(dto.errorMessage);
+                    console.error(url + ": " + dto.errorMessage);
             } catch (e) {
                 console.error(e); // otherwise SignalR just swallows it and pretends everything is fine, thanks for wasting my time SignalR
             }

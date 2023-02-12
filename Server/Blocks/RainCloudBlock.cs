@@ -128,8 +128,8 @@ class RainCloudBlockServer : SimpleBlockServerBase<RainCloudBlockDto>
             var best = colormap
                 .Select(m => (m, diff: Math.Abs(m.Key.Alpha - clr.Alpha) + Math.Abs(m.Key.Red - clr.Red) + Math.Abs(m.Key.Green - clr.Green) + Math.Abs(m.Key.Blue - clr.Blue)))
                 .MinElement(el => el.diff);
-            if (best.diff > 6)
-                throw new Exception();
+            if (best.diff > 8)
+                throw new Exception("best.diff > 8");
             counts[best.m.Value]++;
         }
         return counts;
