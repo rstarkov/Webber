@@ -105,11 +105,12 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
     const tasksSoon = tasks.filter(t => tagFilter(t) && t.dueUtc > cutoffTomorrow && t.dueUtc <= cutoffSoon).sort(byDueDate);
     const tasksEasy = tasks.filter(t => t.tags.includes("easy") && t.dueUtc <= cutoffEndOfToday).sort(byPriority);
     const tasksBacklog = tasks.filter(t => t.tags.includes("backlog") && t.dueUtc <= cutoffEndOfToday).sort(byPriority);
+
     const dayCount = tasks.filter(t => !t.tags.includes("easy") && t.dueUtc <= cutoffEndOfToday).length;
     const weekCount = tasks.filter(t => !t.tags.includes("easy") && t.dueUtc <= cutoffEndOfToday.plus({ day: 7 })).length;
     const monthCount = tasks.filter(t => !t.tags.includes("easy") && t.dueUtc <= cutoffEndOfToday.plus({ day: 31 })).length;
 
-    // if all tasks don't fit then we collapse sections in the following order: soon, tomorrow, backlog, neglected
+    // if all tasks don't fit then we collapse sections in the following order: soon, tomorrow, backlog, easy, neglected
     let remainingCount = 12 - tasksEasy.length - tasksTodayPrio.length - tasksToday.length - tasksNeglected.length - tasksBacklog.length - tasksTomorrow.length - tasksSoon.length;
     remainingCount += tasksSoon.length;
     const cSoon = Math.min(tasksSoon.length, Math.max(0, remainingCount)); // 0: allow it to scroll off entirely
@@ -120,6 +121,9 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
     remainingCount += tasksBacklog.length;
     const cBacklog = Math.min(tasksBacklog.length, Math.max(1, remainingCount));
     remainingCount -= cBacklog;
+    remainingCount += tasksEasy.length;
+    const cEasy = Math.min(tasksEasy.length, Math.max(3, remainingCount));
+    remainingCount -= cEasy;
     remainingCount += tasksNeglected.length;
     const cNeglected = Math.min(tasksNeglected.length, Math.max(1, remainingCount));
     remainingCount -= cNeglected;
@@ -129,7 +133,8 @@ export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): 
     return <RemilkPanelContainer state={remilk} {...rest}>
         <OverflowFaderDiv>
             {tasksEasy.length > 0 && <TaskSectionDiv style={{ color: "#73ff73" }}>
-                {tasksEasy.map(t => <Task key={t.id} task={t} nolate={true} />)}
+                {tasksEasy.slice(0, cEasy).map(t => <Task key={t.id} task={t} nolate={true} />)}
+                {tasksEasy.length > cEasy && <NonTaskDiv style={{ fontSize: "70%" }}>... and {tasksEasy.length - cEasy} more</NonTaskDiv>}
             </TaskSectionDiv>}
             {tasksTodayPrio.length > 0 && <TaskSectionDiv style={{ color: PrioColors[1] }}>
                 {tasksTodayPrio.map(t => <Task key={t.id} task={t} />)}
