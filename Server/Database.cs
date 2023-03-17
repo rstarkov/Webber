@@ -23,13 +23,13 @@ class DisabledDbService : IDbService
 
 class DbService : IDbService
 {
-    private AppConfig _config;
+    private string _dbFilePath;
     private List<MigrationInfo> _migrations = new();
     private bool _initialised = false;
 
     public DbService(AppConfig config)
     {
-        _config = config;
+        _dbFilePath = config.DbFilePath;
     }
 
     public bool Enabled => true;
@@ -38,7 +38,7 @@ class DbService : IDbService
     {
         if (!_initialised)
             throw new InvalidOperationException("The database has not been initialised yet.");
-        var conn = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = _config.DbFilePath }.ConnectionString);
+        var conn = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = _dbFilePath }.ConnectionString);
         conn.Open();
         return conn;
     }
@@ -65,11 +65,11 @@ class DbService : IDbService
 
         SqlMapperExtensions.TableNameMapper = type => type.Name;
 
-        var connString = new SqliteConnectionStringBuilder { DataSource = _config.DbFilePath }.ConnectionString;
+        var connString = new SqliteConnectionStringBuilder { DataSource = _dbFilePath }.ConnectionString;
 
-        if (!File.Exists(_config.DbFilePath))
+        if (!File.Exists(_dbFilePath))
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(_config.DbFilePath)));
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(_dbFilePath)));
             using var conn = new SqliteConnection(connString);
             conn.Open();
             conn.Execute($@"CREATE TABLE {nameof(TbSchema)} (
