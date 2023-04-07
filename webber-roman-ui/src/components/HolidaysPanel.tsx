@@ -26,7 +26,11 @@ function HolidayRow(p: { holiday: Holiday2 }): JSX.Element {
     const h = p.holiday;
     //const leftDiv = <div style={{ justifySelf: "end" }}>{h.daysUntil}</div>;
     //const leftDiv = <div style={{ justifySelf: "end" }}>{h.daysUntil <= 21 ? `${h.daysUntil}d` : h.daysUntil <= 60 ? `${Math.floor(h.daysUntil / 7).toFixed(0)}w` : `${Math.floor(h.daysUntil / 30.5).toFixed(0)}m`}</div>;
-    const leftDiv = h.daysUntil <= 21 ? <Rdiv fw={700} c="#ff0">{h.daysUntil}d</Rdiv> : h.daysUntil <= 60 ? <Rdiv fw={300}>{Math.floor(h.daysUntil / 7).toFixed(0)}w</Rdiv> : <Rdiv fw={100} c="#666">{Math.floor(h.daysUntil / 30.5).toFixed(0)}m</Rdiv>;
+    const leftDiv =
+        h.daysUntil <= 3 ? <Rdiv fw={700} c="#ff0">{h.daysUntil}d</Rdiv> :
+            h.daysUntil <= 21 ? <Rdiv fw={300} c="#ff0">{h.daysUntil}d</Rdiv> :
+                h.daysUntil <= 30 ? <Rdiv fw={300}>{Math.floor(h.daysUntil / 7).toFixed(0)}w</Rdiv> :
+                    h.daysUntil <= 60 ? <Rdiv fw={300} c="#666">{Math.floor(h.daysUntil / 7).toFixed(0)}w</Rdiv> : <Rdiv fw={100} c="#666">{Math.floor(h.daysUntil / 30.5).toFixed(0)}m</Rdiv>;
     let fw = 300;
     let clr = h.color;
     if (h.daysUntil > h.priorityDays) {

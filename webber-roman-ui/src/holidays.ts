@@ -37,7 +37,7 @@ function list(description: string, priorityDays: number, interestDays: number, d
     const pdates = dates.map(d => DateTime.fromFormat(d, "dd/MM/yyyy"));
     return function (from: DateTime): Holiday {
         return {
-            next: pdates.filter(pd => pd.diffNow("days").days >= 0)[0],
+            next: pdates.filter(pd => pd.diff(from, "days").days >= 0)[0],
             description,
             color: color ?? "",
             interestDays,
