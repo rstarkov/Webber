@@ -6,6 +6,7 @@ export interface Holiday {
     color: string;
     priorityDays: number; // not used at the moment
     interestDays: number;
+    pastDays: number;
 }
 
 type HolidayFunc = (from: DateTime) => Holiday;
@@ -21,6 +22,7 @@ function annual(day: number, month: number, description: string, priorityDays: n
             color: color ?? "",
             interestDays,
             priorityDays,
+            pastDays: 0,
         };
     };
 }
@@ -29,6 +31,7 @@ function anniversary(day: number, month: number, year: number, description: stri
     return function (from: DateTime): Holiday {
         const h = annual(day, month, description, priorityDays, interestDays, color)(from);
         h.description = `${h.description} (${h.next.year - year} yr)`;
+        h.pastDays = 1;
         return h;
     };
 }
@@ -42,6 +45,7 @@ function list(description: string, priorityDays: number, interestDays: number, d
             color: color ?? "",
             interestDays,
             priorityDays,
+            pastDays: 0,
         };
     }
 }
