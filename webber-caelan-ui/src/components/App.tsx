@@ -17,7 +17,7 @@ function reload() {
 function App() {
     return (
         <div className="box">
-            <div className="l1t1 w4h1">
+            {/* <div className="l1t1 w4h1">
                 <HwInfoBlock />
             </div>
             <div className="l1t2 w4h1">
@@ -34,8 +34,8 @@ function App() {
             </div>
             <div className="l1t6 w8h1">
                 <WeatherForecastBlock />
-            </div>
-            <div className="l1t7 w8h2" style={{ overflow: 'hidden' }}>
+            </div> */}
+            <div className="l1t1 w8h8" style={{ overflow: 'hidden' }}>
                 <TimeUntilBlock />
             </div>
             <div onClick={reload} style={{ position: "absolute", right: 0, top: 0, width: 60, height: 60, textAlign: "center", fontSize: 40, opacity: 0.6, lineHeight: "60px" }}>

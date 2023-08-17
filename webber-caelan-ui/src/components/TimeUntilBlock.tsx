@@ -30,6 +30,7 @@ interface CalendarEvent {
     startTimeUtc: string;
     hasStarted: boolean;
     isNextUp: boolean;
+    isAllDay: boolean;
 }
 
 interface TimeUntilBlockDto extends BaseDto {
@@ -37,13 +38,21 @@ interface TimeUntilBlockDto extends BaseDto {
 }
 
 function getTimeString(e: CalendarEvent) {
-    const momentStr = e.hasStarted
+    let momentStr = e.hasStarted
         ? moment(e.startTimeUtc).fromNow(false)
         : moment(e.startTimeUtc).fromNow(!e.isNextUp);
+
+    let color = "white";
 
     let opacity = 0.6;
     if (e.hasStarted) opacity = 0.4;
     if (e.isNextUp) opacity = 1;
+
+    if (e.isAllDay) {
+        opacity = 0.8;
+        momentStr = moment(e.startTimeUtc).format("dddd").substring(0, 3).toUpperCase();
+        color = "orange";
+    }
 
     const wrapLen = 50;
     let displayText = momentStr + " - " + e.displayName;
@@ -56,12 +65,12 @@ function getTimeString(e: CalendarEvent) {
             str2 = str2.substring(0, str1.length - 3) + "...";
         }
         return (
-            <div style={{ opacity, lineHeight: "30px" }}>{str1}<br />{str2}</div>
+            <div style={{ opacity, color, lineHeight: "30px" }}>{str1}<br />{str2}</div>
         );
     }
 
     return (
-        <span style={{ opacity }}>{momentStr} - {e.displayName}</span>
+        <span style={{ opacity, color }}>{momentStr} - {e.displayName}</span>
     );
 }
 
