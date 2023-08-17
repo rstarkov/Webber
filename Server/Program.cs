@@ -4,9 +4,7 @@ using Webber.Server;
 if (args.Length == 2 && args[0] == "--debug")
 {
     var svc = new WebberService(args[1]);
-    svc.Start(null);
-    while (true)
-        Thread.Sleep(1000);
+    svc.StartAndBlock();
 }
 
 string configPath = null;

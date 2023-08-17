@@ -24,8 +24,10 @@ class WebberService : ServiceControl
 
     public WebberService(string configPath)
     {
-        if (string.IsNullOrWhiteSpace(configPath) || !File.Exists(configPath))
-            throw new ArgumentException("The '-config' command line variable is required");
+        if (string.IsNullOrWhiteSpace(configPath))
+            throw new ArgumentNullException(nameof(configPath), "missing config path");
+        if (!File.Exists(configPath))
+            throw new ArgumentException("The '-config' specified path does not exist");
         this._configPath = configPath;
 
         var appConfig = JObject.Parse(File.ReadAllText(configPath))["App"].ToObject<AppConfig>(); // we need this before the ASP config API gets to load the file...
@@ -83,7 +85,7 @@ class WebberService : ServiceControl
         app.MapFallbackToFile("index.html");
     }
 
-    public bool Start(HostControl hostControl)
+    private void Init()
     {
         foreach (var service in app.Services.GetServices<IBlockServer>())
             service.Init(app);
@@ -100,10 +102,21 @@ class WebberService : ServiceControl
                 app.Logger.LogInformation($"Service {service.GetType().Name} started in {(DateTime.UtcNow - start).TotalSeconds:0.0} seconds");
             }).Start();
         }
+    }
 
+    public bool Start(HostControl hostControl)
+    {
+        Init();
         app.Start();
         return true;
     }
+
+    public void StartAndBlock()
+    {
+        Init();
+        app.Run();
+    }
+
 
     public bool Stop(HostControl hostControl)
     {
