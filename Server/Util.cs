@@ -1,4 +1,6 @@
-﻿namespace Webber.Server;
+﻿using TimeZoneConverter;
+
+namespace Webber.Server;
 
 static class Util
 {
@@ -38,6 +40,6 @@ static class Util
 
     public static double GetUtcOffset(string timezoneName)
     {
-        return TimeZoneInfo.FindSystemTimeZoneById(timezoneName).GetUtcOffset(DateTimeOffset.UtcNow).TotalHours;
+        return TZConvert.GetTimeZoneInfo(timezoneName).GetUtcOffset(DateTimeOffset.UtcNow).TotalHours;
     }
 }

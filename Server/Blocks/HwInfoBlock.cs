@@ -1,10 +1,12 @@
 ﻿using System.Diagnostics;
 using System.Management;
+using System.Runtime.Versioning;
 using RT.Util.ExtensionMethods;
 using Webber.Client.Models;
 
 namespace Webber.Server.Blocks;
 
+[SupportedOSPlatform("windows")]
 internal class HwInfoBlockServer : SimpleBlockServerBase<HwInfoBlockDto>
 {
     static readonly int METRIC_REFRESH_INTERVAL = 1000;
