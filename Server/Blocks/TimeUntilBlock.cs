@@ -1,3 +1,4 @@
+﻿using System.Globalization;
 using System.Text;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
@@ -111,13 +112,18 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             synthetic.Add(new CalendarEvent() { DisplayName = "Sleep!", StartTimeUtc = DateTime.UtcNow.Date.AddHours(_config.SleepTime.Value) });
 
         var candidates = events
-            .Where(i => i.Start != null && i.Start.DateTime != null) // filter out all day events
             .Where(i => i.EventType == "default") // filter out OOO
             .Where(checkSelfRsvpNotDeclined) // filter out declined events
             .Where(i => !string.IsNullOrWhiteSpace(i.Summary)) // no title?
-            .OrderBy(i => i.Start.DateTime)
             .DistinctBy(i => i.RecurringEventId ?? i.Id)
-            .Select(i => new CalendarEvent() { Id = i.Id, DisplayName = i.Summary, StartTimeUtc = i.Start.DateTime.Value.ToUniversalTime(), IsRecurring = i.RecurringEventId != null })
+            .Select(i => new CalendarEvent()
+            {
+                Id = i.Id,
+                DisplayName = i.Summary,
+                StartTimeUtc = i.Start.DateTime?.ToUniversalTime() ?? DateTime.ParseExact(i.Start.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
+                IsRecurring = i.RecurringEventId != null,
+                IsAllDay = i.Start?.DateTime == null,
+            })
             .Concat(synthetic)
             .OrderBy(i => i.StartTimeUtc)
             .Distinct() // this uses the 'record' equality logic to filter out events that might be added to more than one calendar
