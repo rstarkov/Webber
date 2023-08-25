@@ -5,13 +5,13 @@ import { withSubscription, BaseDto } from './util';
 import moment from 'moment';
 
 const TimeLabel = styled.div`
-    height: 40px;
+    height: 30px;
     margin-top: 10px;
-    line-height: 40px;
+    line-height: 30px;
     text-align: center;
     font-weight: bold;
-    font-size: 40px;
-    opacity: 0.6;
+    font-size: 30px;
+    opacity: 1;
 `;
 
 const Time = styled.div`
@@ -53,14 +53,14 @@ const ClockBlock: React.FunctionComponent<{ data: ClockBlockDto }> = ({ data }) 
 
     return (
         <React.Fragment>
-            <TimeLabel>{moment(time).format("DD MMM").toUpperCase()}</TimeLabel>
             <Time>{getTimeString(data.localOffsetHours)}</Time>
-            {_.map(data.timeZones, t => (
+            <TimeLabel>{moment(time).format("dddd").substring(0, 3).toUpperCase() + ", " + moment(time).format("DD MMM").toUpperCase()}</TimeLabel>
+            {/* {_.map(data.timeZones, t => (
                 <React.Fragment key={t.displayName}>
                     <TimeLabel style={{ marginTop: 0, fontSize: 30 }}>{t.displayName}</TimeLabel>
                     <SecondaryTime>{getTimeString(t.offsetHours)}</SecondaryTime>
                 </React.Fragment>
-            ))}
+            ))} */}
         </React.Fragment>
     );
 }
