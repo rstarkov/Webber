@@ -50,8 +50,5 @@ jobs:
       - name: .NET Publish
         env:
           ESCAPED_TAGS: "'\"${{ steps.nbgv-version.outputs.C_VERSION }};latest\"'"
-        run: |
-          ls -la ./Server
-          ls -la ./Server/wwwroot
-          dotnet publish --os linux --arch x64 -c Release -p:ContainerImageTags=${{ env.ESCAPED_TAGS }} -p:ContainerRepository=caesay/webber -p:PublishProfile=DefaultContainer
+        run: dotnet publish --os linux --arch x64 -c Release -p:ContainerImageTags=${{ env.ESCAPED_TAGS }} -p:ContainerRepository=caesay/webber -p:PublishProfile=DefaultContainer
 
