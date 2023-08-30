@@ -7,6 +7,10 @@ Builds
 # wwwroot contains only the build outputs of webber-react-ui or webber-roman-ui; nothing to commit
 wwwroot
 
+# don't accidentally commit google credentials..
+TimeUntilToken/
+*.TokenResponse-user
+
 # User-specific files
 launchSettings.json
 *.rsuser
