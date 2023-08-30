@@ -14,6 +14,9 @@ class TimeUntilBlockConfig
     /// <summary> The number of events to send to the client in each update. </summary>
     public int MaxNumberOfEvents { get; set; } = 3;
 
+    /// <summary> The max number of all-day events to send to the client in each update. </summary>
+    public int MaxNumberOfAllDayEventsPerDay { get; set; } = 3;
+
     /// <summary> Optionally add a sleep timer to the list of events. </summary>
     public double? SleepTime { get; set; }
 
@@ -127,9 +130,24 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             .Concat(synthetic)
             .OrderBy(i => i.StartTimeUtc)
             .Distinct() // this uses the 'record' equality logic to filter out events that might be added to more than one calendar
-            .Take(_config.MaxNumberOfEvents)
-            .ToArray();
+            .ToList();
 
+        // limit all-day events to the max per-day value
+        var alldaygroup = candidates.Where(d => d.IsAllDay).GroupBy(d => d.StartTimeUtc);
+        foreach (var c in alldaygroup)
+        {
+            var grp_evts = c.ToArray();
+            if (grp_evts.Length > _config.MaxNumberOfAllDayEventsPerDay)
+            {
+                grp_evts[_config.MaxNumberOfAllDayEventsPerDay - 1].DisplayName += $" [+{grp_evts.Length - _config.MaxNumberOfAllDayEventsPerDay}]";
+                for (int i = _config.MaxNumberOfAllDayEventsPerDay; i < grp_evts.Length; i++)
+                {
+                    candidates.Remove(grp_evts[i]);
+                }
+            }
+        }
+
+        // calculate next up / started properties
         DateTime time = DateTime.UtcNow;
         foreach (var c in candidates)
         {
@@ -146,7 +164,9 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
         return new TimeUntilBlockDto()
         {
             ValidUntilUtc = DateTime.UtcNow.AddMinutes(3),
-            Events = candidates,
+            Events = candidates
+                .Take(_config.MaxNumberOfEvents)
+                .ToArray(),
         };
     }
 }
