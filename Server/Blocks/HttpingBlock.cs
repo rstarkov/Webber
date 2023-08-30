@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Dapper;
 using Dapper.Contrib.Extensions;
 using Microsoft.Data.Sqlite;
@@ -274,7 +274,8 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingBlockDto>
             foreach (var grp in points.GroupBy(pt => getStart(pt.Timestamp.FromUnixSeconds())).OrderBy(g => g.Key).Skip(1).SkipLast(1))
             {
                 var interval = new HttpingPointInterval { StartUtc = grp.Key };
-                var good = grp.Select(g => g.MsResponse).Where(ms => ms != 0 && ms != 65535).Order().ToList();
+
+                var good = IEnumerableExtensions.Order(grp.Select(g => g.MsResponse).Where(ms => ms != 0 && ms != 65535)).ToList();
                 if (good.Count > 0)
                     SetPercentiles(ref interval.MsResponse, good);
                 foreach (var sample in grp)

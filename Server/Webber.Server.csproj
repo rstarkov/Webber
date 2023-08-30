@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <LangVersion>10</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>Webber</AssemblyName>
@@ -12,6 +12,10 @@
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
     <PackageReference Include="Google.Apis.Calendar.v3" Version="1.55.0.2500" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.2" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.133">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="RT.Serialization.Xml" Version="2.0.1724" />
     <PackageReference Include="RT.Util.Core" Version="2.0.1724" />
     <PackageReference Include="SkiaSharp" Version="2.88.3" />
