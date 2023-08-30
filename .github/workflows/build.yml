@@ -40,6 +40,8 @@ jobs:
 
       - name: Build NodeJS
         working-directory: ./webber-caelan-ui
+        env: 
+          CI: false
         run: |
           npm install --legacy-peer-deps
           npm run build
