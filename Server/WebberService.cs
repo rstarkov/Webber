@@ -8,7 +8,7 @@ using Webber.Server.Services;
 
 namespace Webber.Server;
 
-class AppConfig
+public class AppConfig
 {
     public string DbFilePath { get; init; }
     public string WebRootPath { get; init; }

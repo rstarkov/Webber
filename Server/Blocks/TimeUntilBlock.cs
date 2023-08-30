@@ -5,6 +5,7 @@ using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
 using Google.Apis.Util.Store;
+using TimeZoneConverter;
 using Webber.Client.Models;
 
 namespace Webber.Server.Blocks;
@@ -112,7 +113,11 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
 
         List<CalendarEvent> synthetic = new List<CalendarEvent>();
         if (_config.SleepTime.HasValue)
-            synthetic.Add(new CalendarEvent() { DisplayName = "Sleep!", StartTimeUtc = DateTime.UtcNow.Date.AddHours(_config.SleepTime.Value) });
+        {
+            var offset = TZConvert.GetTimeZoneInfo(AppConfig.LocalTimezoneName).GetUtcOffset(DateTimeOffset.UtcNow);
+            var sleepTime = new DateTimeOffset(DateTime.Now.Date, offset).AddHours(_config.SleepTime.Value);
+            synthetic.Add(new CalendarEvent() { DisplayName = "Sleep!", StartTimeUtc = sleepTime.UtcDateTime });
+        }
 
         var candidates = events
             .Where(i => _config.MaxNumberOfAllDayEventsPerDay > 0 || i.Start?.DateTime != null) // filter out all-day events if disabled
