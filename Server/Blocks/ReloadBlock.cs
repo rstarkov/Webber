@@ -52,7 +52,7 @@ class ReloadBlockServer : BlockServerBase<ReloadBlockDto>
                 var hash = hashStream.Hash.ToHex();
 
                 Logger.LogDebug($"Server hash: {hash}");
-                SendUpdate(new ReloadBlockDto { ValidUntilUtc = DateTime.UtcNow.AddYears(10), ServerHash = hash });
+                SendUpdate(new ReloadBlockDto { ValidUntilUtc = DateTime.UtcNow.AddYears(10), ServerHash = hash, ServerVersion = ThisAssembly.AssemblyInformationalVersion });
 
                 // Sleep until we observe a change, but rescan fully every N hours even we didn't see any changes
                 var minimumWait = DateTime.UtcNow.AddSeconds(2);
