@@ -111,10 +111,11 @@ class WebberService : ServiceControl
         return true;
     }
 
-    public void StartAndBlock()
+    public int StartAndBlock()
     {
         Init();
         app.Run();
+        return 0;
     }
 
 
