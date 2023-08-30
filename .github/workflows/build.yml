@@ -1,0 +1,55 @@
+name: Build / Containerize
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 7.0.x
+
+      - name: Install NBGV
+        run: dotnet tool install --tool-path . nbgv
+
+      - name: Get NBGV Version
+        id: nbgv-version
+        run: |
+          c_version=$(nbgv get-version -v SimpleVersion -f text)
+          echo "package version = ${c_version}"
+          echo "C_VERSION=${c_version}" >> "$GITHUB_OUTPUT"
+
+      # - name: Log in to Docker Hub
+      #   uses: docker/login-action@v2.2.0
+      #   with:
+      #     registry: registry.hub.docker.com
+      #     username: ${{ secrets.CAESAY_DOCKER_USERNAME }}
+      #     password: ${{ secrets.CAESAY_DOCKER_PASSWORD }}
+
+      - name: Build NodeJS
+        working-directory: ./webber-caelan-ui
+        run: |
+          npm install --legacy-peer-deps
+          npm run build
+          cp -r ./build ../Server/wwwroot
+
+      - name: .NET Publish
+        env:
+          ESCAPED_TAGS: "'\"${{ steps.nbgv-version.outputs.C_VERSION }};latest\"'"
+        run: |
+          ls -la ./Server
+          ls -la ./Server/wwwroot
+          dotnet publish --os linux --arch x64 -c Release -p:ContainerImageTags=${{ env.ESCAPED_TAGS }} -p:ContainerRepository=caesay/webber -p:PublishProfile=DefaultContainer
+

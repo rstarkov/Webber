@@ -7,6 +7,11 @@
     <AssemblyName>Webber</AssemblyName>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <ContainerGenerateLabels>false</ContainerGenerateLabels>
+    <ContainerRegistry>registry.hub.docker.com</ContainerRegistry>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.123" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
