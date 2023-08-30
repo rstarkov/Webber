@@ -115,6 +115,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             synthetic.Add(new CalendarEvent() { DisplayName = "Sleep!", StartTimeUtc = DateTime.UtcNow.Date.AddHours(_config.SleepTime.Value) });
 
         var candidates = events
+            .Where(i => _config.MaxNumberOfAllDayEventsPerDay > 0 || i.Start?.DateTime != null) // filter out all-day events if disabled
             .Where(i => i.EventType == "default") // filter out OOO
             .Where(checkSelfRsvpNotDeclined) // filter out declined events
             .Where(i => !string.IsNullOrWhiteSpace(i.Summary)) // no title?
