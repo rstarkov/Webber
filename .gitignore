@@ -10,6 +10,8 @@ wwwroot
 # don't accidentally commit google credentials..
 TimeUntilToken/
 *.TokenResponse-user
+webber-settings.json
+webber-googleapi.json
 
 # User-specific files
 launchSettings.json
