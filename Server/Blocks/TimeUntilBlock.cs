@@ -130,6 +130,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
                 Id = i.Id,
                 DisplayName = i.Summary,
                 StartTimeUtc = i.Start.DateTime?.ToUniversalTime() ?? DateTime.ParseExact(i.Start.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
+                EndTimeUtc = i.End.DateTime?.ToUniversalTime() ?? DateTime.ParseExact(i.End.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
                 IsRecurring = i.RecurringEventId != null,
                 IsAllDay = i.Start?.DateTime == null,
             })

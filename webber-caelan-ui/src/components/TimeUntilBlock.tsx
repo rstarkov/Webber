@@ -28,6 +28,7 @@ moment.locale('en', {
 interface CalendarEvent {
     displayName: string;
     startTimeUtc: string;
+    endTimeUtc: string;
     hasStarted: boolean;
     isNextUp: boolean;
     isAllDay: boolean;
@@ -38,9 +39,13 @@ interface TimeUntilBlockDto extends BaseDto {
 }
 
 function getTimeString(e: CalendarEvent) {
+
+    const dstart = moment(e.startTimeUtc);
+    const dend = moment(e.endTimeUtc);
+
     let momentStr = e.hasStarted
-        ? moment(e.startTimeUtc).fromNow(false)
-        : moment(e.startTimeUtc).fromNow(!e.isNextUp);
+        ? dstart.fromNow(false)
+        : dstart.fromNow(!e.isNextUp);
 
     let color = "white";
 
@@ -50,7 +55,10 @@ function getTimeString(e: CalendarEvent) {
 
     if (e.isAllDay) {
         opacity = 0.8;
-        momentStr = moment(e.startTimeUtc).format("dddd").substring(0, 3).toUpperCase();
+        momentStr = dstart.format("dddd").substring(0, 3).toUpperCase();
+        const diff = dend.diff(dstart);
+        if (diff > 90000000)
+            momentStr += "~" + dend.format("dddd").substring(0, 3).toUpperCase();
         color = "orange";
     }
 
