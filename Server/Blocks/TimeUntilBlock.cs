@@ -164,7 +164,9 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
                 continue;
             }
 
-            c.IsNextUp = true;
+            if (c.StartTimeUtc.Date == DateTime.Now.Date)
+                c.IsNextUp = true;
+
             break;
         }
 
