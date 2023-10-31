@@ -103,6 +103,9 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
             const nextIdx = data.events.findIndex(e => e.isNextUp);
             if (nextIdx >= 0) {
                 const evt = data.events[nextIdx];
+                if (evt.isAllDay)
+                    return;
+
                 const secondsUntil = moment(evt.startTimeUtc).diff(moment()) / 1000;
                 if (secondsUntil <= 120 && secondsUntil >= -120) {
                     setUntil(secondsUntil); // force re-render each tick when approaching event start time
