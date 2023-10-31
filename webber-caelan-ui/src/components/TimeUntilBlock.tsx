@@ -1,5 +1,6 @@
 import * as _ from 'lodash';
 import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { withSubscription, BaseDto } from './util';
 import { Textfit } from 'react-textfit';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -82,7 +83,30 @@ function getTimeString(e: CalendarEvent) {
     );
 }
 
+var audioSoon = new Audio('/soon.wav');
+var audioNow = new Audio('/now.mp3');
+
 const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ data }) => {
+    const [warn, setWarn] = useState();
+    const [now, setNow] = useState();
+    useEffect(() => {
+        const id = setInterval(() => {
+            const nextIdx = data.events.findIndex(e => e.isNextUp);
+            if (nextIdx >= 0) {
+                const evt = data.events[nextIdx];
+                const secondsUntil = moment(evt.startTimeUtc).diff(moment()) / 1000;
+                if (secondsUntil > 20 && secondsUntil < 120 && warn != evt.displayName) {
+                    setWarn(evt.displayName as any);
+                    audioSoon.play();
+                }
+                else if (secondsUntil < 20 && now != evt.displayName) {
+                    setNow(evt.displayName as any);
+                    audioNow.play();
+                }
+            }
+        }, 1000);
+        return () => clearInterval(id);
+    });
     return (
         <React.Fragment>
             {/* <FontAwesomeIcon icon={faCalendarAlt} style={{ color: "#0095FF" }} /> */}
