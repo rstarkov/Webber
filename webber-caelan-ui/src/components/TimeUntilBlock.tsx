@@ -43,10 +43,18 @@ function getTimeString(e: CalendarEvent) {
 
     const dstart = moment(e.startTimeUtc);
     const dend = moment(e.endTimeUtc);
+    const secondsUntil = dstart.diff(moment()) / 1000;
 
     let momentStr = e.hasStarted
         ? dstart.fromNow(false)
         : dstart.fromNow(!e.isNextUp);
+
+    if (secondsUntil > 0 && secondsUntil < 60) {
+        momentStr = "in " + secondsUntil.toFixed(0).toString();
+    }
+    else if (secondsUntil <= 0 && secondsUntil > -90) {
+        momentStr = "NOW";
+    }
 
     let color = "white";
 
@@ -87,20 +95,24 @@ var audioSoon = new Audio('/soon.wav');
 var audioNow = new Audio('/now.mp3');
 
 const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ data }) => {
-    const [warn, setWarn] = useState();
-    const [now, setNow] = useState();
+    const [warn, setWarn] = useState<string>();
+    const [now, setNow] = useState<string>();
+    const [until, setUntil] = useState<number>();
     useEffect(() => {
         const id = setInterval(() => {
             const nextIdx = data.events.findIndex(e => e.isNextUp);
             if (nextIdx >= 0) {
                 const evt = data.events[nextIdx];
                 const secondsUntil = moment(evt.startTimeUtc).diff(moment()) / 1000;
-                if (secondsUntil > 20 && secondsUntil < 120 && warn != evt.displayName) {
-                    setWarn(evt.displayName as any);
+                if (secondsUntil <= 120 && secondsUntil >= -120) {
+                    setUntil(secondsUntil); // force re-render each tick when approaching event start time
+                }
+                if (secondsUntil > 30 && secondsUntil < 120 && warn != evt.displayName) {
+                    setWarn(evt.displayName);
                     audioSoon.play();
                 }
-                else if (secondsUntil < 20 && now != evt.displayName) {
-                    setNow(evt.displayName as any);
+                else if (secondsUntil <= 30 && now != evt.displayName) {
+                    setNow(evt.displayName);
                     audioNow.play();
                 }
             }
