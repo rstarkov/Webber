@@ -139,10 +139,24 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             .Distinct() // this uses the 'record' equality logic to filter out events that might be added to more than one calendar
             .ToList();
 
-        // limit all-day events to the max per-day value
         var alldaygroup = candidates.Where(d => d.IsAllDay).GroupBy(d => d.StartTimeUtc);
+
         foreach (var c in alldaygroup)
         {
+            // combine "bin collection" events into a single event
+            var binsearch = "Bin Collection";
+            var bindays = c.Where(v => v.DisplayName.EndsWith(binsearch)).ToArray();
+            if (bindays.Length > 1)
+            {
+                foreach (var bv in bindays)
+                    candidates.Remove(bv);
+
+                var name = string.Join(" & ", bindays.Select(v => v.DisplayName.Substring(0, v.DisplayName.Length - binsearch.Length)));
+                var binevent = new CalendarEvent { DisplayName = name + " Collection", IsAllDay = true, StartTimeUtc = bindays[0].StartTimeUtc };
+                candidates = candidates.Concat(new[] { binevent }).OrderBy(i => i.StartTimeUtc).ToList();
+            }
+
+            // limit all-day events to the max per-day value
             var grp_evts = c.ToArray();
             if (grp_evts.Length > _config.MaxNumberOfAllDayEventsPerDay)
             {
