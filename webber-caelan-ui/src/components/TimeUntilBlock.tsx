@@ -66,7 +66,7 @@ function getTimeString(e: CalendarEvent) {
         opacity = 0.8;
         momentStr = dstart.format("dddd").substring(0, 3).toUpperCase();
         const diff = dend.diff(dstart);
-        if (diff > 90000000)
+        if (diff > 90000000) // if longer than 25 hours
             momentStr += "~" + dend.format("dddd").substring(0, 3).toUpperCase();
         color = "orange";
     }
