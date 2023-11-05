@@ -58,7 +58,7 @@ const WeatherForecastBlock: React.FunctionComponent<{ data: WeatherForecastBlock
     var t4hours = _.take(allhours, 24);
 
     const getPercip = (i: number) => {
-        let prob = Math.max(data.hours[i].rainProbability, data.hours[i - 1].rainProbability, data.hours[i + 1].rainProbability);
+        let prob = Math.max(t4hours[i].rainProbability, t4hours[i - 1].rainProbability, t4hours[i + 1].rainProbability);
         return prob.toString() + "%";
     }
 
