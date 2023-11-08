@@ -33,7 +33,7 @@ jobs:
           echo "information version = ${a_version}"
           echo "C_VERSION=${c_version}" >> "$GITHUB_OUTPUT"
           cat ./webber-caelan-ui/src/version.ts
-          echo 'export default "${a_version}"' > ./webber-caelan-ui/src/version.ts
+          echo "export default \"${a_version}\"" > ./webber-caelan-ui/src/version.ts
           cat ./webber-caelan-ui/src/version.ts
 
       - name: Log in to Docker Hub
