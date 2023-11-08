@@ -142,11 +142,12 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
         {
             var offset = TZConvert.GetTimeZoneInfo(AppConfig.LocalTimezoneName).GetUtcOffset(DateTimeOffset.UtcNow);
             var sleepTime = new DateTimeOffset(DateTime.Now.Date, offset).AddHours(_config.SleepTime.Value);
-            synthetic.Add(new CalendarEvent() { DisplayName = "Sleep!", StartTimeUtc = sleepTime.UtcDateTime });
+            synthetic.Add(new CalendarEvent() { Id = "{sleep}", DisplayName = "Sleep!", StartTimeUtc = sleepTime.UtcDateTime });
         }
 
-        foreach (var v in _config.SpecialAnnualEvents)
+        for (int i = 0; i < _config.SpecialAnnualEvents.Length; i++)
         {
+            TimeUntilSpecialEvent v = _config.SpecialAnnualEvents[i];
             var nowDate = DateTime.UtcNow;
             nowDate = new DateTime(nowDate.Year, nowDate.Month, nowDate.Day, 0, 0, 0, 0, DateTimeKind.Utc);
 
@@ -169,7 +170,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
                     eventName = v.Title.Substring(0, idx) + ordinalYears + " " + v.Title.Substring(idx);
                 }
 
-                synthetic.Add(new CalendarEvent { DisplayName = eventName, StartTimeUtc = nextDate, IsAllDay = true, SpecialEvent = true });
+                synthetic.Add(new CalendarEvent { Id = "{special_" + i + "}", DisplayName = eventName, StartTimeUtc = nextDate, IsAllDay = true, SpecialEvent = true });
             }
         }
 
@@ -181,6 +182,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             .DistinctBy(i => i.RecurringEventId ?? i.Id)
             .Select(i => new CalendarEvent()
             {
+                Id = i.Id,
                 DisplayName = i.Summary,
                 StartTimeUtc = i.Start.DateTimeDateTimeOffset?.UtcDateTime ?? DateTime.ParseExact(i.Start.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
                 EndTimeUtc = i.End.DateTimeDateTimeOffset?.UtcDateTime ?? DateTime.ParseExact(i.End.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
