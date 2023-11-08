@@ -174,7 +174,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
         }
 
         var candidates = events
-            .Where(i => _config.MaxNumberOfAllDayEventsPerDay > 0 || i.Start?.DateTime != null) // filter out all-day events if disabled
+            .Where(i => _config.MaxNumberOfAllDayEventsPerDay > 0 || i.Start?.DateTimeDateTimeOffset != null) // filter out all-day events if disabled
             .Where(i => i.EventType == "default") // filter out OOO
             .Where(checkSelfRsvpNotDeclined) // filter out declined events
             .Where(i => !string.IsNullOrWhiteSpace(i.Summary)) // no title?
@@ -182,10 +182,10 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             .Select(i => new CalendarEvent()
             {
                 DisplayName = i.Summary,
-                StartTimeUtc = i.Start.DateTime?.ToUniversalTime() ?? DateTime.ParseExact(i.Start.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
-                EndTimeUtc = i.End.DateTime?.ToUniversalTime() ?? DateTime.ParseExact(i.End.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
+                StartTimeUtc = i.Start.DateTimeDateTimeOffset?.UtcDateTime ?? DateTime.ParseExact(i.Start.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
+                EndTimeUtc = i.End.DateTimeDateTimeOffset?.UtcDateTime ?? DateTime.ParseExact(i.End.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
                 IsRecurring = i.RecurringEventId != null,
-                IsAllDay = i.Start?.DateTime == null,
+                IsAllDay = i.Start?.DateTimeDateTimeOffset == null,
             })
             .Concat(synthetic)
             .OrderBy(i => i.StartTimeUtc)
