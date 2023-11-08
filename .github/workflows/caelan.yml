@@ -27,7 +27,7 @@ jobs:
       - name: Get NBGV Version
         id: nbgv-version
         run: |
-          c_version=$(nbgv get-version -v SimpleVersion -f text)
+          c_version=$(nbgv get-version -v SimpleVersion)
           echo "package version = ${c_version}"
           echo "C_VERSION=${c_version}" >> "$GITHUB_OUTPUT"
 
@@ -43,6 +43,9 @@ jobs:
         env: 
           CI: false
         run: |
+          cat ./src/version.ts
+          'export default "$(nbgv get-version -v AssemblyInformationalVersion)' > ./src/version.ts
+          cat ./src/version.ts
           npm install --legacy-peer-deps
           npm run build
           cp -r ./build ../Server/wwwroot

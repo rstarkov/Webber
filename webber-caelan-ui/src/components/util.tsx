@@ -32,6 +32,7 @@ async function setStateAsync<P, S, K extends keyof S>(
 export interface BaseDto {
     localOffsetHours: number;
     errorMessage: string;
+    serverVersion: string;
 }
 
 export function withSubscription<TDto extends BaseDto>(WrappedComponent: (React.ComponentType<{ data: TDto }>), hubName: string) {
