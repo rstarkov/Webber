@@ -2,6 +2,7 @@ import _ from 'lodash';
 import * as React from 'react';
 import styled from 'styled-components';
 import { HubConnectionBuilder, HubConnection, IRetryPolicy, RetryContext } from '@microsoft/signalr';
+import currentVersion from "../version";
 
 const ErrorOverlay = styled.div`
     position: absolute;
@@ -93,6 +94,9 @@ export function withSubscription<TDto extends BaseDto>(WrappedComponent: (React.
         }
 
         onUpdateReceived = (dto: TDto) => {
+            if (currentVersion != "local" && currentVersion != dto.serverVersion) {
+                window.location.reload();
+            }
             this.setState({ lastUpdate: dto, errorMessage: dto.errorMessage });
         }
 
