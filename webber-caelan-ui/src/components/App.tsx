@@ -27,9 +27,7 @@ function App() {
                 <SynologyRouterBlock />
             </div>
 */}
-            <div className="l5t1 w4h2">
-                <WeatherBlock />
-            </div>
+ 
             <div className="l1t3 w8h1" style={{ marginTop: 15 }}>
                 <WeatherForecastBlock />
             </div> 
@@ -42,6 +40,9 @@ function App() {
             {/* <div onClick={reload} style={{ position: "absolute", right: 0, top: 0, width: 60, height: 60, textAlign: "center", fontSize: 40, opacity: 0.6, lineHeight: "60px" }}>
                 <FontAwesomeIcon icon={faSyncAlt} />
             </div> */}
+            <div className="l5t1 w4h2">
+                <WeatherBlock />
+            </div>
             <div onClick={reload} style={{ position: "fixed", left: 0, bottom: 0, top: 0, right: 0, backgroundColor: "black", opacity: 0.01 }}>
             </div>
         </div>

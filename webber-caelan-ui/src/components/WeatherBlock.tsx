@@ -3,6 +3,7 @@ import { withSubscription, BaseDto } from './util';
 import styled from "styled-components";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons'
+import moment from 'moment';
 
 interface WeatherBlockDto extends BaseDto {
     curTemperature: number;
@@ -38,7 +39,20 @@ const SunriseContainer = styled.div`
     text-align: center;
 `;
 
+const SunsetDimmer = styled.div`
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+`
+
 const WeatherBlock: React.FunctionComponent<{ data: WeatherBlockDto }> = ({ data }) => {
+
+    const sunsetTime = moment(data.sunsetTime, ['h:m a', 'H:m']).subtract(1, "hour");
+    const nowTime = moment();
+    const shouldDim = nowTime.diff(sunsetTime) > 0;
     return (
         <React.Fragment>
             <CurrentWeatherLabel style={{ color: data.curTemperatureColor }}>{data.curTemperature.toFixed(1)}°C</CurrentWeatherLabel>
@@ -48,6 +62,7 @@ const WeatherBlock: React.FunctionComponent<{ data: WeatherBlockDto }> = ({ data
                 <FontAwesomeIcon icon={faMoon} style={{ paddingLeft: 40, paddingRight: 10, fontSize: 26, color: "#548BAB" }} />
                 <span>{data.sunsetTime}</span>
             </SunriseContainer>
+            {shouldDim && <SunsetDimmer />}
         </React.Fragment>
     );
 }
