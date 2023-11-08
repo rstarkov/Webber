@@ -30,6 +30,9 @@ jobs:
           c_version=$(nbgv get-version -v SimpleVersion)
           echo "package version = ${c_version}"
           echo "C_VERSION=${c_version}" >> "$GITHUB_OUTPUT"
+          cat ./webber-caelan-ui/src/version.ts
+          'export default "$(nbgv get-version -v AssemblyInformationalVersion)' > ./webber-caelan-ui/src/version.ts
+          cat ./webber-caelan-ui/src/version.ts
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2.2.0
@@ -43,9 +46,6 @@ jobs:
         env: 
           CI: false
         run: |
-          cat ./src/version.ts
-          'export default "$(nbgv get-version -v AssemblyInformationalVersion)' > ./src/version.ts
-          cat ./src/version.ts
           npm install --legacy-peer-deps
           npm run build
           cp -r ./build ../Server/wwwroot
