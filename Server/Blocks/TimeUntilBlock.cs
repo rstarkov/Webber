@@ -10,6 +10,15 @@ using Webber.Client.Models;
 
 namespace Webber.Server.Blocks;
 
+class TimeUntilSpecialEvent
+{
+    public DateTime Date { get; set; }
+
+    public string Title { get; set; }
+
+    public int LeadDays { get; set; }
+}
+
 class TimeUntilBlockConfig
 {
     /// <summary> The number of events to send to the client in each update. </summary>
@@ -29,6 +38,13 @@ class TimeUntilBlockConfig
 
     /// <summary> This is optional, if you wish to create your own App via Google Console - otherwise it will use mine (hard coded). </summary>
     public string AppCredentialsPath { get; set; }
+
+    /// <summary> A list of special / annual events. These will be shown each year with a counting number (eg. 10th anniversary). </summary>
+    public TimeUntilSpecialEvent[] SpecialAnnualEvents { get; set; } = new TimeUntilSpecialEvent[0];
+
+    /// <summary> The number of days in advance special events should appear on your calendar. </summary>
+    public int SpecialAnnualDefaultLeadTimeDays { get; set; } = 14;
+
 }
 
 internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
@@ -111,12 +127,50 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             return me.ResponseStatus != "declined";
         }
 
+        string getNumberWithOrdinal(int n)
+        {
+            var s = new[] { "th", "st", "nd", "rd" };
+            var v = n % 100;
+            var i = (v - 20) % 10;
+            if (i is < 0 or > 3) i = v;
+            if (i is < 0 or > 3) i = 0;
+            return n + s[i];
+        }
+
         List<CalendarEvent> synthetic = new List<CalendarEvent>();
         if (_config.SleepTime.HasValue)
         {
             var offset = TZConvert.GetTimeZoneInfo(AppConfig.LocalTimezoneName).GetUtcOffset(DateTimeOffset.UtcNow);
             var sleepTime = new DateTimeOffset(DateTime.Now.Date, offset).AddHours(_config.SleepTime.Value);
             synthetic.Add(new CalendarEvent() { DisplayName = "Sleep!", StartTimeUtc = sleepTime.UtcDateTime });
+        }
+
+        foreach (var v in _config.SpecialAnnualEvents)
+        {
+            var nowDate = DateTime.UtcNow;
+            nowDate = new DateTime(nowDate.Year, nowDate.Month, nowDate.Day, 0, 0, 0, 0, DateTimeKind.Utc);
+
+            var evtDate = v.Date.Date;
+            evtDate = new DateTime(evtDate.Year, evtDate.Month, evtDate.Day, 0, 0, 0, 0, DateTimeKind.Utc);
+
+            var nextDate = new DateTime(nowDate.Year, evtDate.Month, evtDate.Day, 0, 0, 0, 0, DateTimeKind.Utc);
+            if (nextDate < nowDate)
+                nextDate = nextDate.AddYears(1);
+
+            var timeUntil = nextDate - nowDate;
+            if (timeUntil.TotalDays < _config.SpecialAnnualDefaultLeadTimeDays)
+            {
+                var years = (int)Math.Round((nextDate - evtDate).TotalDays / 365);
+                var ordinalYears = getNumberWithOrdinal(years);
+                var eventName = ordinalYears + " " + v.Title;
+                if (v.Title.EndsWith("Birthday", StringComparison.OrdinalIgnoreCase))
+                {
+                    var idx = v.Title.IndexOf("Birthday", StringComparison.OrdinalIgnoreCase);
+                    eventName = v.Title.Substring(0, idx) + ordinalYears + " " + v.Title.Substring(idx);
+                }
+
+                synthetic.Add(new CalendarEvent { DisplayName = eventName, StartTimeUtc = nextDate, IsAllDay = true, SpecialEvent = true });
+            }
         }
 
         var candidates = events
@@ -127,7 +181,6 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             .DistinctBy(i => i.RecurringEventId ?? i.Id)
             .Select(i => new CalendarEvent()
             {
-                Id = i.Id,
                 DisplayName = i.Summary,
                 StartTimeUtc = i.Start.DateTime?.ToUniversalTime() ?? DateTime.ParseExact(i.Start.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
                 EndTimeUtc = i.End.DateTime?.ToUniversalTime() ?? DateTime.ParseExact(i.End.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
@@ -170,7 +223,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
 
         // calculate next up / started properties
         DateTime time = DateTime.UtcNow;
-        foreach (var c in candidates)
+        foreach (var c in candidates.Where(e => !e.IsAllDay && !e.SpecialEvent))
         {
             if (c.StartTimeUtc.AddMinutes(5) < time)
             {
@@ -183,6 +236,11 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
 
             break;
         }
+
+        // limit events to the max number, while preserving special events
+        for (int i = candidates.Count - 1; i >= 0 && candidates.Count > _config.MaxNumberOfEvents; i--)
+            if (!candidates[i].SpecialEvent)
+                candidates.RemoveAt(i);
 
         return new TimeUntilBlockDto()
         {

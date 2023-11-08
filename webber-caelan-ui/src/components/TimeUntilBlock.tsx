@@ -33,6 +33,7 @@ interface CalendarEvent {
     hasStarted: boolean;
     isNextUp: boolean;
     isAllDay: boolean;
+    specialEvent: boolean;
 }
 
 interface TimeUntilBlockDto extends BaseDto {
@@ -64,11 +65,19 @@ function getTimeString(e: CalendarEvent) {
 
     if (e.isAllDay) {
         opacity = 0.8;
-        momentStr = dstart.format("dddd").substring(0, 3).toUpperCase();
-        const diff = dend.diff(dstart);
-        if (diff > 90000000) // if longer than 25 hours
-            momentStr += "~" + dend.format("dddd").substring(0, 3).toUpperCase();
         color = "orange";
+        if (secondsUntil < 345600 ) { // less than 4 days until event
+            momentStr = dstart.format("dddd").substring(0, 3).toUpperCase();
+            const diff = dend.diff(dstart);
+            if (diff > 90000000) { // event is longer than 25 hours
+                momentStr += "~" + dend.format("dddd").substring(0, 3).toUpperCase();
+            }
+        }
+    }
+
+    if (e.specialEvent) {
+        color = "#88B2F5";
+        opacity = 1.0;
     }
 
     const wrapLen = 50;
