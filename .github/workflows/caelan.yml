@@ -28,10 +28,12 @@ jobs:
         id: nbgv-version
         run: |
           c_version=$(nbgv get-version -v SimpleVersion)
+          a_version=$(nbgv get-version -v AssemblyInformationalVersion)
           echo "package version = ${c_version}"
+          echo "information version = ${a_version}"
           echo "C_VERSION=${c_version}" >> "$GITHUB_OUTPUT"
           cat ./webber-caelan-ui/src/version.ts
-          'export default "$(nbgv get-version -v AssemblyInformationalVersion)' > ./webber-caelan-ui/src/version.ts
+          echo 'export default "${a_version}"' > ./webber-caelan-ui/src/version.ts
           cat ./webber-caelan-ui/src/version.ts
 
       - name: Log in to Docker Hub
