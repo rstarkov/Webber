@@ -109,13 +109,19 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
     const [until, setUntil] = useState<number>();
     useEffect(() => {
         const id = setInterval(() => {
+            const audioOnTime = moment("8:00", ['h:m a', 'H:m']);
+            const audioOffTime = moment("18:00", ['h:m a', 'H:m']);
+            const nowTime = moment();
+            const shouldPlayAudio = nowTime.diff(audioOnTime) > 0 && nowTime.diff(audioOffTime) < 0;
+            if (!shouldPlayAudio) return;
+
             const nextIdx = data.events.findIndex(e => e.isNextUp);
             if (nextIdx >= 0) {
                 const evt = data.events[nextIdx];
                 if (evt.isAllDay)
                     return;
 
-                const secondsUntil = moment(evt.startTimeUtc).diff(moment()) / 1000;
+                const secondsUntil = moment(evt.startTimeUtc).diff(nowTime) / 1000;
                 if (secondsUntil <= 120 && secondsUntil >= -120) {
                     setUntil(secondsUntil); // force re-render each tick when approaching event start time
                 }
@@ -128,7 +134,7 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
                     audioNow.play();
                 }
             }
-        }, 1000);
+        }, 2000);
         return () => clearInterval(id);
     });
     return (
