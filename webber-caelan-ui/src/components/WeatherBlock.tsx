@@ -49,10 +49,10 @@ const SunsetDimmer = styled.div`
 `
 
 const WeatherBlock: React.FunctionComponent<{ data: WeatherBlockDto }> = ({ data }) => {
-
     const sunsetTime = moment(data.sunsetTime, ['h:m a', 'H:m']).subtract(1, "hour");
+    const sunriseTime = moment(data.sunsetTime, ['h:m a', 'H:m']).add(1, "hour");
     const nowTime = moment();
-    const shouldDim = nowTime.diff(sunsetTime) > 0;
+    const shouldDim = nowTime.diff(sunsetTime) > 0 || nowTime.diff(sunriseTime) < 0;
     return (
         <React.Fragment>
             <CurrentWeatherLabel style={{ color: data.curTemperatureColor }}>{data.curTemperature.toFixed(1)}°C</CurrentWeatherLabel>
