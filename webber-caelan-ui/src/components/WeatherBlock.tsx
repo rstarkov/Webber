@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { withSubscription, BaseDto } from './util';
+import { withSubscription, BaseDto, isTimeBetween } from './util';
 import styled from "styled-components";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons'
@@ -49,10 +49,7 @@ const SunsetDimmer = styled.div`
 `
 
 const WeatherBlock: React.FunctionComponent<{ data: WeatherBlockDto }> = ({ data }) => {
-    const sunsetTime = moment(data.sunsetTime, ['h:m a', 'H:m']).subtract(1, "hour");
-    const sunriseTime = moment(data.sunsetTime, ['h:m a', 'H:m']).add(1, "hour");
-    const nowTime = moment();
-    const shouldDim = nowTime.diff(sunsetTime) > 0 || nowTime.diff(sunriseTime) < 0;
+    const shouldDim = !isTimeBetween(moment(), data.sunriseTime, data.sunsetTime);
     return (
         <React.Fragment>
             <CurrentWeatherLabel style={{ color: data.curTemperatureColor }}>{data.curTemperature.toFixed(1)}°C</CurrentWeatherLabel>

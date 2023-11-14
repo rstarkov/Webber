@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { withSubscription, BaseDto } from './util';
+import { withSubscription, BaseDto, isTimeBetween } from './util';
 import { Textfit } from 'react-textfit';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCalendarAlt, faCaretRight } from '@fortawesome/free-solid-svg-icons'
@@ -66,7 +66,7 @@ function getTimeString(e: CalendarEvent) {
     if (e.isAllDay) {
         opacity = 0.8;
         color = "orange";
-        if (secondsUntil < 345600 ) { // less than 4 days until event
+        if (secondsUntil < 345600) { // less than 4 days until event
             momentStr = dstart.format("dddd").substring(0, 3).toUpperCase();
             const diff = dend.diff(dstart);
             if (diff > 90000000) { // event is longer than 25 hours
@@ -109,11 +109,11 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
     const [until, setUntil] = useState<number>();
     useEffect(() => {
         const id = setInterval(() => {
-            const audioOnTime = moment("8:00", ['h:m a', 'H:m']);
-            const audioOffTime = moment("18:00", ['h:m a', 'H:m']);
             const nowTime = moment();
-            const shouldPlayAudio = nowTime.diff(audioOnTime) > 0 && nowTime.diff(audioOffTime) < 0;
-            if (!shouldPlayAudio) return;
+            if (!isTimeBetween(nowTime, "8:00", "18:00")) {
+                // only play audio between 8am and 6pm
+                return;
+            }
 
             const nextIdx = data.events.findIndex(e => e.isNextUp);
             if (nextIdx >= 0) {

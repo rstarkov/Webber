@@ -3,6 +3,7 @@ import * as React from 'react';
 import styled from 'styled-components';
 import { HubConnectionBuilder, HubConnection, IRetryPolicy, RetryContext } from '@microsoft/signalr';
 import currentVersion from "../version";
+import moment from 'moment';
 
 const ErrorOverlay = styled.div`
     position: absolute;
@@ -129,4 +130,14 @@ export function formatBytes(bytes: number, div: number = 1024): string {
     if (bytes < div * div) return roundStrAuto(bytes / div) + " kb";
     if (bytes < div * div * div) return roundStrAuto(bytes / (div * div)) + " mb";
     return roundStrAuto(bytes / (div * div * div)) + " gb";
+}
+
+export function isTimeBetween(time, start, end): boolean {
+    if (_.isString(time)) time = moment(time, ['h:m a', 'H:m']);
+    if (_.isString(start)) start = moment(start, ['h:m a', 'H:m']);
+    if (_.isString(end)) end = moment(end, ['h:m a', 'H:m']);
+
+    const c1 = time.diff(start);
+    const c2 = time.diff(end);
+    return c1 > 0 && c2 < 0;
 }
