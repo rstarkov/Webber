@@ -40,7 +40,7 @@ interface TimeUntilBlockDto extends BaseDto {
     events: CalendarEvent[];
 }
 
-function getTimeString(e: CalendarEvent) {
+function getTimeString(e: CalendarEvent, alt: boolean) {
 
     const dstart = moment(e.startTimeUtc);
     const dend = moment(e.endTimeUtc);
@@ -61,7 +61,12 @@ function getTimeString(e: CalendarEvent) {
 
     let opacity = 0.6;
     if (e.hasStarted) opacity = 0.4;
-    if (e.isNextUp) opacity = 1;
+    if (e.isNextUp) { 
+        opacity = 1;
+        if (alt) {
+            color = "yellow";
+        }
+    }
 
     if (e.isAllDay) {
         opacity = 0.8;
@@ -107,6 +112,7 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
     const [warn, setWarn] = useState<string>();
     const [now, setNow] = useState<string>();
     const [until, setUntil] = useState<number>();
+    const [alt, setAlt] = useState<boolean>();
     useEffect(() => {
         const id = setInterval(() => {
             const nowTime = moment();
@@ -121,29 +127,35 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
                 if (evt.isAllDay)
                     return;
 
-                const secondsUntil = moment(evt.startTimeUtc).diff(nowTime) / 1000;
-                if (secondsUntil <= 120 && secondsUntil >= -120) {
-                    setUntil(secondsUntil); // force re-render each tick when approaching event start time
+                const secondsUntil = Math.round(moment(evt.startTimeUtc).diff(nowTime) / 1000);
+                
+                // force re-render each tick when approaching event start time and alternate caret color
+                if (secondsUntil <= 180 && secondsUntil >= -120) {
+                    setUntil(secondsUntil); 
+                    setAlt(secondsUntil > -90 ? (secondsUntil % 2) == 0 : false); 
                 }
-                if (secondsUntil > 30 && secondsUntil < 120 && warn != evt.displayName) {
+
+                // play warning 3 minutes before meeting
+                if (secondsUntil > 30 && secondsUntil < 180 && warn != evt.displayName) {
                     setWarn(evt.displayName);
                     audioSoon.play();
                 }
+
+                // play second warning 30 seconds before meeting
                 else if (secondsUntil <= 30 && now != evt.displayName) {
                     setNow(evt.displayName);
                     audioNow.play();
                 }
             }
-        }, 2000);
+        }, 100);
         return () => clearInterval(id);
     });
     return (
         <React.Fragment>
-            {/* <FontAwesomeIcon icon={faCalendarAlt} style={{ color: "#0095FF" }} /> */}
             {_.map(data.events, (e, i) => (
                 <div key={i} style={{ position: "absolute", left: 60, width: 90 * 8 - 60 - 20, top: i * 60, height: 60, lineHeight: "60px" }}>
-                    {e.isNextUp && <FontAwesomeIcon icon={faCaretRight} style={{ color: "red", fontSize: 60, position: "absolute", left: -60, top: 0, width: 60, textAlign: "center" }} />}
-                    <Textfit mode="single" max={40}>{getTimeString(e)}</Textfit>
+                    {e.isNextUp && <FontAwesomeIcon icon={faCaretRight} style={{ color: alt ? "yellow" : "red", fontSize: 60, position: "absolute", left: -60, top: 0, width: 60, textAlign: "center" }} />}
+                    <Textfit mode="single" max={40}>{getTimeString(e, alt)}</Textfit>
                 </div>
             ))}
         </React.Fragment>
