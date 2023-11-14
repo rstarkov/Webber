@@ -116,11 +116,6 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
     useEffect(() => {
         const id = setInterval(() => {
             const nowTime = moment();
-            if (!isTimeBetween(nowTime, "8:00", "18:00")) {
-                // only play audio between 8am and 6pm
-                return;
-            }
-
             const nextIdx = data.events.findIndex(e => e.isNextUp);
             if (nextIdx >= 0) {
                 const evt = data.events[nextIdx];
@@ -132,19 +127,23 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
                 // force re-render each tick when approaching event start time and alternate caret color
                 if (secondsUntil <= 180 && secondsUntil >= -120) {
                     setUntil(secondsUntil); 
-                    setAlt(secondsUntil > -90 ? (secondsUntil % 2) == 0 : false); 
+                    setAlt(secondsUntil < 60 && secondsUntil > -30 ? (secondsUntil % 2) == 0 : false); 
                 }
 
                 // play warning 3 minutes before meeting
                 if (secondsUntil > 30 && secondsUntil < 180 && warn != evt.displayName) {
                     setWarn(evt.displayName);
-                    audioSoon.play();
+                    if (isTimeBetween(nowTime, "8:00", "18:00")) {
+                        audioSoon.play();
+                    }
                 }
 
                 // play second warning 30 seconds before meeting
                 else if (secondsUntil <= 30 && now != evt.displayName) {
                     setNow(evt.displayName);
-                    audioNow.play();
+                    if (isTimeBetween(nowTime, "8:00", "18:00")) {
+                        audioNow.play();
+                    }
                 }
             }
         }, 100);
