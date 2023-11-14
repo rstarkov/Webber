@@ -7,6 +7,7 @@ import SynologyRouterBlock from './SynologyRouterBlock';
 import WeatherBlock from './WeatherBlock';
 import TimeUntilBlock from './TimeUntilBlock';
 import WeatherForecastBlock from './WeatherForecastBlock';
+import PresenceBlock from './PresenceBlock';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSyncAlt } from '@fortawesome/free-solid-svg-icons'
 
@@ -43,6 +44,9 @@ function App() {
             <div className="l5t1 w4h2">
                 <WeatherBlock />
             </div>
+
+            <PresenceBlock />
+            
             <div onClick={reload} style={{ position: "fixed", left: 0, bottom: 0, top: 0, right: 0, backgroundColor: "black", opacity: 0.01 }}>
             </div>
         </div>

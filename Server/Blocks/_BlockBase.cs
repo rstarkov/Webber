@@ -68,7 +68,7 @@ public abstract class BlockServerBase<TDto> : IBlockServer<TDto>
         AppConfig = sp.GetRequiredService<AppConfig>();
     }
 
-    public void Init(WebApplication app)
+    public virtual void Init(WebApplication app)
     {
         app.MapHub<BlockHub>($"/hub/{typeof(TDto).Name.Replace("Dto", "")}");
     }
