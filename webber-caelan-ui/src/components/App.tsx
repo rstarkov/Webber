@@ -35,7 +35,7 @@ function App() {
             <div className="l1t1 w4h2">
                 <ClockBlock />
             </div>
-            <div className="l1t5 w8h5" style={{ marginTop: 45 }}>
+            <div className="l1t5 w8h4" style={{ marginTop: 45, height: 315 }}>
                 <TimeUntilBlock />
             </div>
             {/* <div onClick={reload} style={{ position: "absolute", right: 0, top: 0, width: 60, height: 60, textAlign: "center", fontSize: 40, opacity: 0.6, lineHeight: "60px" }}>
