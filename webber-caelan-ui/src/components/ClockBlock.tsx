@@ -24,11 +24,17 @@ const Time = styled.div`
 `;
 
 const SecondaryTime = styled(Time)`
-    font-size: 60px;
-    line-height: 70px;
-    opacity: 0.6;
+    height: 30px;
+    margin-top: 10px;
+    line-height: 30px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 30px;
+    opacity: 0.7;
 `;
-
+// font-size: 60px;
+// line-height: 70px;
+// opacity: 0.6;
 interface TimeZone {
     displayName: string;
     offsetHours: number;
@@ -54,13 +60,16 @@ const ClockBlock: React.FunctionComponent<{ data: ClockBlockDto }> = ({ data }) 
     return (
         <React.Fragment>
             <Time>{getTimeString(data.localOffsetHours)}</Time>
-            <TimeLabel>{moment(time).format("dddd").substring(0, 3).toUpperCase() + ", " + moment(time).format("DD MMM").toUpperCase()}</TimeLabel>
-            {/* {_.map(data.timeZones, t => (
+            <div className="l5t1 w4h1" style={{ paddingTop: 30 }}>
+                <TimeLabel>{moment(time).format("dddd").substring(0, 3).toUpperCase() + ", " + moment(time).format("DD MMM").toUpperCase()}</TimeLabel>
+            </div>
+            {_.map(data.timeZones, t => (
                 <React.Fragment key={t.displayName}>
-                    <TimeLabel style={{ marginTop: 0, fontSize: 30 }}>{t.displayName}</TimeLabel>
-                    <SecondaryTime>{getTimeString(t.offsetHours)}</SecondaryTime>
+                    <SecondaryTime>{t.displayName.substring(0, 5)} &nbsp; {getTimeString(t.offsetHours)}</SecondaryTime>
+                    {/* <TimeLabel style={{ marginTop: 0, fontSize: 30 }}>{t.displayName}</TimeLabel>
+                    <SecondaryTime>{getTimeString(t.offsetHours)}</SecondaryTime> */}
                 </React.Fragment>
-            ))} */}
+            ))}
         </React.Fragment>
     );
 }
