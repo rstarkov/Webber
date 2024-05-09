@@ -1,15 +1,9 @@
 import * as React from 'react';
 import "./App.css";
-import HwInfoBlock from './HwInfoBlock';
 import ClockBlock from './ClockBlock';
-import PingBlock from './PingBlock';
-import SynologyRouterBlock from './SynologyRouterBlock';
 import WeatherBlock from './WeatherBlock';
 import TimeUntilBlock from './TimeUntilBlock';
 import WeatherForecastBlock from './WeatherForecastBlock';
-import PresenceBlock from './PresenceBlock';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSyncAlt } from '@fortawesome/free-solid-svg-icons'
 
 function reload() {
     window.location.reload();
@@ -28,10 +22,10 @@ function App() {
                 <SynologyRouterBlock />
             </div>
 */}
- 
+
             <div className="l1t4 w8h1" style={{ marginTop: 20 }}>
                 <WeatherForecastBlock />
-            </div> 
+            </div>
             <div className="l1t1 w4h2">
                 <ClockBlock />
             </div>
@@ -45,8 +39,6 @@ function App() {
                 <WeatherBlock />
             </div>
 
-            <PresenceBlock />
-            
             <div onClick={reload} style={{ position: "fixed", left: 0, bottom: 0, top: 0, right: 0, backgroundColor: "black", opacity: 0.01 }}>
             </div>
         </div>
