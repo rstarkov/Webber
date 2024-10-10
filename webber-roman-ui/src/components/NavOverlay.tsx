@@ -1,8 +1,9 @@
-import { Dialog, DialogState, useDialogState } from "ariakit/Dialog";
+import { Dialog } from "@ariakit/react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowsRotate, faCompress, faExpand, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { useState } from "react";
 
 const NavOverlayDiv = styled.div`
     position: absolute;
@@ -23,7 +24,13 @@ const Fi = styled(FontAwesomeIcon)`
     margin-right: 2vw;
 `;
 
-export function NavOverlay(props: { state: DialogState }): JSX.Element {
+interface NavOverlayState {
+    open: boolean;
+    show: () => void;
+    hide: () => void;
+}
+
+export function NavOverlay(props: { state: NavOverlayState }): JSX.Element {
 
     const navigate = useNavigate();
 
@@ -36,7 +43,7 @@ export function NavOverlay(props: { state: DialogState }): JSX.Element {
         props.state.hide();
     }
 
-    return <Dialog state={props.state}>
+    return <Dialog open={props.state.open} onClose={props.state.hide}>
         <NavOverlayDiv>
             <button onClick={() => navigate("/")}>Page: Tasks</button>
             <button onClick={() => navigate("/weather")}>Page: Weather</button>
@@ -51,4 +58,11 @@ export function NavOverlay(props: { state: DialogState }): JSX.Element {
     </Dialog>;
 }
 
-export const useNavOverlayState = useDialogState;
+export function useNavOverlayState(): NavOverlayState {
+    const [open, setOpen] = useState(false);
+    return {
+        open,
+        show: () => setOpen(true),
+        hide: () => setOpen(false),
+    };
+}
