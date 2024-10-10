@@ -31,8 +31,8 @@ const SpanLeft = styled.span`
 const SpanDesc = styled.span`
 `;
 
-const TimeDiv = styled.div<{ newGroup: boolean }>`
-    ${p => p.newGroup ? "margin-top: 0.4rem;" : ""}
+const TimeDiv = styled.div<{ $newGroup: boolean }>`
+    ${p => p.$newGroup ? "margin-top: 0.4rem;" : ""}
 `;
 
 const DivMins = styled(TimeDiv)`
@@ -97,27 +97,27 @@ export function TimeUntilPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>
                 const startHHmm = start.toFormat("HH:mm");
                 if (totalMinutes < 60)
                     return <Fragment key={e.id}>
-                        <DivMins newGroup={newGroup}><SpanTime>{startHHmm}</SpanTime><SpanLeft>{`${Math.floor(totalMinutes).toFixed(0)}min`}</SpanLeft></DivMins>
-                        <DivMins newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivMins>
+                        <DivMins $newGroup={newGroup}><SpanTime>{startHHmm}</SpanTime><SpanLeft>{`${Math.floor(totalMinutes).toFixed(0)}min`}</SpanLeft></DivMins>
+                        <DivMins $newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivMins>
                     </Fragment>;
                 if (start < endOfToday)
                     return <Fragment key={e.id}>
-                        <DivHrs newGroup={newGroup}><SpanTime>{startHHmm}</SpanTime><SpanLeft>{`${totalHours.toFixed(1)}hr`}</SpanLeft></DivHrs>
-                        <DivHrs newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivHrs>
+                        <DivHrs $newGroup={newGroup}><SpanTime>{startHHmm}</SpanTime><SpanLeft>{`${totalHours.toFixed(1)}hr`}</SpanLeft></DivHrs>
+                        <DivHrs $newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivHrs>
                     </Fragment>;
                 if (start < endOfToday.plus({ days: 1 }))
                     return <Fragment key={e.id}>
-                        <DivTmrw newGroup={newGroup}><SpanTime>{startHHmm}</SpanTime><SpanLeft>{`${totalHours.toFixed(1)}hr`}</SpanLeft></DivTmrw>
-                        <DivTmrw newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivTmrw>
+                        <DivTmrw $newGroup={newGroup}><SpanTime>{startHHmm}</SpanTime><SpanLeft>{`${totalHours.toFixed(1)}hr`}</SpanLeft></DivTmrw>
+                        <DivTmrw $newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivTmrw>
                     </Fragment>;
                 if (start < endOfToday.plus({ days: 7 }))
                     return <Fragment key={e.id}>
-                        <DivWeek newGroup={newGroup}><SpanTime>{startHHmm}</SpanTime><SpanLeft>{start.toFormat("ccc")}</SpanLeft></DivWeek>
-                        <DivWeek newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivWeek>
+                        <DivWeek $newGroup={newGroup}><SpanTime>{startHHmm}</SpanTime><SpanLeft>{start.toFormat("ccc")}</SpanLeft></DivWeek>
+                        <DivWeek $newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivWeek>
                     </Fragment>;
                 return <Fragment key={e.id}>
-                    <DivLong newGroup={newGroup}><SpanTime>{`${endOfLocalDay(start, true).diff(endOfToday).as("days").toFixed(0)} days`}</SpanTime></DivLong>
-                    <DivLong newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivLong>
+                    <DivLong $newGroup={newGroup}><SpanTime>{`${endOfLocalDay(start, true).diff(endOfToday).as("days").toFixed(0)} days`}</SpanTime></DivLong>
+                    <DivLong $newGroup={newGroup}><SpanDesc>{e.displayName}</SpanDesc></DivLong>
                 </Fragment>;
             })}
         </CalContentDiv>}

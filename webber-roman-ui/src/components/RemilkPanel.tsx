@@ -52,18 +52,18 @@ const TaskDiv = styled.div`
 const NonTaskDiv = styled(TaskDiv)`
     border-left-color: rgba(0,0,0,0);
 `;
-const DueSpan = styled.span<{ overdue: boolean }>`
+const DueSpan = styled.span<{ $overdue: boolean }>`
     margin-right: 0.35rem;
     font-size: 83%;
     font-weight: bold;
-    color: ${p => p.overdue ? "red" : "#359AFF"};
+    color: ${p => p.$overdue ? "red" : "#359AFF"};
 `;
 
 function Task(p: { task: RemilkTask, nolate?: boolean }): JSX.Element {
     const overdue = p.task.dueUtc < DateTime.utc();
     return <TaskDiv style={{ borderLeftColor: PrioColors[p.task.priority] }}>
-        {p.task.hasDueTime && <DueSpan overdue={overdue}>{p.task.dueUtc.toLocal().toFormat("HH:mm")}</DueSpan>}
-        {!p.task.hasDueTime && overdue && !p.nolate && <DueSpan overdue={overdue}>late</DueSpan>}
+        {p.task.hasDueTime && <DueSpan $overdue={overdue}>{p.task.dueUtc.toLocal().toFormat("HH:mm")}</DueSpan>}
+        {!p.task.hasDueTime && overdue && !p.nolate && <DueSpan $overdue={overdue}>late</DueSpan>}
         {p.task.description}
     </TaskDiv>;
 }

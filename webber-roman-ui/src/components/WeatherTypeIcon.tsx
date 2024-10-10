@@ -66,8 +66,8 @@ interface WeatherTypeProps extends React.HTMLAttributes<HTMLDivElement> {
 const ContainerDiv = styled.div`
     position: relative;
 `;
-const IconDiv = styled.div<{ img: string }>`
-    background-image: url(${p => p.img});
+const IconDiv = styled.div<{ $img: string }>`
+    background-image: url(${p => p.$img});
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -78,7 +78,7 @@ const IconDiv = styled.div<{ img: string }>`
 export function WeatherTypeIcon({ kind, night, wind, ...rest }: WeatherTypeProps): JSX.Element {
     const layers = night ? _nightIconMap[kind] : _dayIconMap[kind];
     return <ContainerDiv {...rest}>
-        {layers.map(src => <IconDiv key={src} img={src} />)}
-        {wind > 0 && <IconDiv key={iWind} img={iWind} style={{ opacity: wind }} />}
+        {layers.map(src => <IconDiv key={src} $img={src} />)}
+        {wind > 0 && <IconDiv key={iWind} $img={iWind} style={{ opacity: wind }} />}
     </ContainerDiv>;
 }

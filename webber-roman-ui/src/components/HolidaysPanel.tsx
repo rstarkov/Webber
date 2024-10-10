@@ -54,6 +54,6 @@ export function HolidaysPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>)
         .map(h => ({ ...h, daysUntil: Math.ceil(h.next.diff(startOfToday, "days").days) }));
 
     return <HolidaysDiv {...rest}>
-        {hols.filter(h => h.daysUntil >= -h.pastDays && h.daysUntil <= h.interestDays).map(h => <HolidayRow holiday={h} />)}
+        {hols.filter(h => h.daysUntil >= -h.pastDays && h.daysUntil <= h.interestDays).map(h => <HolidayRow key={h.description} holiday={h} />)}
     </HolidaysDiv>;
 }

@@ -41,6 +41,19 @@ function MainClock(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     </MainClockDiv>;
 }
 
+const DateClockDiv = styled.div`
+    font-size: 160%;
+    font-weight: bold;
+    text-align: center;
+`;
+
+function DateClock(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+    const { time } = useTime();
+    return <DateClockDiv {...props}>
+        {time.toFormat("ccc, d LLL")}
+    </DateClockDiv>
+}
+
 export function WeatherPage(): JSX.Element {
     const overlay = useNavOverlayState();
 
@@ -49,6 +62,7 @@ export function WeatherPage(): JSX.Element {
             <WeatherPanel style={{ position: "absolute", top: "0vw", left: "0vw", width: "37vw", height: "26vw" }} />
             <MainClock style={{ position: "absolute", left: "38vw", top: "-5vh", width: "27vw" }} onClick={overlay.show} />
             <ZonesClock style={{ position: "absolute", left: "38vw", top: "18vh", width: "27vw" }} />
+            <DateClock style={{ position: "absolute", left: "38vw", bottom: "55vh", width: "27vw" }} />
             <MiniPingPanel style={{ position: "absolute", top: "0vw", right: "0", width: "33vw", height: "18vh" }} />
             <MiniRouterPanel style={{ position: "absolute", top: "18vh", right: "0", width: "33vw", bottom: "55.8vh" }} />
 
