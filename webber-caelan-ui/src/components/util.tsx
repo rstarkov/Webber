@@ -41,6 +41,7 @@ export function withSubscription<TDto extends BaseDto>(WrappedComponent: (React.
     interface BlockPanelBaseState {
         lastUpdate?: TDto;
         errorMessage?: string;
+        reconnectingDelay?: any;
     }
     class InfiniteRetryPolicy implements IRetryPolicy {
         nextRetryDelayInMilliseconds(retryContext: RetryContext): number {
@@ -65,8 +66,6 @@ export function withSubscription<TDto extends BaseDto>(WrappedComponent: (React.
         }
 
         connect = async () => {
-            await setStateAsync(this, { errorMessage: "" });
-
             if (this.connection) {
                 try { await this.connection.stop(); } catch { }
                 this.connection = null;
@@ -80,18 +79,33 @@ export function withSubscription<TDto extends BaseDto>(WrappedComponent: (React.
 
                 this.connection.on('Update', this.onUpdateReceived);
                 this.connection.onreconnecting(this.onReconnecting);
+                this.connection.onreconnected(this.onReconnected);
                 await this.connection.start();
+                await setStateAsync(this, { errorMessage: "" });
             } catch (e) {
                 if (_.isError(e)) {
                     await setStateAsync(this, { errorMessage: "Failed to connect: " + e.message });
                 } else {
                     await setStateAsync(this, { errorMessage: "Failed to connect: " + e });
                 }
+                setTimeout(this.connect, 10000);
             }
         }
 
         onReconnecting = (e: Error) => {
-            this.setState({ errorMessage: "Reconnecting: " + e.message });
+
+            var timeoutHandle = setTimeout(() => {
+                this.setState({ reconnectingDelay: null });
+            }, 10000);
+
+            this.setState((prevState) => ({ errorMessage: "Reconnecting: " + e.message, reconnectingDelay: timeoutHandle }));
+        }
+
+        onReconnected = (connectionId: string) => {
+            this.setState((prevState) => { 
+                clearTimeout(prevState.reconnectingDelay);
+                return { reconnectingDelay: null };
+            });
         }
 
         onUpdateReceived = (dto: TDto) => {
@@ -102,11 +116,12 @@ export function withSubscription<TDto extends BaseDto>(WrappedComponent: (React.
         }
 
         render() {
-            const { lastUpdate, errorMessage } = this.state;
+            const { lastUpdate, errorMessage, reconnectingDelay } = this.state;
+
             return (
                 <React.Fragment>
                     {!_.isEmpty(lastUpdate) && <WrappedComponent data={lastUpdate} />}
-                    {!_.isEmpty(errorMessage) && <ErrorOverlay onClick={this.connect}>{errorMessage}</ErrorOverlay>}
+                    {!_.isEmpty(errorMessage) && !reconnectingDelay && <ErrorOverlay onClick={this.connect}>{errorMessage}</ErrorOverlay>}
                 </React.Fragment>
             );
         }
