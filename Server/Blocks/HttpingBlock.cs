@@ -275,7 +275,7 @@ class HttpingBlockServer : SimpleBlockServerBase<HttpingBlockDto>
             {
                 var interval = new HttpingPointInterval { StartUtc = grp.Key };
 
-                var good = IEnumerableExtensions.Order(grp.Select(g => g.MsResponse).Where(ms => ms != 0 && ms != 65535)).ToList();
+                var good = grp.Select(g => g.MsResponse).Where(ms => ms != 0 && ms != 65535).Order().ToList();
                 if (good.Count > 0)
                     SetPercentiles(ref interval.MsResponse, good);
                 foreach (var sample in grp)

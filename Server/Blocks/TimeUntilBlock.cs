@@ -111,7 +111,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
         foreach (var c in _config.CalendarKeys.Distinct())
         {
             EventsResource.ListRequest request = _svc.Events.List(c);
-            request.TimeMin = DateTime.Now;
+            request.TimeMinDateTimeOffset = DateTimeOffset.Now;
             request.ShowDeleted = false;
             request.SingleEvents = true;
             request.MaxResults = _config.MaxNumberOfEvents * 3;
