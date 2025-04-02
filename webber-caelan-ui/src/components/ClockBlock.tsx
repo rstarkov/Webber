@@ -15,8 +15,8 @@ const TimeLabel = styled.div`
 `;
 
 const Time = styled.div`
-    height: 120px;
-    line-height: 120px;
+    height: 100px;
+    line-height: 100px;
     text-align: center;
     font-weight: bold;
     font-size: 100px;
@@ -25,7 +25,7 @@ const Time = styled.div`
 
 const SecondaryTime = styled(Time)`
     height: 30px;
-    margin-top: 10px;
+    margin-top: 6px;
     line-height: 30px;
     text-align: center;
     font-weight: bold;
@@ -60,7 +60,7 @@ const ClockBlock: React.FunctionComponent<{ data: ClockBlockDto }> = ({ data }) 
     return (
         <React.Fragment>
             <Time>{getTimeString(data.localOffsetHours)}</Time>
-            <div className="l5t1 w4h1" style={{ paddingTop: 30 }}>
+            <div className="l5t1 w4h1" style={{ paddingTop: 2 }}>
                 <TimeLabel>{moment(time).format("dddd").substring(0, 3).toUpperCase() + ", " + moment(time).format("DD MMM").toUpperCase()}</TimeLabel>
             </div>
             {_.map(data.timeZones, t => (

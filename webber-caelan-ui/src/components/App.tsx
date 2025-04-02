@@ -23,19 +23,19 @@ function App() {
             </div>
 */}
 
-            <div className="l1t4 w8h1" style={{ marginTop: 20 }}>
+            <div className="l1t3 w8h1" style={{ marginTop: 20 }}>
                 <WeatherForecastBlock />
             </div>
             <div className="l1t1 w4h2">
                 <ClockBlock />
             </div>
-            <div className="l1t5 w8h4" style={{ marginTop: 45, height: 315 }}>
+            <div className="l1t4 w8h4" style={{ marginTop: 25, height: 415 }}>
                 <TimeUntilBlock />
             </div>
             {/* <div onClick={reload} style={{ position: "absolute", right: 0, top: 0, width: 60, height: 60, textAlign: "center", fontSize: 40, opacity: 0.6, lineHeight: "60px" }}>
                 <FontAwesomeIcon icon={faSyncAlt} />
             </div> */}
-            <div className="l5t1 w4h2" style={{ marginTop: 80 }}>
+            <div className="l5t1 w4h2" style={{ marginTop: 40 }}>
                 <WeatherBlock />
             </div>
 

@@ -23,8 +23,8 @@ interface WeatherBlockDto extends BaseDto {
 }
 
 const CurrentWeatherLabel = styled.div`
-    height: 120px;
-    line-height: 120px;
+    height: 100px;
+    line-height: 100px;
     text-align: center;
     font-weight: bold;
     font-size: 100px;
@@ -32,8 +32,9 @@ const CurrentWeatherLabel = styled.div`
 `;
 
 const SunriseContainer = styled.div`
-    height: 50px;
-    line-height: 50px;
+    margin-top: 2px;
+    height: 30px;
+    line-height: 30px;
     font-weight: bold;
     font-size: 30px;
     text-align: center;
