@@ -44,7 +44,6 @@ class TimeUntilBlockConfig
 
     /// <summary> The number of days in advance special events should appear on your calendar. </summary>
     public int SpecialAnnualDefaultLeadTimeDays { get; set; } = 14;
-
 }
 
 internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
@@ -141,8 +140,16 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
         if (_config.SleepTime.HasValue)
         {
             var offset = TZConvert.GetTimeZoneInfo(AppConfig.LocalTimezoneName).GetUtcOffset(DateTimeOffset.UtcNow);
-            var sleepTime = new DateTimeOffset(DateTime.Now.Date, offset).AddHours(_config.SleepTime.Value);
-            synthetic.Add(new CalendarEvent() { Id = "{sleep}", DisplayName = "Sleep!", StartTimeUtc = sleepTime.UtcDateTime });
+            var sleepTimeStart = DateTime.UtcNow
+                .Add(offset).Date.Subtract(offset)
+                .AddHours(_config.SleepTime.Value); // set to sleep time
+
+            synthetic.Add(new CalendarEvent()
+            {
+                Id = "{sleep}",
+                DisplayName = "Sleep!",
+                StartTimeUtc = sleepTimeStart,
+            });
         }
 
         for (int i = 0; i < _config.SpecialAnnualEvents.Length; i++)
