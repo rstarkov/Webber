@@ -6,7 +6,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { ExperimentsPage } from "./pages/ExperimentsPage";
 import { WeatherPage } from "./pages/WeatherPage";
 
-export function App(): JSX.Element {
+export function App(): React.ReactNode {
     const reload = useReloadBlock();
     const [prevHash, setPrevHash] = useState(reload.dto?.serverHash);
     const navigate = useNavigate();
@@ -24,7 +24,7 @@ export function App(): JSX.Element {
             // navigate to the hash if it doesn't match curret route
             const hash = window.parent.location.hash.substring(1);
             if (loc.pathname !== hash)
-                navigate(hash);
+                void navigate(hash);
         }
     }, [reload.dto?.serverHash]);
 

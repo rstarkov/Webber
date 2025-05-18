@@ -75,7 +75,7 @@ const IconDiv = styled.div<{ $img: string }>`
     left: 0; top: 0; right: 0; bottom: 0;
 `;
 
-export function WeatherTypeIcon({ kind, night, wind, ...rest }: WeatherTypeProps): JSX.Element {
+export function WeatherTypeIcon({ kind, night, wind, ...rest }: WeatherTypeProps): React.ReactNode {
     const layers = night ? _nightIconMap[kind] : _dayIconMap[kind];
     return <ContainerDiv {...rest}>
         {layers.map(src => <IconDiv key={src} $img={src} />)}

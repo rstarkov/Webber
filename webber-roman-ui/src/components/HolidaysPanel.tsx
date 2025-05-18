@@ -22,7 +22,7 @@ const Rdiv = styled(Ldiv)`
     justify-self: end;
 `;
 
-function HolidayRow(p: { holiday: Holiday2 }): JSX.Element {
+function HolidayRow(p: { holiday: Holiday2 }): React.ReactNode {
     const h = p.holiday;
     //const leftDiv = <div style={{ justifySelf: "end" }}>{h.daysUntil}</div>;
     //const leftDiv = <div style={{ justifySelf: "end" }}>{h.daysUntil <= 21 ? `${h.daysUntil}d` : h.daysUntil <= 60 ? `${Math.floor(h.daysUntil / 7).toFixed(0)}w` : `${Math.floor(h.daysUntil / 30.5).toFixed(0)}m`}</div>;
@@ -45,7 +45,7 @@ function HolidayRow(p: { holiday: Holiday2 }): JSX.Element {
     </>;
 }
 
-export function HolidaysPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function HolidaysPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     useTime(); // refresh every minute - a little much but not worth fixing
 
     const startOfToday = startOfLocalDay(DateTime.utc(), true);

@@ -3,7 +3,7 @@ import { TimeUntilPanel } from "../components/TimeUntilPanel";
 import { NavOverlay, useNavOverlayState } from "../components/NavOverlay";
 import { HolidaysPanel } from "../components/HolidaysPanel";
 
-export function DashboardPage(): JSX.Element {
+export function DashboardPage(): React.ReactNode {
     const overlay = useNavOverlayState();
 
     return (

@@ -23,7 +23,7 @@ interface barSample {
     color: string;
 }
 
-function RainChart(p: { from: DateTime }): JSX.Element {
+function RainChart(p: { from: DateTime }): React.ReactNode {
     const rb = useRainCloudBlock();
     const wdc = useWeatherDotComBlock();
     const wb = useWeatherBlock();
@@ -191,7 +191,7 @@ function RainChart(p: { from: DateTime }): JSX.Element {
     </svg>;
 }
 
-export function RainCloudPanel(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function RainCloudPanel(props: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     const rb = useRainCloudBlock();
     const wdc = useWeatherDotComBlock();
 

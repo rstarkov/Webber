@@ -40,7 +40,7 @@ interface BlockPanelProps extends React.HTMLAttributes<HTMLDivElement> {
     state: BlockState;
 }
 
-export function BlockPanelContainer({ state, children, ...rest }: BlockPanelProps): JSX.Element {
+export function BlockPanelContainer({ state, children, ...rest }: BlockPanelProps): React.ReactNode {
     const [visible, setVisible] = useState(false);
     const [valid, setValid] = useState<"empty" | "valid" | "invalid">("empty"); // empty occurs before we have received the first dto from server
     useEffect(() => {

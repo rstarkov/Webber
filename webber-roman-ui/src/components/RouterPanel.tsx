@@ -40,7 +40,7 @@ function getRxPt(pt: RouterHistoryPoint | null) {
     return getPt(pt?.rxRate, 26_000_000, "#573805", "#966008", "#ed980d", "#f6bb5a");
 }
 
-export function RouterPanel(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function RouterPanel(props: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     const router = useRouterBlock();
     if (!router.dto)
         return <RouterBoxDiv state={router} {...props} />;
@@ -107,7 +107,7 @@ const MiniLabelDiv = styled.div`
         align-content: end;
     }
 `;
-function Rate(p: { rate: number }): JSX.Element {
+function Rate(p: { rate: number }): React.ReactNode {
     let num: string;
     let unit: string;
     if (p.rate >= 1_000_000) {
@@ -124,7 +124,7 @@ function Rate(p: { rate: number }): JSX.Element {
     </>;
 }
 
-export function MiniRouterPanel(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function MiniRouterPanel(props: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     const router = useRouterBlock();
     if (!router.dto)
         return <MiniRouterBoxDiv state={router} {...props} />;

@@ -23,7 +23,7 @@ const OverflowFaderDiv = styled.div`
     }
 `;
 
-function TaskToday(p: { task: RemilkTask }): JSX.Element {
+function TaskToday(p: { task: RemilkTask }): React.ReactNode {
     const overdue = p.task.dueUtc < DateTime.utc();
     return <p key={p.task.id}>{overdue && "OVERDUE: "}{p.task.description}</p>
 }
@@ -59,7 +59,7 @@ const DueSpan = styled.span<{ $overdue: boolean }>`
     color: ${p => p.$overdue ? "red" : "#359AFF"};
 `;
 
-function Task(p: { task: RemilkTask, nolate?: boolean }): JSX.Element {
+function Task(p: { task: RemilkTask, nolate?: boolean }): React.ReactNode {
     const overdue = p.task.dueUtc < DateTime.utc();
     return <TaskDiv style={{ borderLeftColor: PrioColors[p.task.priority] }}>
         {p.task.hasDueTime && <DueSpan $overdue={overdue}>{p.task.dueUtc.toLocal().toFormat("HH:mm")}</DueSpan>}
@@ -87,7 +87,7 @@ const TaskCountContainerDiv = styled.div`
     position: relative;
 `;
 
-export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function RemilkPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     const remilk = useRemilkBlock();
     const tasks = remilk.dto?.tasks ?? [];
 

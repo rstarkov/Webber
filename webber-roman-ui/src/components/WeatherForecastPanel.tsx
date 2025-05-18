@@ -75,7 +75,7 @@ const WindDash = styled.div`
     flex: 1;
     height: 0.15vw;
 `;
-function WindLine(p: { windMph: number }): JSX.Element {
+function WindLine(p: { windMph: number }): React.ReactNode {
     const beaufort = [1, 3, 7, 12, 18, 24, 31, 38, 46, 54, 63, 73, 999]; // Beaufort Wind Scale; levels 11-12 only at sea; level 10 is "rare on land"
     const b = beaufort.findIndex(v => p.windMph <= v);
     const color = ["#333", "#555", "#666", "#777", "#ccc", "#ff0", "#ff6738", "#f00", "#f0f", "#f0f", "#f0f", "#f0f", "#f0f"][b];
@@ -86,7 +86,7 @@ function WindLine(p: { windMph: number }): JSX.Element {
     </WindDiv>
 }
 
-function ForecastDay(p: { dto: WeatherForecastDayDto, mode: "today" | "big" | "small" }): JSX.Element {
+function ForecastDay(p: { dto: WeatherForecastDayDto, mode: "today" | "big" | "small" }): React.ReactNode {
     const w = useWeatherBlock();
 
     const cellSize = 1.0; // flex size to vary by date
@@ -114,7 +114,7 @@ function ForecastDay(p: { dto: WeatherForecastDayDto, mode: "today" | "big" | "s
     </ForecastDayDiv>;
 }
 
-export function WeatherForecastPanel(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function WeatherForecastPanel(props: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     const fc = useWeatherForecastBlock();
     if (!fc.dto)
         return <ForecastDiv state={fc} {...props} />;

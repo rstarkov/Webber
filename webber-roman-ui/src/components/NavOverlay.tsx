@@ -30,7 +30,7 @@ interface NavOverlayState {
     hide: () => void;
 }
 
-export function NavOverlay(props: { state: NavOverlayState }): JSX.Element {
+export function NavOverlay(props: { state: NavOverlayState }): React.ReactNode {
 
     const navigate = useNavigate();
 
@@ -45,10 +45,10 @@ export function NavOverlay(props: { state: NavOverlayState }): JSX.Element {
 
     return <Dialog open={props.state.open} onClose={props.state.hide}>
         <NavOverlayDiv>
-            <button onClick={() => navigate("/")}>Page: Tasks</button>
-            <button onClick={() => navigate("/weather")}>Page: Weather</button>
-            <button onClick={() => navigate("/classic")}>Page: Classic</button>
-            <button onClick={() => navigate("/experiments")}>Page: Experiments</button>
+            <button onClick={() => void navigate("/")}>Page: Tasks</button>
+            <button onClick={() => void navigate("/weather")}>Page: Weather</button>
+            <button onClick={() => void navigate("/classic")}>Page: Classic</button>
+            <button onClick={() => void navigate("/experiments")}>Page: Experiments</button>
 
             <button onClick={props.state.hide}><FontAwesomeIcon icon={faXmark} /></button>
             <div></div>

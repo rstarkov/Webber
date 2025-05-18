@@ -19,7 +19,7 @@ export function ScaleY(value: number, min: number, max: number, transform: (v: n
 }
 
 
-export function BarChart({ Data, BarCount, BarSpacing, Downwards }: { Data: BarChartPt[], BarCount?: number, BarSpacing?: number, Downwards?: boolean }): JSX.Element {
+export function BarChart({ Data, BarCount, BarSpacing, Downwards }: { Data: BarChartPt[], BarCount?: number, BarSpacing?: number, Downwards?: boolean }): React.ReactNode {
     BarSpacing ??= 0.2;
     BarCount ??= 10;
     Downwards ??= false;

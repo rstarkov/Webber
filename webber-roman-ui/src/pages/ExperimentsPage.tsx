@@ -19,7 +19,7 @@ const ZoneName = styled.div`
 const ZoneTime = styled.div`
 `;
 
-function ZonesClock(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+function ZonesClock(props: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     return <ZonesClockDiv {...props}>
         <ZoneName>Ukr</ZoneName><ZoneTime>{DateTime.utc().setZone("Europe/Kiev").toFormat("HH:mm")}</ZoneTime>
         <ZoneName style={{ fontWeight: "bold" }}>UTC</ZoneName><ZoneTime style={{ fontWeight: "bold" }}>{DateTime.utc().toFormat("HH:mm")}</ZoneTime>
@@ -33,7 +33,7 @@ const MainClockDiv = styled.div`
     text-align: center;
 `;
 
-function MainClock(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+function MainClock(props: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     return <MainClockDiv {...props}>
         {DateTime.local().toFormat("HH:mm")}
     </MainClockDiv>;
@@ -47,7 +47,7 @@ const RecentMinMaxDiv = styled.div`
     padding-left: 1.3vw;
     color: #777;
 `;
-function RecentTemperatures(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+function RecentTemperatures(props: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     const weather = useWeatherBlock();
     if (!weather.dto)
         return <RecentTemperaturesDiv state={weather} {...props} />
@@ -77,7 +77,7 @@ const SunTimesDiv = styled.div`
     opacity: 0.7;
 `;
 
-function SunTimes(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+function SunTimes(props: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     const weather = useWeatherBlock();
     return <SunTimesDiv {...props}>
         <div><FontAwesomeIcon icon={faSun} color="#ff0" /> {weather.dto?.sunriseTime}</div>
@@ -86,7 +86,7 @@ function SunTimes(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
     </SunTimesDiv>
 }
 
-export function ExperimentsPage(): JSX.Element {
+export function ExperimentsPage(): React.ReactNode {
     const overlay = useNavOverlayState();
 
     return (

@@ -77,7 +77,7 @@ const DivLong = styled(TimeDiv)`
     }
 `;
 
-export function TimeUntilPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function TimeUntilPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     const calendar = useTimeUntilBlock();
     const endOfToday = endOfLocalDay(DateTime.utc(), true);
     const endOfTomorrow = endOfToday.plus({ days: 1 });

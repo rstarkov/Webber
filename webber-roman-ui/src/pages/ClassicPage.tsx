@@ -4,7 +4,7 @@ import { RouterPanel } from "../components/RouterPanel";
 import { TimePanel } from "../components/TimePanel";
 import { WeatherPanel } from "../components/WeatherPanel";
 
-export function ClassicPage(): JSX.Element {
+export function ClassicPage(): React.ReactNode {
     const overlay = useNavOverlayState();
     return (
         <>

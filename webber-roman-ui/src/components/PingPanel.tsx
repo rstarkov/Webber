@@ -8,7 +8,7 @@ const PingBoxDiv = styled(BlockPanelBorderedContainer)`
     flex-direction: column;
 `;
 
-export function PingPanel(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function PingPanel(props: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     const ping = usePingBlock();
     if (!ping.dto)
         return <PingBoxDiv state={ping} {...props} />;
@@ -44,7 +44,7 @@ const MiniPingLabelDiv = styled.div`
     align-content: start;
 `;
 
-export function MiniPingPanel(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+export function MiniPingPanel(props: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     const ping = usePingBlock();
     if (!ping.dto)
         return <MiniPingBoxDiv state={ping} {...props} />;

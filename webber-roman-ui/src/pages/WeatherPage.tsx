@@ -19,7 +19,7 @@ const ZoneName = styled.div`
 const ZoneTime = styled.div`
 `;
 
-function ZonesClock(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+function ZonesClock(props: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     const { time } = useTime();
     return <ZonesClockDiv {...props}>
         <ZoneName>Ukr</ZoneName><ZoneTime>{time.setZone("Europe/Kiev").toFormat("HH:mm")}</ZoneTime>
@@ -34,7 +34,7 @@ const MainClockDiv = styled.div`
     text-align: center;
 `;
 
-function MainClock(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+function MainClock(props: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     const { time } = useTime();
     return <MainClockDiv {...props}>
         {time.toLocal().toFormat("HH:mm")}
@@ -47,14 +47,14 @@ const DateClockDiv = styled.div`
     text-align: center;
 `;
 
-function DateClock(props: React.HTMLAttributes<HTMLDivElement>): JSX.Element {
+function DateClock(props: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     const { time } = useTime();
     return <DateClockDiv {...props}>
         {time.toFormat("ccc, d LLL")}
     </DateClockDiv>
 }
 
-export function WeatherPage(): JSX.Element {
+export function WeatherPage(): React.ReactNode {
     const overlay = useNavOverlayState();
 
     return (
