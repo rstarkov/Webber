@@ -50,7 +50,7 @@ export function HolidaysPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>)
 
     const startOfToday = startOfLocalDay(DateTime.utc(), true);
     const from = DateTime.utc().plus({ days: -30 });
-    const hols = holidays.map(h => h(from)).sort((a, b) => a.next.toMillis() - b.next.toMillis())
+    const hols = holidays.map(h => h(from)).filter(h => !!h).sort((a, b) => a.next.toMillis() - b.next.toMillis())
         .map(h => ({ ...h, daysUntil: Math.ceil(h.next.diff(startOfToday, "days").days) }));
 
     return <HolidaysDiv {...rest}>
