@@ -67,7 +67,7 @@ const WeatherForecastBlock: React.FunctionComponent<{ data: WeatherForecastBlock
     let now = moment().valueOf() - start;
     let end = moment(t4hours[23].dateTime).add(1, "hour").valueOf() - start;
 
-    const maxWidth = 720;
+    const maxWidth = 576;
     const nowPosition = (now / end) * maxWidth;
 
     return (
