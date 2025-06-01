@@ -3,38 +3,34 @@ import * as React from 'react';
 import styled from 'styled-components';
 import { withSubscription, BaseDto } from './util';
 import moment from 'moment';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMoon, faClock } from '@fortawesome/free-solid-svg-icons';
 
-const TimeLabel = styled.div`
-    height: 30px;
-    margin-top: 10px;
-    line-height: 30px;
-    text-align: center;
+const DateLabel = styled.div`
+    height: 24px;
+    line-height: 24px;
     font-weight: bold;
-    font-size: 30px;
+    font-size: 24px;
     opacity: 1;
 `;
 
 const Time = styled.div`
-    height: 100px;
-    line-height: 100px;
-    text-align: center;
+    height: 70px;
+    line-height: 70px;
     font-weight: bold;
-    font-size: 100px;
+    font-size: 70px;
     opacity: 0.9;
 `;
 
 const SecondaryTime = styled(Time)`
-    height: 30px;
+    height: 17px;
     margin-top: 6px;
-    line-height: 30px;
-    text-align: center;
+    line-height: 17px;
     font-weight: bold;
-    font-size: 30px;
+    font-size: 17px;
     opacity: 0.7;
 `;
-// font-size: 60px;
-// line-height: 70px;
-// opacity: 0.6;
+
 interface TimeZone {
     displayName: string;
     offsetHours: number;
@@ -57,19 +53,26 @@ const ClockBlock: React.FunctionComponent<{ data: ClockBlockDto }> = ({ data }) 
         return moment(time).utcOffset(offset).format("HH:mm");
     }
 
+    const firstTwoTz = _.take(data.timeZones, 2);
+    const restTz = _.drop(data.timeZones, 2);
+
     return (
         <React.Fragment>
+            <FontAwesomeIcon icon={faClock} style={{ fontSize: 40, marginBottom: 20, color: "#548BAB" }} />
+            <DateLabel>{moment(time).format("dddd").substring(0, 3).toUpperCase() + ", " + moment(time).format("DD MMM").toUpperCase()}</DateLabel>
             <Time>{getTimeString(data.localOffsetHours)}</Time>
-            <div className="l5t1 w4h1" style={{ paddingTop: 2 }}>
-                <TimeLabel>{moment(time).format("dddd").substring(0, 3).toUpperCase() + ", " + moment(time).format("DD MMM").toUpperCase()}</TimeLabel>
-            </div>
-            {_.map(data.timeZones, t => (
+            {_.map(firstTwoTz, t => (
                 <React.Fragment key={t.displayName}>
-                    <SecondaryTime>{t.displayName.substring(0, 5)} &nbsp; {getTimeString(t.offsetHours)}</SecondaryTime>
-                    {/* <TimeLabel style={{ marginTop: 0, fontSize: 30 }}>{t.displayName}</TimeLabel>
-                    <SecondaryTime>{getTimeString(t.offsetHours)}</SecondaryTime> */}
+                    <SecondaryTime>{getTimeString(t.offsetHours)} &nbsp; {t.displayName}</SecondaryTime>
                 </React.Fragment>
             ))}
+            <div style={{ position: "relative", left: 280, top: -48 }}>
+                {_.map(restTz, t => (
+                    <React.Fragment key={t.displayName}>
+                        <SecondaryTime>{getTimeString(t.offsetHours)} &nbsp; {t.displayName}</SecondaryTime>
+                    </React.Fragment>
+                ))}
+            </div>
         </React.Fragment>
     );
 }

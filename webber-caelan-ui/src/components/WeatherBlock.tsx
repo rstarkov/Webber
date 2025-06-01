@@ -2,7 +2,7 @@ import * as React from 'react';
 import { withSubscription, BaseDto, isTimeBetween } from './util';
 import styled from "styled-components";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons'
+import { faCloud, faMoon, faSun, faSunPlantWilt } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment';
 
 interface WeatherBlockDto extends BaseDto {
@@ -23,21 +23,20 @@ interface WeatherBlockDto extends BaseDto {
 }
 
 const CurrentWeatherLabel = styled.div`
-    height: 100px;
-    line-height: 100px;
-    text-align: center;
+    height: 70px;
+    line-height: 70px;
     font-weight: bold;
-    font-size: 100px;
+    font-size: 70px;
     opacity: 0.9;
 `;
 
 const SunriseContainer = styled.div`
-    margin-top: 2px;
-    height: 30px;
-    line-height: 30px;
+    margin-top: -5px;
+    margin-bottom: 5px;
+    height: 24px;
+    line-height: 24px;
     font-weight: bold;
-    font-size: 30px;
-    text-align: center;
+    font-size: 24px;
 `;
 
 const SunsetDimmer = styled.div`
@@ -46,20 +45,21 @@ const SunsetDimmer = styled.div`
     right: 0;
     top: 0;
     bottom: 0;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0,0,0,0.6);
 `
 
 const WeatherBlock: React.FunctionComponent<{ data: WeatherBlockDto }> = ({ data }) => {
     const shouldDim = !isTimeBetween(moment(), data.sunriseTime, data.sunsetTime);
     return (
         <React.Fragment>
-            <CurrentWeatherLabel style={{ color: data.curTemperatureColor }}>{data.curTemperature.toFixed(1)}°C</CurrentWeatherLabel>
+            <FontAwesomeIcon icon={faCloud} style={{ fontSize: 40, marginBottom: 18, color: "#548BAB" }} />
             <SunriseContainer>
                 <FontAwesomeIcon icon={faSun} style={{ paddingRight: 10, color: "#EDBF24" }} />
                 <span>{data.sunriseTime}</span>
-                <FontAwesomeIcon icon={faMoon} style={{ paddingLeft: 40, paddingRight: 10, fontSize: 26, color: "#548BAB" }} />
+                <FontAwesomeIcon icon={faMoon} style={{ paddingLeft: 20, paddingRight: 10, fontSize: 30, color: "#548BAB" }} />
                 <span>{data.sunsetTime}</span>
             </SunriseContainer>
+            <CurrentWeatherLabel style={{ color: data.curTemperatureColor }}>{data.curTemperature.toFixed(1)}°C</CurrentWeatherLabel>
             {shouldDim && <SunsetDimmer />}
         </React.Fragment>
     );

@@ -40,6 +40,7 @@ static class Util
 
     public static double GetUtcOffset(string timezoneName)
     {
+        // var timezones = TZConvert.KnownIanaTimeZoneNames;
         return TZConvert.GetTimeZoneInfo(timezoneName).GetUtcOffset(DateTimeOffset.UtcNow).TotalHours;
     }
 }

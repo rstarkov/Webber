@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { withSubscription, BaseDto, isTimeBetween } from './util';
 import { Textfit } from 'react-textfit';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCalendarAlt, faCaretRight } from '@fortawesome/free-solid-svg-icons'
+import { faCalendarAlt, faCalendarDay, faCalendarDays, faCalendarWeek, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import moment from 'moment';
 
 moment.locale('en', {
@@ -61,7 +61,7 @@ function getTimeString(e: CalendarEvent, alt: boolean) {
 
     let opacity = 0.6;
     if (e.hasStarted) opacity = 0.4;
-    if (e.isNextUp) { 
+    if (e.isNextUp) {
         opacity = 1;
         if (alt) {
             color = "yellow";
@@ -69,8 +69,11 @@ function getTimeString(e: CalendarEvent, alt: boolean) {
     }
 
     if (e.isAllDay) {
-        opacity = 0.8;
-        color = "orange";
+        opacity = 0.6;
+        if (secondsUntil < 86400) { // less than 1 day until event
+            color = "orange";
+            opacity = 0.8;
+        }
         if (secondsUntil < 345600) { // less than 4 days until event
             momentStr = dstart.format("dddd").substring(0, 3).toUpperCase();
             const diff = dend.diff(dstart);
@@ -113,21 +116,25 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
     const [now, setNow] = useState<string>();
     const [until, setUntil] = useState<number>();
     const [alt, setAlt] = useState<boolean>();
+
+    const specialEvents = _.take(_.filter(data.events, e => e.specialEvent || e.isAllDay), 7);
+    const normalEvents = _.take(_.filter(data.events, e => !e.specialEvent && !e.isAllDay), 7);
+
     useEffect(() => {
         const id = setInterval(() => {
             const nowTime = moment();
-            const nextIdx = data.events.findIndex(e => e.isNextUp);
+            const nextIdx = normalEvents.findIndex(e => e.isNextUp);
             if (nextIdx >= 0) {
-                const evt = data.events[nextIdx];
+                const evt = normalEvents[nextIdx];
                 if (evt.isAllDay)
                     return;
 
                 const secondsUntil = Math.round(moment(evt.startTimeUtc).diff(nowTime) / 1000);
-                
+
                 // force re-render each tick when approaching event start time and alternate caret color
                 if (secondsUntil <= 180 && secondsUntil >= -120) {
-                    setUntil(secondsUntil); 
-                    setAlt(secondsUntil < 60 && secondsUntil > -30 ? (secondsUntil % 2) == 0 : false); 
+                    setUntil(secondsUntil);
+                    setAlt(secondsUntil < 60 && secondsUntil > -30 ? (secondsUntil % 2) == 0 : false);
                 }
 
                 // play warning 3 minutes before meeting
@@ -151,12 +158,23 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
     });
     return (
         <React.Fragment>
-            {_.map(data.events, (e, i) => (
-                <div key={i} style={{ position: "absolute", left: 60, width: 90 * 8 - 60 - 20, top: i * 60, height: 60, lineHeight: "60px" }}>
-                    {e.isNextUp && <FontAwesomeIcon icon={faCaretRight} style={{ color: alt ? "yellow" : "red", fontSize: 60, position: "absolute", left: -60, top: 0, width: 60, textAlign: "center" }} />}
-                    <Textfit mode="single" max={40}>{getTimeString(e, alt)}</Textfit>
-                </div>
-            ))}
+            <div style={{ position: "absolute", left: 0, top: 0, bottom: 0 }}>
+                <FontAwesomeIcon icon={faCalendarWeek} style={{ fontSize: 40, marginBottom: 20, color: "#548BAB" }} />
+                {_.map(specialEvents, (e, i) => (
+                    <div key={i} style={{ position: "absolute", width: 400, top: i * 34 + 59, height: 24, lineHeight: "24px" }}>
+                        <Textfit mode="single" max={24}>{getTimeString(e, alt)}</Textfit>
+                    </div>
+                ))}
+            </div>
+            <div style={{ position: "absolute", left: 420, top: 0, bottom: 0 }}>
+                <FontAwesomeIcon icon={faCalendarDays} style={{ fontSize: 40, marginBottom: 20, marginLeft: 46, color: "#548BAB" }} />
+                {_.map(normalEvents, (e, i) => (
+                    <div key={i} style={{ position: "absolute", left: 46, width: 400, top: i * 34 + 59, height: 24, lineHeight: "24px" }}>
+                        {e.isNextUp && <FontAwesomeIcon icon={faCaretRight} style={{ color: alt ? "yellow" : "red", fontSize: 60, position: "absolute", left: -60, top: -15, width: 60, textAlign: "center" }} />}
+                        <Textfit mode="single" max={24}>{getTimeString(e, alt)}</Textfit>
+                    </div>
+                ))}
+            </div>
         </React.Fragment>
     );
 }
