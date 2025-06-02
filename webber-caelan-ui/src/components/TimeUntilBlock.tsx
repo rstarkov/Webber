@@ -117,7 +117,29 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
     const [until, setUntil] = useState<number>();
     const [alt, setAlt] = useState<boolean>();
 
-    const specialEvents = _.take(_.filter(data.events, e => e.specialEvent || e.isAllDay), 7);
+    // Get current time
+    const nowMoment = moment();
+
+    // Special events within next 30 days
+    const specialEventsWithin30Days = _.filter(data.events, e =>
+        e.specialEvent &&
+        moment(e.startTimeUtc).isBefore(moment(nowMoment).add(30, 'days'))
+    );
+
+    // All-day events that are not special events, sorted by date
+    const allDayEventsNotSpecial = _.filter(data.events, e => e.isAllDay && !e.specialEvent);
+
+    // Limit total to 7, after including all special events within 30 days
+    const remainingSlots = 7 - specialEventsWithin30Days.length;
+    const additionalAllDay = remainingSlots > 0 ? _.take(allDayEventsNotSpecial, remainingSlots) : [];
+
+    // Combine and sort by date
+    const specialEvents = _.sortBy(
+        [...specialEventsWithin30Days, ...additionalAllDay],
+        e => moment(e.startTimeUtc).valueOf()
+    );
+
+    // Normal events (not all-day, not special)
     const normalEvents = _.take(_.filter(data.events, e => !e.specialEvent && !e.isAllDay), 7);
 
     useEffect(() => {
