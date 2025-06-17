@@ -15,6 +15,7 @@ html {
   width: 1480px;
   height: 320px;
   overflow: hidden;
+  position: relative;
 }
 
 .cpu-heatmap {

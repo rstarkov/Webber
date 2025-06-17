@@ -99,7 +99,7 @@ function getTimeString(e: CalendarEvent, alt: boolean) {
             str2 = str2.substring(0, str1.length - 3) + "...";
         }
         return (
-            <div style={{ opacity, color, lineHeight: "30px" }}>{str1}<br />{str2}</div>
+            <div style={{ opacity, color, lineHeight: "16px" }}>{str1}<br />{str2}</div>
         );
     }
 
