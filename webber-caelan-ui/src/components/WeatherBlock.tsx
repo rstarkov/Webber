@@ -49,15 +49,18 @@ const SunsetDimmer = styled.div`
 `
 
 const WeatherBlock: React.FunctionComponent<{ data: WeatherBlockDto }> = ({ data }) => {
-    const shouldDim = !isTimeBetween(moment(), data.sunriseTime, data.sunsetTime);
+    const sunriseTime = moment.utc(data.sunriseTime, "HH:mm").utcOffset(data.localOffsetHours).format("HH:mm");
+    const sunsetTime = moment.utc(data.sunsetTime, "HH:mm").utcOffset(data.localOffsetHours).format("HH:mm");
+    const shouldDim = !isTimeBetween(moment(), sunriseTime, sunsetTime);
+
     return (
         <React.Fragment>
             <FontAwesomeIcon icon={faCloud} style={{ fontSize: 40, marginBottom: 18, color: "#548BAB" }} />
             <SunriseContainer>
                 <FontAwesomeIcon icon={faSun} style={{ paddingRight: 10, color: "#EDBF24" }} />
-                <span>{data.sunriseTime}</span>
+                <span>{sunriseTime}</span>
                 <FontAwesomeIcon icon={faMoon} style={{ paddingLeft: 20, paddingRight: 10, fontSize: 30, color: "#548BAB" }} />
-                <span>{data.sunsetTime}</span>
+                <span>{sunsetTime}</span>
             </SunriseContainer>
             <CurrentWeatherLabel style={{ color: data.curTemperatureColor }}>{data.curTemperature.toFixed(1)}°C</CurrentWeatherLabel>
             {shouldDim && <SunsetDimmer />}
