@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <LangVersion>10</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>Webber</AssemblyName>
   </PropertyGroup>

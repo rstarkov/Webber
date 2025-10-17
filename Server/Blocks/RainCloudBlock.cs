@@ -1,4 +1,6 @@
-﻿using RT.Serialization;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
+using RT.Serialization;
 using RT.Util.ExtensionMethods;
 using SkiaSharp;
 using Webber.Client.Models;
@@ -12,6 +14,7 @@ class RainCloudBlockConfig
     public double LocationY { get; set; }
     public string CachePath { get; set; } = null;
     public string DumpImagesPath { get; set; } = null;
+    public string OxiPngPath { get; set; } = null;
 }
 
 class RainCloudBlockServer : SimpleBlockServerBase<RainCloudBlockDto>
@@ -19,6 +22,7 @@ class RainCloudBlockServer : SimpleBlockServerBase<RainCloudBlockDto>
     private RainCloudBlockConfig _config;
     private MetOfficeMapsService _metoffice;
     private Dictionary<string, RainCloudPtDto> _havePoints = new();
+    private BlockingCollection<string> _pngsToCompress = new();
 
     private Dictionary<SKColor, int> _cRain = new()
     {
@@ -51,6 +55,7 @@ class RainCloudBlockServer : SimpleBlockServerBase<RainCloudBlockDto>
     {
         _config = config;
         _metoffice = new MetOfficeMapsService();
+        new Thread(pngCompressThread) { IsBackground = true }.Start();
     }
 
     public override void Start()
@@ -103,7 +108,11 @@ class RainCloudBlockServer : SimpleBlockServerBase<RainCloudBlockDto>
                 bmp = SKBitmap.Decode(bytes);
                 if (_config.DumpImagesPath != null)
                     if (ts.ModelName == "rainfall_radar" || ts.ModelName == "total_precipitation_rate")
-                        File.WriteAllBytes(Path.Combine(_config.DumpImagesPath, $@"{ts.Time:yyyy-MM-dd'T'HH'.'mm}--{(isForecast ? $"fc--{(ts.Time - ts.ModelRun).TotalMinutes:0000}" : "ob")}.png"), bytes);
+                    {
+                        var pngname = Path.Combine(_config.DumpImagesPath, $@"{ts.Time:yyyy-MM-dd'T'HH'.'mm}--{(isForecast ? $"fc--{(ts.Time - ts.ModelRun).TotalMinutes:0000}" : "ob")}.png");
+                        File.WriteAllBytes(pngname, bytes);
+                        _pngsToCompress.Add(pngname);
+                    }
             }
             catch { } // download and decode can fail for various benign reasons; expect and ignore this, we'll retry later
 
@@ -123,16 +132,31 @@ class RainCloudBlockServer : SimpleBlockServerBase<RainCloudBlockDto>
         int y = (int)Math.Round(bmp.Height * locY);
         var counts = new int[colormap.Values.Max() + 1];
         for (int cy = y - 1; cy <= y + 1; cy++)
-        for (int cx = x - 1; cx <= x + 1; cx++)
-        {
-            var clr = bmp.GetPixel(cx, cy);
-            var best = colormap
-                .Select(m => (m, diff: Math.Abs(m.Key.Alpha - clr.Alpha) + Math.Abs(m.Key.Red - clr.Red) + Math.Abs(m.Key.Green - clr.Green) + Math.Abs(m.Key.Blue - clr.Blue)))
-                .MinElement(el => el.diff);
-            if (best.diff > 8)
-                throw new Exception("best.diff > 8");
-            counts[best.m.Value]++;
-        }
+            for (int cx = x - 1; cx <= x + 1; cx++)
+            {
+                var clr = bmp.GetPixel(cx, cy);
+                var best = colormap
+                    .Select(m => (m, diff: Math.Abs(m.Key.Alpha - clr.Alpha) + Math.Abs(m.Key.Red - clr.Red) + Math.Abs(m.Key.Green - clr.Green) + Math.Abs(m.Key.Blue - clr.Blue)))
+                    .MinElement(el => el.diff);
+                if (best.diff > 8)
+                    throw new Exception("best.diff > 8");
+                counts[best.m.Value]++;
+            }
         return counts;
+    }
+
+    private void pngCompressThread()
+    {
+        foreach (var pngname in _pngsToCompress.GetConsumingEnumerable())
+        {
+            if (_config.OxiPngPath == null)
+                continue;
+            var psi = new ProcessStartInfo(_config.OxiPngPath, ["-o", "max", "--strip", "safe", "--alpha", "--preserve", "--threads", "1", pngname]);
+            var oxi = new Process { StartInfo = psi };
+            oxi.Start();
+            oxi.PriorityClass = ProcessPriorityClass.Idle;
+            oxi.WaitForExit();
+            Thread.Sleep(1000);
+        }
     }
 }
