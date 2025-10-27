@@ -72,6 +72,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
         using var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromMinutes(5));
 
+        _log.LogDebug("AuthorizeAsync starting");
         var credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
             GoogleClientSecrets.FromStream(stream).Secrets,
             Scopes,
@@ -79,6 +80,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             cts.Token,
             new FileDataStore(Path.GetFullPath(_config.AuthStoreDirectory), true)
         );
+        _log.LogDebug("AuthorizeAsync completed.");
 
         return credential;
     }
@@ -100,6 +102,7 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             });
 
             // the Tick loop will not be started unless authorization is completed
+            _log.LogDebug("GoogleAuth completed.");
             base.Start();
         });
     }
