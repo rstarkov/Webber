@@ -51,8 +51,8 @@ type Annual = Holiday & { annual: NonNullable<Holiday["annual"]>; }
 export function BirthdaysOverlay(props: { state: BirthdaysOverlayState }): React.ReactNode {
     useTime(); // refresh every minute
 
-    let hols = holidays.filter(h => !!h.annual) as Annual[];
-    hols = hols.sort((a, b) => (a.annual.month * 100 + a.annual.day) - (b.annual.month * 100 + b.annual.day));
+    let bdays = holidays.filter(h => !!h.annual && !h.isHoliday) as Annual[];
+    bdays = bdays.sort((a, b) => (a.annual.month * 100 + a.annual.day) - (b.annual.month * 100 + b.annual.day));
     const now = DateTime.utc();
 
     function age(year: number, month: number, day: number): number {
@@ -67,7 +67,7 @@ export function BirthdaysOverlay(props: { state: BirthdaysOverlayState }): React
             <ContentBox>
                 <ScrollableContent>
                     <BirthdaysGrid>
-                        {hols.map((h, idx) => (
+                        {bdays.map((h, idx) => (
                             <Fragment key={`${h.description}-${idx}`}>
                                 <div>{`${h.annual.day}`.padStart(2, "0")}.{`${h.annual.month}`.padStart(2, "0")}{h.year && `.${h.year}`}</div>
                                 <div>{h.year && age(h.year, h.annual.month, h.annual.day).toFixed(1)}</div>
