@@ -1,7 +1,15 @@
 import { DateTime } from "luxon";
 
+export interface HolidayInstance {
+    date: DateTime;
+    description: string;
+    holiday: Holiday;
+}
+
 export interface Holiday {
-    next: DateTime;
+    next: (from: DateTime) => HolidayInstance | null;
+    annual?: { day: number; month: number };
+    year?: number;
     description: string;
     color: string;
     priorityDays: number; // not used at the moment
@@ -9,51 +17,61 @@ export interface Holiday {
     pastDays: number;
 }
 
-type HolidayFunc = (from: DateTime) => Holiday | null;
+type NextFunc = Holiday["next"];
 
-function annual(day: number, month: number, description: string, priorityDays: number, interestDays: number, color?: string) {
-    return function (from: DateTime): Holiday {
-        let d = DateTime.fromObject({ year: from.year, month, day });
-        if (d.toMillis() < from.toMillis())
-            d = DateTime.fromObject({ year: from.year + 1, month, day });
-        return {
-            next: d,
-            description,
-            color: color ?? "",
-            interestDays,
-            priorityDays,
-            pastDays: 0,
-        };
+function annual(day: number, month: number, description: string, priorityDays: number, interestDays: number, color?: string): Holiday {
+    const holiday = {
+        next: (() => null) as NextFunc,
+        annual: { day, month },
+        description,
+        color: color ?? "",
+        priorityDays,
+        interestDays,
+        pastDays: 0,
     };
+    holiday.next = (from) => {
+        let date = DateTime.fromObject({ year: from.year, month, day });
+        if (date.toMillis() < from.toMillis())
+            date = DateTime.fromObject({ year: from.year + 1, month, day });
+        return { date, description, holiday };
+    };
+    return holiday;
 }
 
-function anniversary(day: number, month: number, year: number, description: string, priorityDays: number, interestDays: number, color?: string) {
-    return function (from: DateTime): Holiday {
-        const h = annual(day, month, description, priorityDays, interestDays, color)(from);
-        h.description = `${h.description} (${h.next.year - year} yr)`;
-        h.pastDays = 1;
+function anniversary(day: number, month: number, year: number, description: string, priorityDays: number, interestDays: number, color?: string): Holiday {
+    const holiday = annual(day, month, description, priorityDays, interestDays, color);
+    holiday.pastDays = 1;
+    holiday.year = year;
+    const next = holiday.next;
+    holiday.next = (from) => {
+        const h = next(from);
+        if (!h) return null;
+        h.description = `${h.description} (${h.date.year - year} yr)`;
         return h;
     };
+    return holiday;
 }
 
-function list(description: string, priorityDays: number, interestDays: number, dates: string[], color?: string): HolidayFunc {
+function list(description: string, priorityDays: number, interestDays: number, dates: string[], color?: string): Holiday {
+    const holiday = {
+        next: (() => null) as NextFunc,
+        description,
+        color: color ?? "",
+        interestDays,
+        priorityDays,
+        pastDays: 0,
+    };
     const pdates = dates.map(d => DateTime.fromFormat(d, "dd/MM/yyyy"));
-    return function (from: DateTime): Holiday | null {
+    holiday.next = (from) => {
         const nexts = pdates.filter(pd => pd.diff(from, "days").days >= 0);
         if (nexts.length === 0)
             return null;
-        return {
-            next: nexts[0],
-            description,
-            color: color ?? "",
-            interestDays,
-            priorityDays,
-            pastDays: 0,
-        };
+        return { date: nexts[0], description, holiday };
     }
+    return holiday;
 }
 
-export const holidays: HolidayFunc[] = [
+export const holidays: Holiday[] = [
     annual(8, 3, "8 марта", 30, 90),
     annual(25, 12, "Christmas", 30, 90),
     annual(31, 12, "Новый Год", 30, 90),
