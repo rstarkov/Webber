@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { HolidayInstance, holidays } from "../holidays";
 import { useTime } from "../util/useTime";
 import { startOfLocalDay } from "../util/util";
+import { BirthdaysOverlay, useBirthdaysOverlayState } from "./BirthdaysOverlay";
 
 interface Holiday2 extends HolidayInstance {
     daysUntil: number; // 0 = today, -1 = yesterday
@@ -47,13 +48,17 @@ function HolidayRow(p: { holiday: Holiday2 }): React.ReactNode {
 
 export function HolidaysPanel({ ...rest }: React.HTMLAttributes<HTMLDivElement>): React.ReactNode {
     useTime(); // refresh every minute - a little much but not worth fixing
+    const overlayState = useBirthdaysOverlayState();
 
     const startOfToday = startOfLocalDay(DateTime.utc(), true);
     const from = DateTime.utc().plus({ days: -30 });
     const hols = holidays.map(h => h.next(from)).filter(h => !!h).sort((a, b) => a.date.toMillis() - b.date.toMillis())
         .map(h => ({ ...h, daysUntil: Math.ceil(h.date.diff(startOfToday, "days").days) }));
 
-    return <HolidaysDiv {...rest}>
-        {hols.filter(h => h.daysUntil >= -h.holiday.pastDays && h.daysUntil <= h.holiday.interestDays).map(h => <HolidayRow key={h.description} holiday={h} />)}
-    </HolidaysDiv>;
+    return <>
+        <HolidaysDiv {...rest} onClick={overlayState.show}>
+            {hols.filter(h => h.daysUntil >= -h.holiday.pastDays && h.daysUntil <= h.holiday.interestDays).map(h => <HolidayRow key={h.description} holiday={h} />)}
+        </HolidaysDiv>
+        <BirthdaysOverlay state={overlayState} />
+    </>;
 }
