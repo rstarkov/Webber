@@ -103,15 +103,23 @@ class WeatherForecastBlockServer : SimpleBlockServerBase<WeatherForecastBlockDto
 
     private WeatherForecastDayDto GetDayForecast(JObject json)
     {
+        var localDate = (string)json["localDate"] ?? string.Empty;
+        var minTempC = (int?)json["minTempC"] ?? 0;
+        var maxTempC = (int?)json["maxTempC"] ?? 0;
+        var precipitationProbability = (int?)json["precipitationProbabilityInPercent"] ?? 0;
+        var windSpeedMph = (int?)json["windSpeedMph"] ?? 0;
+        var gustSpeedMph = (int?)json["gustSpeedMph"] ?? 0;
+        var weatherType = (int?)json["weatherType"] ?? 0;
+
         var result = new WeatherForecastDayDto
         {
-            Date = json["localDate"].Value<string>(),
-            TempMinC = json["minTempC"].Value<int>(),
-            TempMaxC = json["maxTempC"].Value<int>(),
-            RainProbability = json["precipitationProbabilityInPercent"].Value<int>(),
-            WindMph = json["windSpeedMph"].Value<int>(),
-            GustMph = json["gustSpeedMph"].Value<int>(),
-            WeatherKind = (WeatherForecastKindDte)json["weatherType"].Value<int>(),
+            Date = localDate,
+            TempMinC = minTempC,
+            TempMaxC = maxTempC,
+            RainProbability = precipitationProbability,
+            WindMph = windSpeedMph,
+            GustMph = gustSpeedMph,
+            WeatherKind = (WeatherForecastKindDte)weatherType,
         };
         if (_nighttimeMap.TryGetValue((int)result.WeatherKind, out var dayKind))
         {
