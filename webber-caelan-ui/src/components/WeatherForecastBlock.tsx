@@ -15,7 +15,7 @@ interface WeatherForecastBlockDto extends BaseDto {
 
 const RainBar = styled.div`
     position: absolute;
-    bottom: 30px;
+    bottom: 24px;
     width: 22px;
     background-color: rgb(30, 53, 89);
     border-top: 2px solid #8AB4F8;
@@ -26,14 +26,15 @@ const TimeText = styled.div`
     text-align: center;
     width: 72px;
     bottom: 0;
-    font-size: 16px;
+    font-size: 12px;
+    line-height: 12px;
 `;
 
 const PercipText = styled.div`
     position: absolute;
     text-align: center;
     width: 72px;
-    top: 0;
+    top: 7px;
     font-size: 16px;
     margin-left: 2px;
 `;
@@ -47,6 +48,14 @@ const NowTime = styled.div`
     background-color: red;
 `;
 
+const TopBar = styled.div`
+    position: absolute;
+    top: -10px;
+    left: 0;
+    width: 574px;
+    border-top: 2px dotted #ffffff27;
+`;
+
 const WeatherForecastBlock: React.FunctionComponent<{ data: WeatherForecastBlockDto }> = ({ data }) => {
     var allhours = data.hours;
 
@@ -57,6 +66,10 @@ const WeatherForecastBlock: React.FunctionComponent<{ data: WeatherForecastBlock
         allhours = _.drop(allhours, firstInRange);
 
     var t4hours = _.take(allhours, 24);
+
+    if (!allhours || !t4hours || t4hours.length < 8) {
+        return (<div>Insufficient data</div>);
+    }
 
     const getPercip = (i: number) => {
         let prob = Math.max(t4hours[i].rainProbability, t4hours[i - 1].rainProbability, t4hours[i + 1].rainProbability);
@@ -72,7 +85,8 @@ const WeatherForecastBlock: React.FunctionComponent<{ data: WeatherForecastBlock
 
     return (
         <React.Fragment>
-            {_.map(t4hours, (e, i) => (<RainBar key={i} style={{ left: i * 24, height: 60 * (e.rainProbability / 100) }} />))}
+            <TopBar />
+            {_.map(t4hours, (e, i) => (<RainBar key={i} style={{ left: i * 24, height: 54 * (e.rainProbability / 100) }} />))}
             <NowTime style={{ left: nowPosition - 2 }} />
             <TimeText style={{ left: 72 * 0 }}>{moment(t4hours[1].dateTime).format("HH:mm")}</TimeText>
             <TimeText style={{ left: 72 * 1 }}>{moment(t4hours[4].dateTime).format("HH:mm")}</TimeText>
