@@ -1,13 +1,26 @@
 ﻿using System.Diagnostics;
 using System.Management;
+using Hardware.Info;
 using WorkstationReporter.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure port from command line or use default
+var port = args.Length > 0 && int.TryParse(args[0], out var p) ? p : 54344;
+builder.WebHost.UseUrls($"http://*:{port}");
+
 var app = builder.Build();
+Console.WriteLine($"WorkstationReporter listening on port {port}");
 
 var computeCategory = new PerformanceCounterCategory("GPU Engine");
 var computeCounterNames = computeCategory.GetInstanceNames();
 var computeCounters = new List<PerformanceCounter>();
+
+var hardwareInfo = new HardwareInfo();
+hardwareInfo.RefreshVideoControllerList();
+hardwareInfo.RefreshMemoryStatus();
+var totalDedicatedMemory = hardwareInfo.VideoControllerList.FirstOrDefault()?.AdapterRAM ?? 0;
+var totalSystemMemory = hardwareInfo.MemoryStatus.TotalPhysical;
 
 foreach (string counterName in computeCounterNames)
 {
@@ -26,7 +39,7 @@ foreach (string counterName in computeCounterNames)
 var memoryCategory = new PerformanceCounterCategory("GPU Adapter Memory");
 var memoryCounterNames = memoryCategory.GetInstanceNames();
 var memoryCountersDedicated = new List<PerformanceCounter>();
-var memoryCountersShared = new List<PerformanceCounter>();
+//var memoryCountersShared = new List<PerformanceCounter>();
 
 foreach (string counterName in memoryCounterNames)
 {
@@ -36,10 +49,10 @@ foreach (string counterName in memoryCounterNames)
         {
             memoryCountersDedicated.Add(counter);
         }
-        else if (counter.CounterName == "Shared Usage")
-        {
-            memoryCountersShared.Add(counter);
-        }
+        //else if (counter.CounterName == "Shared Usage")
+        //{
+        //    memoryCountersShared.Add(counter);
+        //}
     }
 }
 
@@ -93,23 +106,33 @@ app.MapGet("/load/gpu", () =>
         {
             gpuLoad += x.NextValue();
         });
+        gpuLoad = (float)Math.Round(gpuLoad);
 
-        var sharedMemory = 0f;
-        memoryCountersShared.ForEach(x =>
-        {
-            sharedMemory += x.NextValue();
-        });
+        //var sharedMemory = 0f;
+        //memoryCountersShared.ForEach(x =>
+        //{
+        //    sharedMemory += x.NextValue();
+        //});
 
-        var dedicatedMemory = 0f;
+        var dedicatedMemoryUsed = 0m;
         memoryCountersDedicated.ForEach(x =>
         {
-            dedicatedMemory += x.NextValue();
+            dedicatedMemoryUsed += (decimal)x.NextValue();
         });
+
+        Console.WriteLine(dedicatedMemoryUsed);
+
+        // Calculate memory usage percentage
+        var memoryPercentage = 0.0;
+        if (totalDedicatedMemory > 0)
+        {
+            memoryPercentage = Math.Round((double)((dedicatedMemoryUsed / (decimal)totalDedicatedMemory) * 100));
+        }
 
         gpuInfo.Layout.Add(new GpuLayout
         {
             Load = gpuLoad,
-            Memory = dedicatedMemory
+            Memory = memoryPercentage
         });
     }
     catch (Exception ex)
@@ -119,6 +142,38 @@ app.MapGet("/load/gpu", () =>
     }
 
     return gpuInfo;
+});
+
+app.MapGet("/load/ram", () =>
+{
+    try
+    {
+        hardwareInfo.RefreshMemoryStatus();
+        var usedMemory = hardwareInfo.MemoryStatus.TotalPhysical - hardwareInfo.MemoryStatus.AvailablePhysical;
+
+        return new RamLoadInfo
+        {
+            Load = usedMemory
+        };
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error querying RAM load: {ex.Message}");
+        return new RamLoadInfo { Load = 0 };
+    }
+});
+
+app.MapGet("/info", () =>
+{
+    var systemInfo = new SystemInfo
+    {
+        Ram = new RamInfo
+        {
+            Size = totalSystemMemory
+        }
+    };
+
+    return systemInfo;
 });
 
 app.Run();

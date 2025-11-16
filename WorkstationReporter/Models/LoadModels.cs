@@ -17,3 +17,18 @@ public record GpuInfo
 {
     public List<GpuLayout> Layout { get; set; } = new();
 }
+
+public record RamInfo
+{
+    public ulong Size { get; set; }
+}
+
+public record SystemInfo
+{
+    public RamInfo Ram { get; set; } = new();
+}
+
+public record RamLoadInfo
+{
+    public ulong Load { get; set; }
+}
