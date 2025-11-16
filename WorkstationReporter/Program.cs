@@ -120,8 +120,6 @@ app.MapGet("/load/gpu", () =>
             dedicatedMemoryUsed += (decimal)x.NextValue();
         });
 
-        Console.WriteLine(dedicatedMemoryUsed);
-
         // Calculate memory usage percentage
         var memoryPercentage = 0.0;
         if (totalDedicatedMemory > 0)
