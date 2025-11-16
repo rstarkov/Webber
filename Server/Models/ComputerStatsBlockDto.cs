@@ -18,6 +18,9 @@ public record ComputerStats
 
     // Power consumption from UPS (optional, in watts)
     public double? PowerConsumptionWatts { get; set; }
+
+    // RAM usage percentage
+    public double RamUtilization { get; set; }
 }
 
 public record CpuCoreInfo

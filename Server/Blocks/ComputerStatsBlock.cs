@@ -7,6 +7,22 @@ using Webber.Client.Models;
 
 namespace Webber.Server.Blocks;
 
+// Models for WorkstationReporter API responses
+class SystemInfo
+{
+    public RamInfo Ram { get; set; }
+}
+
+class RamInfo
+{
+    public ulong Size { get; set; }
+}
+
+class RamLoadInfo
+{
+    public ulong Load { get; set; }
+}
+
 class ComputerStatsBlockConfig
 {
     public List<ComputerConfig> Computers { get; set; } = new();
@@ -16,8 +32,10 @@ class ComputerStatsBlockConfig
 class ComputerConfig
 {
     public string Name { get; set; }
-    public string CpuUrl { get; set; }
-    public string GpuUrl { get; set; }
+
+    // Base URL for monitoring endpoints (e.g., "http://192.168.1.6:3001")
+    // Will append /load/cpu, /load/gpu, /load/ram, /info as needed
+    public string MonitoringUrl { get; set; }
 
     // Optional SNMP settings for power consumption from UPS
     public string SnmpHost { get; set; }
@@ -31,6 +49,7 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
     private ComputerStatsBlockConfig _config;
     private HttpClient _httpClient = new();
     private Dictionary<string, SnmpConnection> _snmpConnections = new();
+    private Dictionary<string, ulong> _totalRamByComputer = new();
 
     public ComputerStatsBlockServer(IServiceProvider sp, ComputerStatsBlockConfig config)
         : base(sp, config.IntervalMs)
@@ -49,6 +68,26 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
                 catch (Exception ex)
                 {
                     Logger.LogWarning($"Failed to initialize SNMP for '{computer.Name}': {ex.Message}");
+                }
+            }
+
+            // Fetch and cache total RAM from /info endpoint
+            if (!string.IsNullOrWhiteSpace(computer.MonitoringUrl))
+            {
+                try
+                {
+                    var infoUrl = $"{computer.MonitoringUrl.TrimEnd('/')}/info";
+                    var infoResponse = _httpClient.GetStringAsync(infoUrl).GetAwaiter().GetResult();
+                    var info = JsonConvert.DeserializeObject<SystemInfo>(infoResponse);
+                    if (info?.Ram?.Size > 0)
+                    {
+                        _totalRamByComputer[computer.Name] = info.Ram.Size;
+                        Logger.LogInformation($"Cached total RAM for '{computer.Name}': {info.Ram.Size / (1024 * 1024 * 1024)} GB");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogWarning($"Failed to fetch total RAM for '{computer.Name}': {ex.Message}");
                 }
             }
         }
@@ -102,18 +141,20 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
                 };
 
                 // Fetch CPU data
-                if (!string.IsNullOrWhiteSpace(computerConfig.CpuUrl))
+                if (!string.IsNullOrWhiteSpace(computerConfig.MonitoringUrl))
                 {
-                    var cpuResponse = _httpClient.GetStringAsync(computerConfig.CpuUrl)
+                    var cpuUrl = $"{computerConfig.MonitoringUrl.TrimEnd('/')}/load/cpu";
+                    var cpuResponse = _httpClient.GetStringAsync(cpuUrl)
                         .GetAwaiter().GetResult();
                     var cpuData = JsonConvert.DeserializeObject<List<CpuCoreInfo>>(cpuResponse);
                     computerStats.CpuCores = cpuData ?? new List<CpuCoreInfo>();
                 }
 
                 // Fetch GPU data
-                if (!string.IsNullOrWhiteSpace(computerConfig.GpuUrl))
+                if (!string.IsNullOrWhiteSpace(computerConfig.MonitoringUrl))
                 {
-                    var gpuResponse = _httpClient.GetStringAsync(computerConfig.GpuUrl)
+                    var gpuUrl = $"{computerConfig.MonitoringUrl.TrimEnd('/')}/load/gpu";
+                    var gpuResponse = _httpClient.GetStringAsync(gpuUrl)
                         .GetAwaiter().GetResult();
                     var gpuData = JsonConvert.DeserializeObject<GpuInfo>(gpuResponse);
                     computerStats.Gpu = gpuData ?? new GpuInfo();
@@ -138,6 +179,28 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
                 if (_snmpConnections.TryGetValue(computerConfig.Name, out var snmpConn))
                 {
                     computerStats.PowerConsumptionWatts = GetPowerConsumptionSnmp(snmpConn);
+                }
+
+                // Fetch RAM usage and calculate percentage (optional)
+                if (!string.IsNullOrWhiteSpace(computerConfig.MonitoringUrl) &&
+                    _totalRamByComputer.TryGetValue(computerConfig.Name, out var totalRam))
+                {
+                    try
+                    {
+                        var ramLoadUrl = $"{computerConfig.MonitoringUrl.TrimEnd('/')}/load/ram";
+                        var ramLoadResponse = _httpClient.GetStringAsync(ramLoadUrl)
+                            .GetAwaiter().GetResult();
+                        var ramLoad = JsonConvert.DeserializeObject<RamLoadInfo>(ramLoadResponse);
+
+                        if (ramLoad?.Load > 0 && totalRam > 0)
+                        {
+                            computerStats.RamUtilization = ((double)ramLoad.Load / totalRam) * 100;
+                        }
+                    }
+                    catch (Exception ramEx)
+                    {
+                        Logger.LogWarning($"Failed to fetch RAM load for '{computerConfig.Name}': {ramEx.Message}");
+                    }
                 }
 
                 computers.Add(computerStats);
