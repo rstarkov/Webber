@@ -157,7 +157,7 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
             <div style={{ position: "absolute", left: 0, top: 0, bottom: 0 }}>
                 <FontAwesomeIcon icon={faCalendarWeek} style={{ fontSize: 40, marginBottom: 20, color: "#548BAB" }} />
                 {_.map(data.allDayEvents, (e, i) => (
-                    <div key={i} style={{ position: "absolute", width: 400, top: i * 34 + 49, height: 24, lineHeight: "24px" }}>
+                    <div key={i} style={{ position: "absolute", width: 400, top: i * 34 + 59, height: 24, lineHeight: "24px" }}>
                         <Textfit mode="single" max={24}>{getTimeString(e, alt)}</Textfit>
                     </div>
                 ))}
@@ -165,7 +165,7 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
             <div style={{ position: "absolute", left: 420, top: 0, bottom: 0 }}>
                 <FontAwesomeIcon icon={faCalendarDays} style={{ fontSize: 40, marginBottom: 20, marginLeft: 46, color: "#548BAB" }} />
                 {_.map(data.regularEvents, (e, i) => (
-                    <div key={i} style={{ position: "absolute", left: 46, width: 400, top: i * 34 + 49, height: 24, lineHeight: "24px" }}>
+                    <div key={i} style={{ position: "absolute", left: 46, width: 400, top: i * 34 + 59, height: 24, lineHeight: "24px" }}>
                         {e.isNextUp && <FontAwesomeIcon icon={faCaretRight} style={{ color: alt ? "yellow" : "red", fontSize: 60, position: "absolute", left: -60, top: -15, width: 60, textAlign: "center" }} />}
                         <Textfit mode="single" max={24}>{getTimeString(e, alt)}</Textfit>
                     </div>

@@ -58,7 +58,7 @@ const ClockBlock: React.FunctionComponent<{ data: ClockBlockDto }> = ({ data }) 
 
     return (
         <React.Fragment>
-            <FontAwesomeIcon icon={faClock} style={{ fontSize: 40, marginBottom: 10, color: "#548BAB" }} />
+            <FontAwesomeIcon icon={faClock} style={{ fontSize: 40, marginBottom: 20, color: "#548BAB" }} />
             <DateLabel>{moment(time).format("dddd").substring(0, 3).toUpperCase() + ", " + moment(time).format("DD MMM").toUpperCase()}</DateLabel>
             <Time>{getTimeString(data.localOffsetHours)}</Time>
             {_.map(firstTwoTz, t => (

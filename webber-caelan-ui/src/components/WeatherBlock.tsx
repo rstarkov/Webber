@@ -31,7 +31,7 @@ const CurrentWeatherLabel = styled.div`
 `;
 
 const SunriseContainer = styled.div`
-    margin-top: -13px;
+    margin-top: -3px;
     margin-bottom: 5px;
     height: 24px;
     line-height: 24px;
