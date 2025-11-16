@@ -13,9 +13,16 @@ interface WeatherForecastBlockDto extends BaseDto {
     hours: WeatherForecastHourDto[];
 }
 
+const ForecastContianer = styled.div`
+    position: relative;
+    width: 576px;
+    height: 80px;
+    overflow: hidden;
+`;
+
 const RainBar = styled.div`
     position: absolute;
-    bottom: 24px;
+    bottom: 0px;
     width: 22px;
     background-color: rgb(30, 53, 89);
     border-top: 2px solid #8AB4F8;
@@ -25,24 +32,23 @@ const TimeText = styled.div`
     position: absolute;
     text-align: center;
     width: 72px;
-    bottom: 0;
-    font-size: 12px;
-    line-height: 12px;
+    bottom: 12px;
+    font-size: 16px;
 `;
 
 const PercipText = styled.div`
     position: absolute;
     text-align: center;
     width: 72px;
-    top: 7px;
+    top: 12px;
     font-size: 16px;
     margin-left: 2px;
 `;
 
 const NowTime = styled.div`
     position: absolute;
-    top: -6px;
-    bottom: 6px;
+    top: 0;
+    bottom: 0;
     width: 2px;
     border-radius: 3px;
     background-color: red;
@@ -50,7 +56,7 @@ const NowTime = styled.div`
 
 const TopBar = styled.div`
     position: absolute;
-    top: -10px;
+    top: 0;
     left: 0;
     width: 574px;
     border-top: 2px dotted #ffffff27;
@@ -84,9 +90,9 @@ const WeatherForecastBlock: React.FunctionComponent<{ data: WeatherForecastBlock
     const nowPosition = (now / end) * maxWidth;
 
     return (
-        <React.Fragment>
+        <ForecastContianer>
             <TopBar />
-            {_.map(t4hours, (e, i) => (<RainBar key={i} style={{ left: i * 24, height: 54 * (e.rainProbability / 100) }} />))}
+            {_.map(t4hours, (e, i) => (<RainBar key={i} style={{ left: i * 24, height: 78 * (e.rainProbability / 100) }} />))}
             <NowTime style={{ left: nowPosition - 2 }} />
             <TimeText style={{ left: 72 * 0 }}>{moment(t4hours[1].dateTime).format("HH:mm")}</TimeText>
             <TimeText style={{ left: 72 * 1 }}>{moment(t4hours[4].dateTime).format("HH:mm")}</TimeText>
@@ -104,7 +110,7 @@ const WeatherForecastBlock: React.FunctionComponent<{ data: WeatherForecastBlock
             <PercipText style={{ left: 72 * 5 }}>{getPercip(16)}</PercipText>
             <PercipText style={{ left: 72 * 6 }}>{getPercip(19)}</PercipText>
             <PercipText style={{ left: 72 * 7 }}>{getPercip(22)}</PercipText>
-        </React.Fragment>
+        </ForecastContianer>
     );
 }
 
