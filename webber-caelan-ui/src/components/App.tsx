@@ -4,6 +4,7 @@ import ClockBlock from './ClockBlock';
 import WeatherBlock from './WeatherBlock';
 import TimeUntilBlock from './TimeUntilBlock';
 import WeatherForecastBlock from './WeatherForecastBlock';
+import ComputerStatsBlock from './ComputerStatsBlock';
 
 function reload() {
     window.location.reload();
@@ -18,8 +19,11 @@ function App() {
             <div style={{ position: "absolute", left: 600, top: 20 }}>
                 <TimeUntilBlock />
             </div>
-            <div style={{ position: "absolute", left: 0, top: 240, bottom: 10 }}>
+            <div style={{ position: "absolute", left: 0, top: 320-80 }}>
                 <WeatherForecastBlock />
+            </div>
+            <div style={{ position: "absolute", left: 600, top: 320-80 }}>
+                <ComputerStatsBlock />
             </div>
             <div style={{ position: "absolute", left: 300, top: 20 }}>
                 <WeatherBlock />
