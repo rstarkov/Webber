@@ -37,7 +37,8 @@ interface CalendarEvent {
 }
 
 interface TimeUntilBlockDto extends BaseDto {
-    events: CalendarEvent[];
+    regularEvents: CalendarEvent[];
+    allDayEvents: CalendarEvent[];
 }
 
 function getTimeString(e: CalendarEvent, alt: boolean) {
@@ -117,39 +118,12 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
     const [until, setUntil] = useState<number>();
     const [alt, setAlt] = useState<boolean>();
 
-    // Get current time
-    const nowMoment = moment();
-
-    // Special events within next 30 days
-    const specialEventsWithin30Days = _.filter(data.events, e =>
-        e.specialEvent &&
-        moment(e.startTimeUtc).isBefore(moment(nowMoment).add(30, 'days'))
-    );
-
-    // All-day events that are not special events, sorted by date
-    const allDayEventsNotSpecial = _.filter(data.events, e => e.isAllDay && !e.specialEvent);
-
-    // Limit total to 7, after including all special events within 30 days
-    const remainingSlots = 7 - specialEventsWithin30Days.length;
-    const additionalAllDay = remainingSlots > 0 ? _.take(allDayEventsNotSpecial, remainingSlots) : [];
-
-    // Combine and sort by date
-    const specialEvents = _.sortBy(
-        [...specialEventsWithin30Days, ...additionalAllDay],
-        e => moment(e.startTimeUtc).valueOf()
-    );
-
-    // Normal events (not all-day, not special)
-    const normalEvents = _.take(_.filter(data.events, e => !e.specialEvent && !e.isAllDay), 7);
-
     useEffect(() => {
         const id = setInterval(() => {
             const nowTime = moment();
-            const nextIdx = normalEvents.findIndex(e => e.isNextUp);
+            const nextIdx = data.regularEvents.findIndex(e => e.isNextUp);
             if (nextIdx >= 0) {
-                const evt = normalEvents[nextIdx];
-                if (evt.isAllDay)
-                    return;
+                const evt = data.regularEvents[nextIdx];
 
                 const secondsUntil = Math.round(moment(evt.startTimeUtc).diff(nowTime) / 1000);
 
@@ -182,16 +156,16 @@ const TimeUntilBlock: React.FunctionComponent<{ data: TimeUntilBlockDto }> = ({ 
         <React.Fragment>
             <div style={{ position: "absolute", left: 0, top: 0, bottom: 0 }}>
                 <FontAwesomeIcon icon={faCalendarWeek} style={{ fontSize: 40, marginBottom: 20, color: "#548BAB" }} />
-                {_.map(specialEvents, (e, i) => (
-                    <div key={i} style={{ position: "absolute", width: 400, top: i * 34 + 59, height: 24, lineHeight: "24px" }}>
+                {_.map(data.allDayEvents, (e, i) => (
+                    <div key={i} style={{ position: "absolute", width: 400, top: i * 34 + 49, height: 24, lineHeight: "24px" }}>
                         <Textfit mode="single" max={24}>{getTimeString(e, alt)}</Textfit>
                     </div>
                 ))}
             </div>
             <div style={{ position: "absolute", left: 420, top: 0, bottom: 0 }}>
                 <FontAwesomeIcon icon={faCalendarDays} style={{ fontSize: 40, marginBottom: 20, marginLeft: 46, color: "#548BAB" }} />
-                {_.map(normalEvents, (e, i) => (
-                    <div key={i} style={{ position: "absolute", left: 46, width: 400, top: i * 34 + 59, height: 24, lineHeight: "24px" }}>
+                {_.map(data.regularEvents, (e, i) => (
+                    <div key={i} style={{ position: "absolute", left: 46, width: 400, top: i * 34 + 49, height: 24, lineHeight: "24px" }}>
                         {e.isNextUp && <FontAwesomeIcon icon={faCaretRight} style={{ color: alt ? "yellow" : "red", fontSize: 60, position: "absolute", left: -60, top: -15, width: 60, textAlign: "center" }} />}
                         <Textfit mode="single" max={24}>{getTimeString(e, alt)}</Textfit>
                     </div>
