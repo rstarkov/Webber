@@ -15,5 +15,6 @@ public record CalendarEvent
 
 public record TimeUntilBlockDto : BaseDto
 {
-    public CalendarEvent[] Events { get; set; }
+    public CalendarEvent[] RegularEvents { get; set; }
+    public CalendarEvent[] AllDayEvents { get; set; }
 }

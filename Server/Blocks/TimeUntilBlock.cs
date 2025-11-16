@@ -21,11 +21,11 @@ class TimeUntilSpecialEvent
 
 class TimeUntilBlockConfig
 {
-    /// <summary> The number of events to send to the client in each update. </summary>
-    public int MaxNumberOfEvents { get; set; } = 3;
+    /// <summary> The number of regular events to send to the client in each update. </summary>
+    public int NumberOfEvents { get; set; } = 3;
 
-    /// <summary> The max number of all-day events to send to the client in each update. </summary>
-    public int MaxNumberOfAllDayEventsPerDay { get; set; } = 3;
+    /// <summary> The number of all-day events to send to the client in each update. </summary>
+    public int NumberOfAllDayEvents { get; set; } = 3;
 
     /// <summary> Optionally add a sleep timer to the list of events. </summary>
     public double? SleepTime { get; set; }
@@ -107,20 +107,45 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
         });
     }
 
-    protected override TimeUntilBlockDto Tick()
+    private List<Event> FetchEvents(int desiredRegularCount, int desiredAllDayCount)
     {
-        List<Event> events = new List<Event>();
-        foreach (var c in _config.CalendarKeys.Distinct())
+        List<Event> allEvents = new List<Event>();
+        int windowSize = 30; // Search 30 days at a time
+        int currentOffset = 0; // Start from now
+        int maxDaysAhead = 365; // Maximum 1 year ahead
+
+        while (currentOffset < maxDaysAhead)
         {
-            EventsResource.ListRequest request = _svc.Events.List(c);
-            request.TimeMinDateTimeOffset = DateTimeOffset.Now;
-            request.ShowDeleted = false;
-            request.SingleEvents = true;
-            request.MaxResults = _config.MaxNumberOfEvents * 3;
-            request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
-            events.AddRange(request.Execute().Items);
+            foreach (var c in _config.CalendarKeys.Distinct())
+            {
+                EventsResource.ListRequest request = _svc.Events.List(c);
+                request.TimeMinDateTimeOffset = DateTimeOffset.Now.AddDays(currentOffset);
+                request.TimeMaxDateTimeOffset = DateTimeOffset.Now.AddDays(currentOffset + windowSize);
+                request.ShowDeleted = false;
+                request.SingleEvents = true;
+                request.MaxResults = (desiredRegularCount + desiredAllDayCount) * 3; // Fetch extra to allow for filtering
+                request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
+
+                var items = request.Execute().Items;
+                allEvents.AddRange(items);
+            }
+
+            // Check if we have enough of both types
+            int regularCount = allEvents.Count(e => e.Start?.DateTimeDateTimeOffset != null);
+            int allDayCount = allEvents.Count(e => e.Start?.DateTimeDateTimeOffset == null);
+
+            if (regularCount >= desiredRegularCount && allDayCount >= desiredAllDayCount)
+                break;
+
+            currentOffset += windowSize; // Shift the window forward
         }
 
+        return allEvents;
+    }
+
+    protected override TimeUntilBlockDto Tick()
+    {
+        // Helper functions
         bool checkSelfRsvpNotDeclined(Event i)
         {
             if (i == null || i.Attendees == null) return true;
@@ -139,22 +164,48 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             return n + s[i];
         }
 
-        List<CalendarEvent> synthetic = new List<CalendarEvent>();
+        // Fetch all events
+        List<Event> events = FetchEvents(_config.NumberOfEvents, _config.NumberOfAllDayEvents);
+
+        // Process all events with a single LINQ query
+        var allCandidates = events
+            .Where(i => i.EventType == "default") // filter out OOO
+            .Where(checkSelfRsvpNotDeclined) // filter out declined events
+            .Where(i => !string.IsNullOrWhiteSpace(i.Summary)) // no title?
+            .DistinctBy(i => i.RecurringEventId ?? i.Id)
+            .Select(i => new CalendarEvent()
+            {
+                Id = i.Id,
+                DisplayName = i.Summary,
+                StartTimeUtc = i.Start?.DateTimeDateTimeOffset?.UtcDateTime
+                    ?? DateTime.ParseExact(i.Start.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
+                EndTimeUtc = i.End?.DateTimeDateTimeOffset?.UtcDateTime
+                    ?? DateTime.ParseExact(i.End.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
+                IsRecurring = i.RecurringEventId != null,
+                IsAllDay = i.Start?.DateTimeDateTimeOffset == null,
+            })
+            .OrderBy(i => i.StartTimeUtc)
+            .Distinct()
+            .ToList();
+
+        // Add sleep synthetic event
         if (_config.SleepTime.HasValue)
         {
             var offset = TZConvert.GetTimeZoneInfo(AppConfig.LocalTimezoneName).GetUtcOffset(DateTimeOffset.UtcNow);
             var sleepTimeStart = DateTime.UtcNow
                 .Add(offset).Date.Subtract(offset)
-                .AddHours(_config.SleepTime.Value); // set to sleep time
+                .AddHours(_config.SleepTime.Value);
 
-            synthetic.Add(new CalendarEvent()
+            allCandidates.Add(new CalendarEvent()
             {
                 Id = "{sleep}",
                 DisplayName = "Sleep!",
                 StartTimeUtc = sleepTimeStart,
+                IsAllDay = false,
             });
         }
 
+        // Add special annual events
         for (int i = 0; i < _config.SpecialAnnualEvents.Length; i++)
         {
             TimeUntilSpecialEvent v = _config.SpecialAnnualEvents[i];
@@ -180,62 +231,38 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
                     eventName = v.Title.Substring(0, idx) + ordinalYears + " " + v.Title.Substring(idx);
                 }
 
-                synthetic.Add(new CalendarEvent { Id = "{special_" + i + "}", DisplayName = eventName, StartTimeUtc = nextDate, IsAllDay = true, SpecialEvent = true });
+                allCandidates.Add(new CalendarEvent { Id = "{special_" + i + "}", DisplayName = eventName, StartTimeUtc = nextDate, IsAllDay = true, SpecialEvent = true });
             }
         }
 
-        var candidates = events
-            .Where(i => _config.MaxNumberOfAllDayEventsPerDay > 0 || i.Start?.DateTimeDateTimeOffset != null) // filter out all-day events if disabled
-            .Where(i => i.EventType == "default") // filter out OOO
-            .Where(checkSelfRsvpNotDeclined) // filter out declined events
-            .Where(i => !string.IsNullOrWhiteSpace(i.Summary)) // no title?
-            .DistinctBy(i => i.RecurringEventId ?? i.Id)
-            .Select(i => new CalendarEvent()
-            {
-                Id = i.Id,
-                DisplayName = i.Summary,
-                StartTimeUtc = i.Start.DateTimeDateTimeOffset?.UtcDateTime ?? DateTime.ParseExact(i.Start.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
-                EndTimeUtc = i.End.DateTimeDateTimeOffset?.UtcDateTime ?? DateTime.ParseExact(i.End.Date, "yyyy-MM-dd", CultureInfo.CurrentCulture.DateTimeFormat),
-                IsRecurring = i.RecurringEventId != null,
-                IsAllDay = i.Start?.DateTimeDateTimeOffset == null,
-            })
-            .Concat(synthetic)
-            .OrderBy(i => i.StartTimeUtc)
-            .Distinct() // this uses the 'record' equality logic to filter out events that might be added to more than one calendar
-            .ToList();
+        // Re-sort after adding synthetic events
+        allCandidates = allCandidates.OrderBy(i => i.StartTimeUtc).ToList();
 
-        var alldaygroup = candidates.Where(d => d.IsAllDay).GroupBy(d => d.StartTimeUtc);
+        // Separate into regular and all-day events
+        var regularCandidates = allCandidates.Where(e => !e.IsAllDay).ToList();
+        var allDayCandidates = allCandidates.Where(e => e.IsAllDay).ToList();
 
+        // Consolidate bin collection events in all-day list
+        var alldaygroup = allDayCandidates.GroupBy(d => d.StartTimeUtc);
         foreach (var c in alldaygroup)
         {
-            // combine "bin collection" events into a single event
             var binsearch = "Bin Collection";
             var bindays = c.Where(v => v.DisplayName.EndsWith(binsearch)).ToArray();
             if (bindays.Length > 1)
             {
                 foreach (var bv in bindays)
-                    candidates.Remove(bv);
+                    allDayCandidates.Remove(bv);
 
                 var name = string.Join(" & ", bindays.Select(v => v.DisplayName.Substring(0, v.DisplayName.Length - binsearch.Length)));
                 var binevent = new CalendarEvent { DisplayName = name + " Collection", IsAllDay = true, StartTimeUtc = bindays[0].StartTimeUtc };
-                candidates = candidates.Concat(new[] { binevent }).OrderBy(i => i.StartTimeUtc).ToList();
-            }
-
-            // limit all-day events to the max per-day value
-            var grp_evts = c.ToArray();
-            if (grp_evts.Length > _config.MaxNumberOfAllDayEventsPerDay)
-            {
-                grp_evts[_config.MaxNumberOfAllDayEventsPerDay - 1].DisplayName += $" [+{grp_evts.Length - _config.MaxNumberOfAllDayEventsPerDay}]";
-                for (int i = _config.MaxNumberOfAllDayEventsPerDay; i < grp_evts.Length; i++)
-                {
-                    candidates.Remove(grp_evts[i]);
-                }
+                allDayCandidates.Add(binevent);
             }
         }
+        allDayCandidates = allDayCandidates.OrderBy(i => i.StartTimeUtc).ToList();
 
-        // calculate next up / started properties
+        // Calculate HasStarted and IsNextUp for regular events
         DateTime time = DateTime.UtcNow;
-        foreach (var c in candidates.Where(e => !e.IsAllDay && !e.SpecialEvent))
+        foreach (var c in regularCandidates.Where(e => !e.SpecialEvent))
         {
             if (c.StartTimeUtc.AddMinutes(5) < time)
             {
@@ -249,17 +276,26 @@ internal class TimeUntilBlockServer : SimpleBlockServerBase<TimeUntilBlockDto>
             break;
         }
 
-        // limit events to the max number, while preserving special events
-        for (int i = candidates.Count - 1; i >= 0 && candidates.Count > _config.MaxNumberOfEvents; i--)
-            if (!candidates[i].SpecialEvent)
-                candidates.RemoveAt(i);
+        // Trim regular events to exact count, preserving special events
+        int targetRegularCount = _config.NumberOfEvents;
+        for (int i = regularCandidates.Count - 1; i >= 0 && regularCandidates.Count > targetRegularCount; i--)
+            if (!regularCandidates[i].SpecialEvent)
+                regularCandidates.RemoveAt(i);
+
+        // Trim all-day events: keep ALL special events, fill remaining slots with regular all-day events
+        int targetAllDayCount = _config.NumberOfAllDayEvents;
+        var specialAllDayEvents = allDayCandidates.Where(e => e.SpecialEvent).ToList();
+        var regularAllDayEvents = allDayCandidates.Where(e => !e.SpecialEvent).ToList();
+
+        // Calculate remaining slots after including all special events
+        int remainingSlots = Math.Max(0, targetAllDayCount - specialAllDayEvents.Count);
+        var finalAllDayEvents = specialAllDayEvents.Concat(regularAllDayEvents.Take(remainingSlots)).ToList();
 
         return new TimeUntilBlockDto()
         {
             ValidUntilUtc = DateTime.UtcNow.AddMinutes(3),
-            Events = candidates
-                .Take(_config.MaxNumberOfEvents)
-                .ToArray(),
+            RegularEvents = regularCandidates.Take(targetRegularCount).ToArray(),
+            AllDayEvents = finalAllDayEvents.ToArray(),
         };
     }
 }
