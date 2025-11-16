@@ -3,7 +3,7 @@ import { useRef, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { withSubscription, BaseDto } from './util';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMicrochip, faBolt, faImage, faMemory } from '@fortawesome/free-solid-svg-icons';
+import { faMicrochip, faBolt, faImage, faMemory, faPlug } from '@fortawesome/free-solid-svg-icons';
 
 interface CpuCoreInfo {
     load: number;
@@ -29,6 +29,7 @@ interface ComputerStats {
     maxGpuUtilization: number;
     powerConsumptionWatts?: number;
     ramUtilization: number;
+    isOffline: boolean;
 }
 
 interface ComputerStatsBlockDto extends BaseDto {
@@ -121,6 +122,20 @@ const CoreCell = styled.div`
     background-color: rgba(138, 180, 248, 0.15);
     transition: background-color 0.4s ease;
     border-radius: 2px;
+`;
+
+const OfflineCard = styled.div`
+    width: ${BLOCK_WIDTH * 3 + BLOCK_GAP * 2}px;
+    height: ${BLOCK_HEIGHT}px;
+    background-color: #303f577c;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #ffffff9c;
+    font-size: 18px;
+    font-weight: bold;
 `;
 
 // Calculate color based on percentage: blue (0-85%), red (85-100%)
@@ -447,12 +462,22 @@ const ComputerStatsBlock: React.FunctionComponent<{ data: ComputerStatsBlockDto 
         return <Container />;
     }
 
-    // data.computers[0].cpuCores.push({ load: 100, temp: 0, core: 12 }); // For debug testing many cores
-    // data.computers[0].cpuCores.push({ load: 50, temp: 0, core: 13 }); // For debug testing many cores
-
     return (
         <Container>
             {data.computers.map((computer, idx) => {
+                // Render offline card if computer is offline
+                if (computer.isOffline) {
+                    return (
+                        <ComputerSection key={idx}>
+                            <NameLabel>{computer.name}</NameLabel>
+                            <OfflineCard>
+                                <FontAwesomeIcon icon={faPlug} color="#ff00007e" size="lg" />
+                                <span>Offline</span>
+                            </OfflineCard>
+                        </ComputerSection>
+                    );
+                }
+
                 const { cols, rows, doubleWidthSpan } = calculateGridLayout(computer.cpuCores.length);
 
                 // Sort cores by load (highest to lowest), with core number as tiebreaker for stability

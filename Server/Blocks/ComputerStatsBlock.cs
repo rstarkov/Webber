@@ -44,24 +44,41 @@ class ComputerConfig
     public string SnmpOid { get; set; } = "1.3.6.1.4.1.534.1.4.4.1.4.1"; // Default OID for Eaton UPS output watts
 }
 
+class ComputerInfo
+{
+    public int ConsecutiveFailures { get; set; }
+    public bool IsOffline { get; set; }
+    public int TicksSinceLastCheck { get; set; }
+    public ulong TotalRam { get; set; }
+}
+
 class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
 {
     private ComputerStatsBlockConfig _config;
     private HttpClient _httpClient = new();
     private Dictionary<string, SnmpConnection> _snmpConnections = new();
-    private Dictionary<string, ulong> _totalRamByComputer = new();
+    private Dictionary<string, ComputerInfo> _computerInfo = new();
+    private Dictionary<string, ComputerStats> _lastSuccessfulResults = new();
 
     public ComputerStatsBlockServer(IServiceProvider sp, ComputerStatsBlockConfig config)
         : base(sp, config.IntervalMs)
     {
         _config = config;
 
-        // Set aggressive timeout for all HTTP requests (same as interval)
-        _httpClient.Timeout = TimeSpan.FromMilliseconds(config.IntervalMs);
+        _httpClient.Timeout = TimeSpan.FromMilliseconds(750);
 
-        // Initialize SNMP connections for each computer
+        // Initialize SNMP connections and computer info for each computer
         foreach (var computer in config.Computers)
         {
+            // Initialize computer info
+            _computerInfo[computer.Name] = new ComputerInfo
+            {
+                ConsecutiveFailures = 0,
+                IsOffline = false,
+                TicksSinceLastCheck = 0,
+                TotalRam = 0
+            };
+
             if (!string.IsNullOrWhiteSpace(computer.SnmpHost))
             {
                 try
@@ -84,13 +101,16 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
                     var info = JsonConvert.DeserializeObject<SystemInfo>(infoResponse);
                     if (info?.Ram?.Size > 0)
                     {
-                        _totalRamByComputer[computer.Name] = info.Ram.Size;
+                        _computerInfo[computer.Name].TotalRam = info.Ram.Size;
                         Logger.LogInformation($"Cached total RAM for '{computer.Name}': {info.Ram.Size / (1024 * 1024 * 1024)} GB");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogWarning($"Failed to fetch total RAM for '{computer.Name}': {ex.Message}");
+                    Logger.LogWarning($"Failed to fetch initial /info for '{computer.Name}': {ex.Message}");
+                    // Mark as offline immediately if initial /info fails
+                    _computerInfo[computer.Name].IsOffline = true;
+                    _computerInfo[computer.Name].ConsecutiveFailures = 1;
                 }
             }
         }
@@ -130,103 +150,236 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
         };
     }
 
+    private async Task<ComputerStats> FetchComputerStatsAsync(ComputerConfig config)
+    {
+        var computerStats = new ComputerStats { Name = config.Name };
+
+        if (string.IsNullOrWhiteSpace(config.MonitoringUrl))
+        {
+            throw new Exception("No monitoring URL configured");
+        }
+
+        var baseUrl = config.MonitoringUrl.TrimEnd('/');
+
+        // Fetch CPU data - if this fails, the whole method throws and stops
+        var cpuUrl = $"{baseUrl}/load/cpu";
+        var cpuResponse = await _httpClient.GetStringAsync(cpuUrl);
+        var cpuData = JsonConvert.DeserializeObject<List<CpuCoreInfo>>(cpuResponse);
+        computerStats.CpuCores = cpuData ?? new List<CpuCoreInfo>();
+
+        // Fetch GPU data
+        var gpuUrl = $"{baseUrl}/load/gpu";
+        var gpuResponse = await _httpClient.GetStringAsync(gpuUrl);
+        var gpuData = JsonConvert.DeserializeObject<GpuInfo>(gpuResponse);
+        computerStats.Gpu = gpuData ?? new GpuInfo();
+
+        // Calculate enriched statistics
+        if (computerStats.CpuCores.Any())
+        {
+            computerStats.AvgCpuUtilization = computerStats.CpuCores.Average(c => c.Load);
+            computerStats.MaxCoreUtilization = computerStats.CpuCores.Max(c => c.Load);
+        }
+
+        if (computerStats.Gpu?.Layout != null && computerStats.Gpu.Layout.Any())
+        {
+            computerStats.MaxGpuUtilization = computerStats.Gpu.Layout
+                .SelectMany(g => new[] { g.Load, g.Memory })
+                .Max();
+        }
+
+        // Fetch RAM usage and calculate percentage
+        var info = _computerInfo[config.Name];
+        if (info.TotalRam > 0)
+        {
+            var ramLoadUrl = $"{baseUrl}/load/ram";
+            var ramLoadResponse = await _httpClient.GetStringAsync(ramLoadUrl);
+            var ramLoad = JsonConvert.DeserializeObject<RamLoadInfo>(ramLoadResponse);
+
+            if (ramLoad?.Load > 0 && info.TotalRam > 0)
+            {
+                computerStats.RamUtilization = ((double)ramLoad.Load / info.TotalRam) * 100;
+            }
+        }
+
+        return computerStats;
+    }
+
+    private async Task<double?> FetchPowerConsumptionAsync(string computerName)
+    {
+        if (!_snmpConnections.TryGetValue(computerName, out var snmpConn))
+        {
+            return null;
+        }
+
+        return await Task.Run(() => GetPowerConsumptionSnmp(snmpConn));
+    }
+
+    private async Task<bool> CheckComputerOnlineAsync(ComputerConfig config)
+    {
+        if (string.IsNullOrWhiteSpace(config.MonitoringUrl))
+        {
+            return false;
+        }
+
+        var infoUrl = $"{config.MonitoringUrl.TrimEnd('/')}/info";
+        var infoResponse = await _httpClient.GetStringAsync(infoUrl);
+        var systemInfo = JsonConvert.DeserializeObject<SystemInfo>(infoResponse);
+
+        if (systemInfo?.Ram?.Size > 0)
+        {
+            var info = _computerInfo[config.Name];
+            info.TotalRam = systemInfo.Ram.Size;
+            return true;
+        }
+
+        return false;
+    }
+
+    private ComputerStats CreateOfflineStats(string name)
+    {
+        return new ComputerStats
+        {
+            Name = name,
+            IsOffline = true,
+            CpuCores = new List<CpuCoreInfo>(),
+            Gpu = new GpuInfo()
+        };
+    }
+
+    private Task<ComputerStats> HandleOfflineComputerAsync(ComputerConfig config)
+    {
+        var info = _computerInfo[config.Name];
+        info.TicksSinceLastCheck++;
+
+        // Only check /info every 10 ticks when offline
+        if (info.TicksSinceLastCheck < 10)
+        {
+            return Task.FromResult(CreateOfflineStats(config.Name));
+        }
+
+        info.TicksSinceLastCheck = 0;
+
+        // Try to bring computer back online
+        return CheckComputerOnlineAsync(config).ContinueWith(task =>
+        {
+            if (task.IsCompletedSuccessfully && task.Result)
+            {
+                info.IsOffline = false;
+                info.ConsecutiveFailures = 0;
+                Logger.LogInformation($"Computer '{config.Name}' is back online. Updated total RAM: {info.TotalRam / (1024 * 1024 * 1024)} GB");
+                return FetchComputerStatsAsync(config);
+            }
+
+            Logger.LogDebug($"Computer '{config.Name}' still offline");
+            return Task.FromResult(CreateOfflineStats(config.Name));
+        }).Unwrap();
+    }
+
+    private void ProcessComputerResult(ComputerConfig config, Task<ComputerStats> task, Task<double?> powerTask, List<ComputerStats> computers)
+    {
+        var info = _computerInfo[config.Name];
+
+        if (task.IsCompletedSuccessfully)
+        {
+            var stats = task.Result;
+
+            // If this is offline stats (returned from HandleOfflineComputerAsync), just add it and return
+            if (stats.IsOffline)
+            {
+                computers.Add(stats);
+                return;
+            }
+
+            // This is real data from a successful fetch
+            info.ConsecutiveFailures = 0;
+            stats.IsOffline = false;
+
+            // Add power consumption if available
+            if (powerTask.IsCompletedSuccessfully)
+            {
+                stats.PowerConsumptionWatts = powerTask.Result;
+            }
+            else if (_snmpConnections.ContainsKey(config.Name))
+            {
+                Logger.LogWarning($"Failed to fetch power consumption for '{config.Name}': {powerTask.Exception?.InnerException?.Message ?? powerTask.Exception?.Message}");
+            }
+
+            // Cache successful result
+            _lastSuccessfulResults[config.Name] = stats;
+            computers.Add(stats);
+            return;
+        }
+
+        // Failed
+        info.ConsecutiveFailures++;
+        Logger.LogWarning($"Failed to fetch stats for computer '{config.Name}' (failure {info.ConsecutiveFailures}/5): {task.Exception?.InnerException?.Message ?? task.Exception?.Message}");
+
+        if (info.ConsecutiveFailures >= 5 && !info.IsOffline)
+        {
+            info.IsOffline = true;
+            info.TicksSinceLastCheck = 0;
+            Logger.LogWarning($"Computer '{config.Name}' marked as OFFLINE after 5 consecutive failures");
+            // Clear cache when going offline
+            _lastSuccessfulResults.Remove(config.Name);
+        }
+
+        // Return cached result if available and not offline, otherwise return offline stats
+        if (!info.IsOffline && _lastSuccessfulResults.TryGetValue(config.Name, out var cachedStats))
+        {
+            Logger.LogInformation($"Using cached stats for '{config.Name}' due to temporary failure");
+            computers.Add(cachedStats);
+        }
+        else
+        {
+            computers.Add(CreateOfflineStats(config.Name));
+        }
+    }
+
     protected override ComputerStatsBlockDto Tick()
     {
-        var computers = new List<ComputerStats>();
+        var computerTasks = new List<Task<ComputerStats>>();
+        var powerTasks = new List<Task<double?>>();
+        var computerConfigs = new List<ComputerConfig>();
 
+        // Prepare tasks for all computers
         foreach (var computerConfig in _config.Computers)
         {
-            try
-            {
-                var computerStats = new ComputerStats
-                {
-                    Name = computerConfig.Name
-                };
+            var info = _computerInfo[computerConfig.Name];
 
-                // Fetch CPU data
-                if (!string.IsNullOrWhiteSpace(computerConfig.MonitoringUrl))
-                {
-                    var cpuUrl = $"{computerConfig.MonitoringUrl.TrimEnd('/')}/load/cpu";
-                    var cpuResponse = _httpClient.GetStringAsync(cpuUrl)
-                        .GetAwaiter().GetResult();
-                    var cpuData = JsonConvert.DeserializeObject<List<CpuCoreInfo>>(cpuResponse);
-                    computerStats.CpuCores = cpuData ?? new List<CpuCoreInfo>();
-                }
+            // Create computer stats task
+            computerTasks.Add(info.IsOffline
+                ? HandleOfflineComputerAsync(computerConfig)
+                : FetchComputerStatsAsync(computerConfig));
 
-                // Fetch GPU data
-                if (!string.IsNullOrWhiteSpace(computerConfig.MonitoringUrl))
-                {
-                    var gpuUrl = $"{computerConfig.MonitoringUrl.TrimEnd('/')}/load/gpu";
-                    var gpuResponse = _httpClient.GetStringAsync(gpuUrl)
-                        .GetAwaiter().GetResult();
-                    var gpuData = JsonConvert.DeserializeObject<GpuInfo>(gpuResponse);
-                    computerStats.Gpu = gpuData ?? new GpuInfo();
-                }
+            // Create power consumption task
+            powerTasks.Add(_snmpConnections.ContainsKey(computerConfig.Name)
+                ? FetchPowerConsumptionAsync(computerConfig.Name)
+                : Task.FromResult<double?>(null));
 
-                // Calculate enriched statistics
-                if (computerStats.CpuCores.Any())
-                {
-                    computerStats.AvgCpuUtilization = computerStats.CpuCores.Average(c => c.Load);
-                    computerStats.MaxCoreUtilization = computerStats.CpuCores.Max(c => c.Load);
-                }
+            computerConfigs.Add(computerConfig);
+        }
 
-                if (computerStats.Gpu?.Layout != null && computerStats.Gpu.Layout.Any())
-                {
-                    // Max GPU utilization is the maximum of load and memory across all layout items
-                    computerStats.MaxGpuUtilization = computerStats.Gpu.Layout
-                        .SelectMany(g => new[] { g.Load, g.Memory })
-                        .Max();
-                }
+        // Wait for all tasks to complete (ignore exceptions, we handle them per-task below)
+        try
+        {
+            Task.WaitAll(computerTasks.Cast<Task>().Concat(powerTasks).ToArray());
+        }
+        catch (AggregateException)
+        {
+            // Some tasks failed, we'll handle them individually below
+        }
 
-                // Fetch power consumption via SNMP (optional)
-                if (_snmpConnections.TryGetValue(computerConfig.Name, out var snmpConn))
-                {
-                    computerStats.PowerConsumptionWatts = GetPowerConsumptionSnmp(snmpConn);
-                }
-
-                // Fetch RAM usage and calculate percentage (optional)
-                if (!string.IsNullOrWhiteSpace(computerConfig.MonitoringUrl) &&
-                    _totalRamByComputer.TryGetValue(computerConfig.Name, out var totalRam))
-                {
-                    try
-                    {
-                        var ramLoadUrl = $"{computerConfig.MonitoringUrl.TrimEnd('/')}/load/ram";
-                        var ramLoadResponse = _httpClient.GetStringAsync(ramLoadUrl)
-                            .GetAwaiter().GetResult();
-                        var ramLoad = JsonConvert.DeserializeObject<RamLoadInfo>(ramLoadResponse);
-
-                        if (ramLoad?.Load > 0 && totalRam > 0)
-                        {
-                            computerStats.RamUtilization = ((double)ramLoad.Load / totalRam) * 100;
-                        }
-                    }
-                    catch (Exception ramEx)
-                    {
-                        Logger.LogWarning($"Failed to fetch RAM load for '{computerConfig.Name}': {ramEx.Message}");
-                    }
-                }
-
-                computers.Add(computerStats);
-            }
-            catch (Exception ex)
-            {
-                // Log error but continue processing other computers
-                Logger.LogWarning($"Failed to fetch stats for computer '{computerConfig.Name}': {ex.Message}");
-
-                // Add computer with empty data to indicate it's configured but unavailable
-                computers.Add(new ComputerStats
-                {
-                    Name = computerConfig.Name,
-                    CpuCores = new List<CpuCoreInfo>(),
-                    Gpu = new GpuInfo()
-                });
-            }
+        // Process results
+        var computers = new List<ComputerStats>();
+        for (int i = 0; i < computerTasks.Count; i++)
+        {
+            ProcessComputerResult(computerConfigs[i], computerTasks[i], powerTasks[i], computers);
         }
 
         return new ComputerStatsBlockDto
         {
             Computers = computers,
-            ValidUntilUtc = DateTime.UtcNow.AddSeconds(_config.IntervalMs / 1000 * 2) // Valid for 2 intervals
+            ValidUntilUtc = DateTime.UtcNow.AddSeconds(_config.IntervalMs / 1000 * 2)
         };
     }
 

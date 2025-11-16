@@ -21,6 +21,9 @@ public record ComputerStats
 
     // RAM usage percentage
     public double RamUtilization { get; set; }
+
+    // Offline status
+    public bool IsOffline { get; set; }
 }
 
 public record CpuCoreInfo
