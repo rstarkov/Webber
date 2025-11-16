@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Management;
 using Hardware.Info;
 using WorkstationReporter.Models;
 
@@ -149,27 +148,31 @@ public class StatsCollectorService : BackgroundService
 
         try
         {
-            using var searcher = new ManagementObjectSearcher("SELECT Name, PercentProcessorTime FROM Win32_PerfFormattedData_PerfOS_Processor");
-            using var results = searcher.Get();
+            _hardwareInfo.RefreshCPUList();
 
             int coreIndex = 0;
-            foreach (ManagementObject obj in results)
+            foreach (var cpu in _hardwareInfo.CpuList)
             {
-                var name = obj["Name"]?.ToString();
-
-                if (name == "_Total")
-                    continue;
-
-                var load = Convert.ToDouble(obj["PercentProcessorTime"] ?? 0);
-
-                cpuCores.Add(new CpuCoreInfo
+                foreach (var core in cpu.CpuCoreList)
                 {
-                    Core = coreIndex,
-                    Load = load,
-                    Temp = 0
-                });
+                    var load = (double)core.PercentProcessorTime;
 
-                coreIndex++;
+                    // PercentProcessorTime should be 0-100, but verify it's reasonable
+                    if (load > 100)
+                    {
+                        _logger.LogWarning("Unexpected CPU load value: {Load} for core {Core}", load, coreIndex);
+                        load = Math.Min(load, 100);
+                    }
+
+                    cpuCores.Add(new CpuCoreInfo
+                    {
+                        Core = coreIndex,
+                        Load = load,
+                        Temp = 0
+                    });
+
+                    coreIndex++;
+                }
             }
 
             lock (_lock)
