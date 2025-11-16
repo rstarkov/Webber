@@ -36,12 +36,28 @@ interface ComputerStatsBlockDto extends BaseDto {
     sentUtc: string;
 }
 
+// Configurable sizing constants
+const BLOCK_WIDTH = 72; // Width of each block (CPU/RAM, Cores, GPU/Power)
+const BLOCK_HEIGHT = 78; // Height of each block (CPU/RAM, Cores, GPU/Power)
+const LABEL_HEIGHT = 20; // Height of computer name label
+const BLOCK_GAP = 2; // Gap between bars within a block
+const SECTION_GAP = 8; // Gap between computer sections
+const STAT_BAR_HEIGHT = (BLOCK_HEIGHT - BLOCK_GAP) / 2; // Height of individual stat bars (CPU, RAM, GPU, Power)
+const CONTAINER_HEIGHT = BLOCK_HEIGHT + LABEL_HEIGHT; // Total container height
+
+// Configurable font sizes
+const LABEL_FONT_SIZE = 14; // Computer name label font size
+const STAT_BAR_FONT_SIZE = 16; // Percentage text in horizontal stat bars
+const STAT_BAR_ICON_SIZE = 16; // Icon size in horizontal stat bars
+const FULL_HEIGHT_FONT_SIZE = 16; // Percentage text in full-height bars
+const FULL_HEIGHT_ICON_SIZE = 20; // Icon size in full-height bars
+
 const Container = styled.div`
-    width: 424px;
-    height: 80px;
+    width: 504px;
+    height: ${CONTAINER_HEIGHT}px;
     display: flex;
     flex-direction: row;
-    gap: 8px;
+    gap: ${SECTION_GAP}px;
     overflow: hidden;
 `;
 
@@ -53,11 +69,11 @@ const ComputerSection = styled.div`
 
 const NameLabel = styled.div`
     width: 100%;
-    height: 20px;
+    height: ${LABEL_HEIGHT}px;
     display: flex;
     align-items: left;
     justify-content: left;
-    font-size: 11px;
+    font-size: ${LABEL_FONT_SIZE}px;
     font-weight: bold;
     margin-left: 4px;
     color: white;
@@ -67,25 +83,25 @@ const InnerContainer = styled.div`
     display: flex;
     flex-direction: row;
     flex: 1;
-    gap: 2px;
+    gap: ${BLOCK_GAP}px;
     margin-top: 2px;
 `;
 
 const BarsSection = styled.div`
     display: flex;
     flex-direction: column;
-    width: 60px;
-    height: 100%;
-    gap: 2px;
+    width: ${BLOCK_WIDTH}px;
+    height: ${BLOCK_HEIGHT}px;
+    gap: ${BLOCK_GAP}px;
 `;
 
 const StatBar = styled.div`
     width: 100%;
-    height: 29px;
+    height: ${STAT_BAR_HEIGHT}px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: ${STAT_BAR_FONT_SIZE}px;
     font-weight: bold;
     color: white;
     position: relative;
@@ -95,8 +111,8 @@ const StatBar = styled.div`
 `;
 
 const CoreGrid = styled.div`
-    width: 60px;
-    height: 100%;
+    width: ${BLOCK_WIDTH}px;
+    height: ${BLOCK_HEIGHT}px;
     position: relative;
 `;
 
@@ -138,8 +154,8 @@ interface UtilizationGraphBarProps {
 const UtilizationGraphBar: React.FC<UtilizationGraphBarProps> = ({ utilization, timestamp, icon, fillHeight = false }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const historyRef = useRef<number[]>([]);
-    const maxHistoryLength = 80; // One point per pixel width
-    const barHeight = fillHeight ? 60 : 29;
+    const maxHistoryLength = BLOCK_WIDTH + 20; // One point per pixel width (plus extra for smoothness)
+    const barHeight = fillHeight ? BLOCK_HEIGHT : STAT_BAR_HEIGHT;
 
     useEffect(() => {
         // Add current utilization to history
@@ -186,7 +202,7 @@ const UtilizationGraphBar: React.FC<UtilizationGraphBarProps> = ({ utilization, 
 
     return (
         <StatBar style={{
-            height: fillHeight ? '100%' : '29px',
+            height: fillHeight ? '100%' : `${STAT_BAR_HEIGHT}px`,
             backgroundColor: getColorForPercentage(utilization),
             position: 'relative',
             overflow: 'hidden',
@@ -196,7 +212,7 @@ const UtilizationGraphBar: React.FC<UtilizationGraphBarProps> = ({ utilization, 
         }}>
             <canvas
                 ref={canvasRef}
-                width={80}
+                width={BLOCK_WIDTH + 20}
                 height={barHeight}
                 style={{
                     position: 'absolute',
@@ -213,13 +229,13 @@ const UtilizationGraphBar: React.FC<UtilizationGraphBarProps> = ({ utilization, 
                         icon={icon}
                         style={{
                             position: 'relative',
-                            fontSize: 16,
+                            fontSize: FULL_HEIGHT_ICON_SIZE,
                             zIndex: 1,
                             opacity: 0.6,
-                            marginBottom: 4
+                            marginBottom: 6
                         }}
                     />
-                    <span style={{ position: 'relative', zIndex: 1 }}>
+                    <span style={{ position: 'relative', zIndex: 1, fontSize: FULL_HEIGHT_FONT_SIZE }}>
                         {Math.round(utilization)}%
                     </span>
                 </>
@@ -229,15 +245,15 @@ const UtilizationGraphBar: React.FC<UtilizationGraphBarProps> = ({ utilization, 
                         icon={icon}
                         style={{
                             position: 'absolute',
-                            left: 4,
+                            left: 6,
                             top: '50%',
                             transform: 'translateY(-50%)',
-                            fontSize: 12,
+                            fontSize: STAT_BAR_ICON_SIZE,
                             zIndex: 1,
                             opacity: 0.6
                         }}
                     />
-                    <span style={{ position: 'relative', zIndex: 1, width: '100%', textAlign: 'right', paddingRight: 4 }}>
+                    <span style={{ position: 'relative', zIndex: 1, width: '100%', textAlign: 'right', paddingRight: 6 }}>
                         {Math.round(utilization)}%
                     </span>
                 </>
@@ -253,12 +269,12 @@ interface PowerGraphBarProps {
 }
 
 const PowerCard = styled.div`
-    width: 60px;
-    height: 29px;
+    width: ${BLOCK_WIDTH}px;
+    height: ${STAT_BAR_HEIGHT}px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: ${STAT_BAR_FONT_SIZE}px;
     font-weight: bold;
     color: white;
     position: relative;
@@ -270,7 +286,7 @@ const PowerCard = styled.div`
 const PowerGraphBar: React.FC<PowerGraphBarProps> = ({ watts, timestamp }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const historyRef = useRef<number[]>([]);
-    const maxHistoryLength = 60; // One point per pixel width
+    const maxHistoryLength = BLOCK_WIDTH; // One point per pixel width
 
     useEffect(() => {
         // Add current watts to history
@@ -328,8 +344,8 @@ const PowerGraphBar: React.FC<PowerGraphBarProps> = ({ watts, timestamp }) => {
         }}>
             <canvas
                 ref={canvasRef}
-                width={60}
-                height={29}
+                width={BLOCK_WIDTH}
+                height={STAT_BAR_HEIGHT}
                 style={{
                     position: 'absolute',
                     left: 0,
@@ -343,15 +359,15 @@ const PowerGraphBar: React.FC<PowerGraphBarProps> = ({ watts, timestamp }) => {
                 icon={faBolt}
                 style={{
                     position: 'absolute',
-                    left: 4,
+                    left: 6,
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    fontSize: 12,
+                    fontSize: STAT_BAR_ICON_SIZE,
                     zIndex: 1,
                     opacity: 0.6
                 }}
             />
-            <span style={{ position: 'relative', zIndex: 1, width: '100%', textAlign: 'right', paddingRight: 4 }}>
+            <span style={{ position: 'relative', zIndex: 1, width: '100%', textAlign: 'right', paddingRight: 6 }}>
                 {Math.round(watts)}W
             </span>
         </PowerCard>
@@ -390,10 +406,11 @@ const getCoreLayout = (
     rows: number,
     doubleWidthSpan: number
 ): CoreLayout => {
-    const gap = 2;
-    const gridSize = 60;
-    const cellWidth = (gridSize - (cols - 1) * gap) / cols;
-    const cellHeight = (gridSize - (rows - 1) * gap) / rows;
+    const gap = BLOCK_GAP;
+    const gridWidth = BLOCK_WIDTH;
+    const gridHeight = BLOCK_HEIGHT;
+    const cellWidth = (gridWidth - (cols - 1) * gap) / cols;
+    const cellHeight = (gridHeight - (rows - 1) * gap) / rows;
 
     // First core (highest loaded) gets double width if needed
     if (doubleWidthSpan > 1 && coreIndex === 0) {

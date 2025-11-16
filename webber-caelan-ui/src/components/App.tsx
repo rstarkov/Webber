@@ -6,10 +6,6 @@ import TimeUntilBlock from "./TimeUntilBlock";
 import WeatherForecastBlock from "./WeatherForecastBlock";
 import ComputerStatsBlock from "./ComputerStatsBlock";
 
-function reload() {
-    window.location.reload();
-}
-
 function App() {
     return (
         <div className="box">
@@ -22,7 +18,7 @@ function App() {
             <div style={{ position: "absolute", left: 0, top: 320 - 80 }}>
                 <WeatherForecastBlock />
             </div>
-            <div style={{ position: "absolute", left: 600, top: 320 - 80 - 2 }}>
+            <div style={{ position: "absolute", left: 600, top: 320 - 100 }}>
                 <ComputerStatsBlock />
             </div>
             <div style={{ position: "absolute", left: 300, top: 20 }}>
