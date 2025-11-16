@@ -44,8 +44,9 @@ const SunsetDimmer = styled.div`
     left: 0;
     right: 0;
     top: 0;
+    z-index: 1000;
     bottom: 0;
-    background-color: rgba(0,0,0,0.6);
+    background-color: rgba(0,0,0,0.4);
 `
 
 const WeatherBlock: React.FunctionComponent<{ data: WeatherBlockDto }> = ({ data }) => {
@@ -63,7 +64,7 @@ const WeatherBlock: React.FunctionComponent<{ data: WeatherBlockDto }> = ({ data
                 <span>{sunsetTime}</span>
             </SunriseContainer>
             <CurrentWeatherLabel style={{ color: data.curTemperatureColor }}>{data.curTemperature.toFixed(1)}°C</CurrentWeatherLabel>
-            {shouldDim && <SunsetDimmer />}
+            {/* {shouldDim && <SunsetDimmer />} */}
         </React.Fragment>
     );
 }

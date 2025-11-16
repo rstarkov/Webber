@@ -15,6 +15,9 @@ public record ComputerStats
     public double AvgCpuUtilization { get; set; }
     public double MaxCoreUtilization { get; set; }
     public double MaxGpuUtilization { get; set; }
+
+    // Power consumption from UPS (optional, in watts)
+    public double? PowerConsumptionWatts { get; set; }
 }
 
 public record CpuCoreInfo

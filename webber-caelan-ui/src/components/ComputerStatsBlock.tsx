@@ -2,6 +2,8 @@ import * as React from 'react';
 import { useRef, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { withSubscription, BaseDto } from './util';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMicrochip, faBolt, faImage } from '@fortawesome/free-solid-svg-icons';
 
 interface CpuCoreInfo {
     load: number;
@@ -25,6 +27,7 @@ interface ComputerStats {
     avgCpuUtilization: number;
     maxCoreUtilization: number;
     maxGpuUtilization: number;
+    powerConsumptionWatts?: number;
 }
 
 interface ComputerStatsBlockDto extends BaseDto {
@@ -79,6 +82,7 @@ const StatBar = styled.div`
     position: relative;
     background-color: rgba(138, 180, 248, 0.15);
     transition: background-color 0.4s ease;
+    border-radius: 2px;
 `;
 
 const CoreGrid = styled.div`
@@ -92,6 +96,7 @@ const CoreCell = styled.div`
     position: absolute;
     background-color: rgba(138, 180, 248, 0.15);
     transition: background-color 0.4s ease;
+    border-radius: 2px;
 `;
 
 // Calculate color based on percentage: blue (0-85%), red (85-100%)
@@ -118,9 +123,10 @@ const getColorForPercentage = (percent: number): string => {
 interface UtilizationGraphBarProps {
     utilization: number;
     timestamp: string; // Add timestamp to detect new data updates
+    icon: any; // FontAwesome icon
 }
 
-const UtilizationGraphBar: React.FC<UtilizationGraphBarProps> = ({ utilization, timestamp }) => {
+const UtilizationGraphBar: React.FC<UtilizationGraphBarProps> = ({ utilization, timestamp, icon }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const historyRef = useRef<number[]>([]);
     const maxHistoryLength = 80; // One point per pixel width
@@ -187,10 +193,135 @@ const UtilizationGraphBar: React.FC<UtilizationGraphBarProps> = ({ utilization, 
                     pointerEvents: 'none'
                 }}
             />
-            <span style={{ position: 'relative', zIndex: 1 }}>
+            <FontAwesomeIcon
+                icon={icon}
+                style={{
+                    position: 'absolute',
+                    left: 4,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontSize: 12,
+                    zIndex: 1,
+                    opacity: 0.6
+                }}
+            />
+            <span style={{ position: 'relative', zIndex: 1, width: '100%', textAlign: 'right', paddingRight: 4 }}>
                 {Math.round(utilization)}%
             </span>
         </StatBar>
+    );
+};
+
+// Power consumption graph component
+interface PowerGraphBarProps {
+    watts: number;
+    timestamp: string;
+}
+
+const PowerCard = styled.div`
+    width: 40px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: white;
+    position: relative;
+    background-color: rgba(138, 180, 248, 0.15);
+    transition: background-color 0.4s ease;
+    align-self: flex-end;
+    border-radius: 2px;
+`;
+
+const PowerGraphBar: React.FC<PowerGraphBarProps> = ({ watts, timestamp }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const historyRef = useRef<number[]>([]);
+    const maxHistoryLength = 40; // One point per pixel width
+
+    useEffect(() => {
+        // Add current watts to history
+        historyRef.current.push(watts);
+        if (historyRef.current.length > maxHistoryLength) {
+            historyRef.current.shift();
+        }
+
+        // Draw graph
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw watts line graph
+        const history = historyRef.current;
+        if (history.length < 2) return;
+
+        // Find max value for scaling
+        const maxWatts = Math.max(...history, 1); // At least 1 to avoid division by zero
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+
+        history.forEach((value, index) => {
+            const x = (index / (maxHistoryLength - 1)) * width;
+            const y = height - (value / maxWatts) * (height - 4) - 2; // 2px padding, scale to max
+
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+
+        ctx.stroke();
+    }, [watts, timestamp]);
+
+    // Calculate color based on watts (assuming typical range 0-500W)
+    // Use similar color scheme as CPU/GPU but scale differently
+    const percentage = Math.min((watts / 500) * 100, 100);
+
+    return (
+        <PowerCard style={{
+            backgroundColor: getColorForPercentage(percentage),
+            overflow: 'hidden'
+        }}>
+            <canvas
+                ref={canvasRef}
+                width={40}
+                height={60}
+                style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    width: '100%',
+                    height: '100%',
+                    pointerEvents: 'none'
+                }}
+            />
+            <span style={{ position: 'relative', zIndex: 1, marginTop: 12 }}>
+                {Math.round(watts)}W
+            </span>
+            <FontAwesomeIcon
+                icon={faBolt}
+                style={{
+                    position: 'absolute',
+                    left: '50%',
+                    marginTop: -12,
+                    transform: 'translateX(-50%)',
+                    fontSize: 10,
+                    zIndex: 1,
+                    opacity: 0.6
+                }}
+            />
+        </PowerCard>
     );
 };
 
@@ -290,12 +421,14 @@ const ComputerStatsBlock: React.FunctionComponent<{ data: ComputerStatsBlockDto 
                             <UtilizationGraphBar
                                 utilization={computer.avgCpuUtilization}
                                 timestamp={data.sentUtc}
+                                icon={faMicrochip}
                             />
 
                             {/* Max GPU Bar with Utilization Graph */}
                             <UtilizationGraphBar
                                 utilization={computer.maxGpuUtilization}
                                 timestamp={data.sentUtc}
+                                icon={faImage}
                             />
                         </BarsSection>
 
@@ -318,6 +451,14 @@ const ComputerStatsBlock: React.FunctionComponent<{ data: ComputerStatsBlockDto 
                                 );
                             })}
                         </CoreGrid>
+
+                        {/* Power Consumption Card - 40x60, aligned at bottom */}
+                        {computer.powerConsumptionWatts != null && (
+                            <PowerGraphBar
+                                watts={computer.powerConsumptionWatts}
+                                timestamp={data.sentUtc}
+                            />
+                        )}
                     </ComputerSection>
                 );
             })}

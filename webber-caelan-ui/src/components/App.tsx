@@ -1,10 +1,10 @@
-import * as React from 'react';
+import * as React from "react";
 import "./App.css";
-import ClockBlock from './ClockBlock';
-import WeatherBlock from './WeatherBlock';
-import TimeUntilBlock from './TimeUntilBlock';
-import WeatherForecastBlock from './WeatherForecastBlock';
-import ComputerStatsBlock from './ComputerStatsBlock';
+import ClockBlock from "./ClockBlock";
+import WeatherBlock from "./WeatherBlock";
+import TimeUntilBlock from "./TimeUntilBlock";
+import WeatherForecastBlock from "./WeatherForecastBlock";
+import ComputerStatsBlock from "./ComputerStatsBlock";
 
 function reload() {
     window.location.reload();
@@ -19,10 +19,10 @@ function App() {
             <div style={{ position: "absolute", left: 600, top: 20 }}>
                 <TimeUntilBlock />
             </div>
-            <div style={{ position: "absolute", left: 0, top: 320-80 }}>
+            <div style={{ position: "absolute", left: 0, top: 320 - 80 }}>
                 <WeatherForecastBlock />
             </div>
-            <div style={{ position: "absolute", left: 600, top: 320-80 }}>
+            <div style={{ position: "absolute", left: 600, top: 320 - 80 - 2 }}>
                 <ComputerStatsBlock />
             </div>
             <div style={{ position: "absolute", left: 300, top: 20 }}>
@@ -55,8 +55,8 @@ function App() {
                 <WeatherBlock />
             </div> */}
 
-            <div onClick={reload} style={{ position: "fixed", left: 0, bottom: 0, top: 0, right: 0, backgroundColor: "black", opacity: 0.01 }}>
-            </div>
+            {/* <div onClick={reload} style={{ position: "fixed", left: 0, bottom: 0, top: 0, right: 0, backgroundColor: "black", opacity: 0.01 }}>
+            </div> */}
         </div>
     );
 }
