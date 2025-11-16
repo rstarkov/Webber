@@ -56,6 +56,9 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
     {
         _config = config;
 
+        // Set aggressive timeout for all HTTP requests (same as interval)
+        _httpClient.Timeout = TimeSpan.FromMilliseconds(config.IntervalMs);
+
         // Initialize SNMP connections for each computer
         foreach (var computer in config.Computers)
         {
