@@ -64,7 +64,7 @@ const WeatherBlock: React.FunctionComponent<{ data: WeatherBlockDto }> = ({ data
                 <span>{sunsetTime}</span>
             </SunriseContainer>
             <CurrentWeatherLabel style={{ color: data.curTemperatureColor }}>{data.curTemperature.toFixed(1)}°C</CurrentWeatherLabel>
-            {/* {shouldDim && <SunsetDimmer />} */}
+            {shouldDim && <SunsetDimmer />}
         </React.Fragment>
     );
 }

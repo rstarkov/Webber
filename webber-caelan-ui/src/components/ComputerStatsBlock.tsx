@@ -3,7 +3,7 @@ import { useRef, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { withSubscription, BaseDto } from './util';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMicrochip, faBolt, faImage } from '@fortawesome/free-solid-svg-icons';
+import { faMicrochip, faBolt, faImage, faMemory } from '@fortawesome/free-solid-svg-icons';
 
 interface CpuCoreInfo {
     load: number;
@@ -28,6 +28,7 @@ interface ComputerStats {
     maxCoreUtilization: number;
     maxGpuUtilization: number;
     powerConsumptionWatts?: number;
+    ramUtilization: number;
 }
 
 interface ComputerStatsBlockDto extends BaseDto {
@@ -40,39 +41,47 @@ const Container = styled.div`
     height: 80px;
     display: flex;
     flex-direction: row;
+    gap: 8px;
     overflow: hidden;
 `;
 
 const ComputerSection = styled.div`
     display: flex;
-    flex-direction: row;
-    height: 100%;
-    gap: 2px;
-`;
-
-const BarsSection = styled.div`
-    display: flex;
     flex-direction: column;
-    width: 80px;
     height: 100%;
-    gap: 2px;
 `;
 
 const NameLabel = styled.div`
     width: 100%;
     height: 20px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: left;
+    justify-content: left;
     font-size: 11px;
     font-weight: bold;
+    margin-left: 4px;
     color: white;
-    margin-top: -2px;
+`;
+
+const InnerContainer = styled.div`
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    gap: 2px;
+    margin-top: 2px;
+`;
+
+const BarsSection = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 60px;
+    height: 100%;
+    gap: 2px;
 `;
 
 const StatBar = styled.div`
     width: 100%;
-    height: 30px;
+    height: 29px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -87,9 +96,8 @@ const StatBar = styled.div`
 
 const CoreGrid = styled.div`
     width: 60px;
-    height: 60px;
+    height: 100%;
     position: relative;
-    align-self: flex-end;
 `;
 
 const CoreCell = styled.div`
@@ -124,12 +132,14 @@ interface UtilizationGraphBarProps {
     utilization: number;
     timestamp: string; // Add timestamp to detect new data updates
     icon: any; // FontAwesome icon
+    fillHeight?: boolean; // If true, fills 100% height instead of 29px
 }
 
-const UtilizationGraphBar: React.FC<UtilizationGraphBarProps> = ({ utilization, timestamp, icon }) => {
+const UtilizationGraphBar: React.FC<UtilizationGraphBarProps> = ({ utilization, timestamp, icon, fillHeight = false }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const historyRef = useRef<number[]>([]);
     const maxHistoryLength = 80; // One point per pixel width
+    const barHeight = fillHeight ? 60 : 29;
 
     useEffect(() => {
         // Add current utilization to history
@@ -176,14 +186,18 @@ const UtilizationGraphBar: React.FC<UtilizationGraphBarProps> = ({ utilization, 
 
     return (
         <StatBar style={{
+            height: fillHeight ? '100%' : '29px',
             backgroundColor: getColorForPercentage(utilization),
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            flexDirection: fillHeight ? 'column' : 'row',
+            justifyContent: fillHeight ? 'center' : 'center',
+            alignItems: fillHeight ? 'center' : 'center'
         }}>
             <canvas
                 ref={canvasRef}
                 width={80}
-                height={30}
+                height={barHeight}
                 style={{
                     position: 'absolute',
                     left: 0,
@@ -193,21 +207,41 @@ const UtilizationGraphBar: React.FC<UtilizationGraphBarProps> = ({ utilization, 
                     pointerEvents: 'none'
                 }}
             />
-            <FontAwesomeIcon
-                icon={icon}
-                style={{
-                    position: 'absolute',
-                    left: 4,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    fontSize: 12,
-                    zIndex: 1,
-                    opacity: 0.6
-                }}
-            />
-            <span style={{ position: 'relative', zIndex: 1, width: '100%', textAlign: 'right', paddingRight: 4 }}>
-                {Math.round(utilization)}%
-            </span>
+            {fillHeight ? (
+                <>
+                    <FontAwesomeIcon
+                        icon={icon}
+                        style={{
+                            position: 'relative',
+                            fontSize: 16,
+                            zIndex: 1,
+                            opacity: 0.6,
+                            marginBottom: 4
+                        }}
+                    />
+                    <span style={{ position: 'relative', zIndex: 1 }}>
+                        {Math.round(utilization)}%
+                    </span>
+                </>
+            ) : (
+                <>
+                    <FontAwesomeIcon
+                        icon={icon}
+                        style={{
+                            position: 'absolute',
+                            left: 4,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            fontSize: 12,
+                            zIndex: 1,
+                            opacity: 0.6
+                        }}
+                    />
+                    <span style={{ position: 'relative', zIndex: 1, width: '100%', textAlign: 'right', paddingRight: 4 }}>
+                        {Math.round(utilization)}%
+                    </span>
+                </>
+            )}
         </StatBar>
     );
 };
@@ -219,25 +253,24 @@ interface PowerGraphBarProps {
 }
 
 const PowerCard = styled.div`
-    width: 40px;
-    height: 60px;
+    width: 60px;
+    height: 29px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: bold;
     color: white;
     position: relative;
     background-color: rgba(138, 180, 248, 0.15);
     transition: background-color 0.4s ease;
-    align-self: flex-end;
     border-radius: 2px;
 `;
 
 const PowerGraphBar: React.FC<PowerGraphBarProps> = ({ watts, timestamp }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const historyRef = useRef<number[]>([]);
-    const maxHistoryLength = 40; // One point per pixel width
+    const maxHistoryLength = 60; // One point per pixel width
 
     useEffect(() => {
         // Add current watts to history
@@ -295,8 +328,8 @@ const PowerGraphBar: React.FC<PowerGraphBarProps> = ({ watts, timestamp }) => {
         }}>
             <canvas
                 ref={canvasRef}
-                width={40}
-                height={60}
+                width={60}
+                height={29}
                 style={{
                     position: 'absolute',
                     left: 0,
@@ -306,21 +339,21 @@ const PowerGraphBar: React.FC<PowerGraphBarProps> = ({ watts, timestamp }) => {
                     pointerEvents: 'none'
                 }}
             />
-            <span style={{ position: 'relative', zIndex: 1, marginTop: 12 }}>
-                {Math.round(watts)}W
-            </span>
             <FontAwesomeIcon
                 icon={faBolt}
                 style={{
                     position: 'absolute',
-                    left: '50%',
-                    marginTop: -12,
-                    transform: 'translateX(-50%)',
-                    fontSize: 10,
+                    left: 4,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontSize: 12,
                     zIndex: 1,
                     opacity: 0.6
                 }}
             />
+            <span style={{ position: 'relative', zIndex: 1, width: '100%', textAlign: 'right', paddingRight: 4 }}>
+                {Math.round(watts)}W
+            </span>
         </PowerCard>
     );
 };
@@ -413,52 +446,67 @@ const ComputerStatsBlock: React.FunctionComponent<{ data: ComputerStatsBlockDto 
 
                 return (
                     <ComputerSection key={idx}>
-                        {/* Bars Section: Name + Stats */}
-                        <BarsSection>
-                            <NameLabel>{computer.name}</NameLabel>
+                        {/* Computer Name Label */}
+                        <NameLabel>{computer.name}</NameLabel>
 
-                            {/* Avg CPU Bar with Utilization Graph */}
-                            <UtilizationGraphBar
-                                utilization={computer.avgCpuUtilization}
-                                timestamp={data.sentUtc}
-                                icon={faMicrochip}
-                            />
+                        {/* Inner container with all bars and grids */}
+                        <InnerContainer>
+                            {/* CPU/RAM Bars Section */}
+                            <BarsSection>
+                                {/* Avg CPU Bar with Utilization Graph */}
+                                <UtilizationGraphBar
+                                    utilization={computer.avgCpuUtilization}
+                                    timestamp={data.sentUtc}
+                                    icon={faMicrochip}
+                                />
 
-                            {/* Max GPU Bar with Utilization Graph */}
-                            <UtilizationGraphBar
-                                utilization={computer.maxGpuUtilization}
-                                timestamp={data.sentUtc}
-                                icon={faImage}
-                            />
-                        </BarsSection>
+                                {/* RAM Utilization Bar */}
+                                <UtilizationGraphBar
+                                    utilization={computer.ramUtilization}
+                                    timestamp={data.sentUtc}
+                                    icon={faMemory}
+                                />
+                            </BarsSection>
 
-                        {/* CPU Core Grid - 60x60, aligned at bottom */}
-                        <CoreGrid>
-                            {Array.from({ length: computer.cpuCores.length }).map((_, positionIndex) => {
-                                const layout = getCoreLayout(positionIndex, cols, rows, doubleWidthSpan);
-                                const coreData = sortedCores[positionIndex];
-                                return (
-                                    <CoreCell
-                                        key={positionIndex}
-                                        style={{
-                                            backgroundColor: getColorForPercentage(coreData.load),
-                                            left: `${layout.left}px`,
-                                            top: `${layout.top}px`,
-                                            width: `${layout.width}px`,
-                                            height: `${layout.height}px`
-                                        }}
+                            {/* CPU Core Grid */}
+                            <CoreGrid>
+                                {Array.from({ length: computer.cpuCores.length }).map((_, positionIndex) => {
+                                    const layout = getCoreLayout(positionIndex, cols, rows, doubleWidthSpan);
+                                    const coreData = sortedCores[positionIndex];
+                                    return (
+                                        <CoreCell
+                                            key={positionIndex}
+                                            style={{
+                                                backgroundColor: getColorForPercentage(coreData.load),
+                                                left: `${layout.left}px`,
+                                                top: `${layout.top}px`,
+                                                width: `${layout.width}px`,
+                                                height: `${layout.height}px`
+                                            }}
+                                        />
+                                    );
+                                })}
+                            </CoreGrid>
+
+                            {/* GPU and Power Section */}
+                            <BarsSection>
+                                {/* Max GPU Bar with Utilization Graph */}
+                                <UtilizationGraphBar
+                                    utilization={computer.maxGpuUtilization}
+                                    timestamp={data.sentUtc}
+                                    icon={faImage}
+                                    fillHeight={computer.powerConsumptionWatts == null}
+                                />
+
+                                {/* Power Consumption Bar */}
+                                {computer.powerConsumptionWatts != null && (
+                                    <PowerGraphBar
+                                        watts={computer.powerConsumptionWatts}
+                                        timestamp={data.sentUtc}
                                     />
-                                );
-                            })}
-                        </CoreGrid>
-
-                        {/* Power Consumption Card - 40x60, aligned at bottom */}
-                        {computer.powerConsumptionWatts != null && (
-                            <PowerGraphBar
-                                watts={computer.powerConsumptionWatts}
-                                timestamp={data.sentUtc}
-                            />
-                        )}
+                                )}
+                            </BarsSection>
+                        </InnerContainer>
                     </ComputerSection>
                 );
             })}
