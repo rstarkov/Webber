@@ -50,41 +50,62 @@ public class StatsCollectorService : BackgroundService
             _computeCounters.Clear();
             _memoryCountersDedicated.Clear();
 
-            // Reinitialize GPU performance counters
-            var computeCategory = new PerformanceCounterCategory("GPU Engine");
-            var computeCounterNames = computeCategory.GetInstanceNames();
-
-            foreach (string counterName in computeCounterNames)
+            try
             {
-                if (counterName.EndsWith("engtype_3D"))
+                // Reinitialize GPU performance counters
+                var computeCategory = new PerformanceCounterCategory("GPU Engine");
+                var computeCounterNames = computeCategory.GetInstanceNames();
+
+                foreach (string counterName in computeCounterNames)
                 {
-                    foreach (PerformanceCounter counter in computeCategory.GetCounters(counterName))
+                    if (counterName.EndsWith("engtype_3D"))
                     {
-                        if (counter.CounterName == "Utilization Percentage")
+                        try
                         {
-                            _computeCounters.Add(counter);
+                            foreach (PerformanceCounter counter in computeCategory.GetCounters(counterName))
+                            {
+                                if (counter.CounterName == "Utilization Percentage")
+                                {
+                                    _computeCounters.Add(counter);
+                                }
+                            }
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            // Instance disappeared between enumeration and access, skip it
                         }
                     }
                 }
-            }
 
-            var memoryCategory = new PerformanceCounterCategory("GPU Adapter Memory");
-            var memoryCounterNames = memoryCategory.GetInstanceNames();
+                var memoryCategory = new PerformanceCounterCategory("GPU Adapter Memory");
+                var memoryCounterNames = memoryCategory.GetInstanceNames();
 
-            foreach (string counterName in memoryCounterNames)
-            {
-                foreach (var counter in memoryCategory.GetCounters(counterName))
+                foreach (string counterName in memoryCounterNames)
                 {
-                    if (counter.CounterName == "Dedicated Usage")
+                    try
                     {
-                        _memoryCountersDedicated.Add(counter);
+                        foreach (var counter in memoryCategory.GetCounters(counterName))
+                        {
+                            if (counter.CounterName == "Dedicated Usage")
+                            {
+                                _memoryCountersDedicated.Add(counter);
+                            }
+                        }
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        // Instance disappeared between enumeration and access, skip it
                     }
                 }
-            }
 
-            _lastCounterRefresh = DateTime.UtcNow;
-            _logger.LogInformation("Refreshed GPU counters: {ComputeCounters} compute, {MemoryCounters} memory",
-                _computeCounters.Count, _memoryCountersDedicated.Count);
+                _lastCounterRefresh = DateTime.UtcNow;
+                _logger.LogInformation("Refreshed GPU counters: {ComputeCounters} compute, {MemoryCounters} memory",
+                    _computeCounters.Count, _memoryCountersDedicated.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error refreshing GPU counters, will retry next cycle");
+            }
         }
     }
 
@@ -94,48 +115,65 @@ public class StatsCollectorService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            // Check if we should sleep
-            TimeSpan timeSinceLastRequest;
-            lock (_lock)
+            try
             {
-                timeSinceLastRequest = DateTime.UtcNow - _lastRequestTime;
-            }
+                // Check if we should sleep
+                TimeSpan timeSinceLastRequest;
+                lock (_lock)
+                {
+                    timeSinceLastRequest = DateTime.UtcNow - _lastRequestTime;
+                }
 
-            if (_lastRequestTime != DateTime.MinValue && timeSinceLastRequest > _sleepTimeout)
-            {
-                _logger.LogInformation("No requests for {Timeout}s, putting thread to sleep", _sleepTimeout.TotalSeconds);
+                if (_lastRequestTime != DateTime.MinValue && timeSinceLastRequest > _sleepTimeout)
+                {
+                    _logger.LogInformation("No requests for {Timeout}s, putting thread to sleep", _sleepTimeout.TotalSeconds);
 
-                // Wait for wake signal or cancellation
+                    // Wait for wake signal or cancellation
+                    try
+                    {
+                        await _wakeSignal.WaitAsync(stoppingToken);
+                        _logger.LogInformation("Thread woken up by request");
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
+                }
+
+                // Check if we need to refresh GPU counters
+                if (DateTime.UtcNow - _lastCounterRefresh > _counterRefreshInterval)
+                {
+                    RefreshGpuCounters();
+                }
+
+                // Update all stats
+                UpdateCpuStats();
+                UpdateGpuStats();
+                UpdateRamStats();
+
+                // Wait 1 second before next update
                 try
                 {
-                    await _wakeSignal.WaitAsync(stoppingToken);
-                    _logger.LogInformation("Thread woken up by request");
+                    await Task.Delay(500, stoppingToken);
                 }
                 catch (OperationCanceledException)
                 {
                     break;
                 }
             }
-
-            // Check if we need to refresh GPU counters
-            if (DateTime.UtcNow - _lastCounterRefresh > _counterRefreshInterval)
+            catch (Exception ex)
             {
-                RefreshGpuCounters();
-            }
+                _logger.LogError(ex, "Unexpected error in stats collection loop, restarting in 5 seconds...");
 
-            // Update all stats
-            UpdateCpuStats();
-            UpdateGpuStats();
-            UpdateRamStats();
-
-            // Wait 1 second before next update
-            try
-            {
-                await Task.Delay(500, stoppingToken);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
+                // Wait before retrying to avoid rapid restart loops
+                try
+                {
+                    await Task.Delay(5000, stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
         }
 
