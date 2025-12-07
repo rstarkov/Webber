@@ -283,9 +283,15 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
         {
             var stats = task.Result;
 
-            // If this is offline stats (returned from HandleOfflineComputerAsync), just add it and return
+            // If this is offline stats (returned from HandleOfflineComputerAsync), add power and return
             if (stats.IsOffline)
             {
+                // Add power consumption if available (UPS can report power even when computer is offline)
+                if (powerTask.IsCompletedSuccessfully)
+                {
+                    stats.PowerConsumptionWatts = powerTask.Result;
+                }
+
                 computers.Add(stats);
                 return;
             }

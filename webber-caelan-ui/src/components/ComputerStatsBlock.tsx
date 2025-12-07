@@ -472,7 +472,11 @@ const ComputerStatsBlock: React.FunctionComponent<{ data: ComputerStatsBlockDto 
                             <NameLabel>{computer.name}</NameLabel>
                             <OfflineCard>
                                 <FontAwesomeIcon icon={faPlug} color="#ff00007e" size="lg" />
-                                <span>Offline</span>
+                                <span>
+                                    Offline
+                                    {computer.powerConsumptionWatts != null &&
+                                        ` (${Math.round(computer.powerConsumptionWatts)}W)`}
+                                </span>
                             </OfflineCard>
                         </ComputerSection>
                     );
