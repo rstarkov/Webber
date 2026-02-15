@@ -1,82 +1,11 @@
-﻿using System.Net;
+using System.Net;
 using Lextm.SharpSnmpLib;
 using Lextm.SharpSnmpLib.Messaging;
 using Lextm.SharpSnmpLib.Security;
-using Newtonsoft.Json;
 using Webber.Client.Models;
+using Webber.Server.Services;
 
 namespace Webber.Server.Blocks;
-
-// Models for WorkstationReporter API responses
-class SystemInfo
-{
-    public RamInfo Ram { get; set; }
-}
-
-class RamInfo
-{
-    public ulong Size { get; set; }
-}
-
-class RamLoadInfo
-{
-    public ulong Load { get; set; }
-}
-
-// Models for Glances API responses
-class GlancesPerCpu
-{
-    [JsonProperty("cpu_number")]
-    public int CpuNumber { get; set; }
-
-    [JsonProperty("total")]
-    public double Total { get; set; }
-}
-
-class GlancesGpu
-{
-    [JsonProperty("gpu_id")]
-    public string GpuId { get; set; }
-
-    [JsonProperty("name")]
-    public string Name { get; set; }
-
-    [JsonProperty("mem")]
-    public double Mem { get; set; }
-
-    [JsonProperty("proc")]
-    public double Proc { get; set; }
-
-    [JsonProperty("temperature")]
-    public double Temperature { get; set; }
-}
-
-class GlancesMem
-{
-    [JsonProperty("total")]
-    public ulong Total { get; set; }
-
-    [JsonProperty("used")]
-    public ulong Used { get; set; }
-
-    [JsonProperty("percent")]
-    public double Percent { get; set; }
-}
-
-class GlancesSensor
-{
-    [JsonProperty("label")]
-    public string Label { get; set; }
-
-    [JsonProperty("unit")]
-    public string Unit { get; set; }
-
-    [JsonProperty("value")]
-    public double Value { get; set; }
-
-    [JsonProperty("type")]
-    public string Type { get; set; }
-}
 
 class ComputerStatsBlockConfig
 {
@@ -92,8 +21,14 @@ class ComputerConfig
     // Will append /load/cpu, /load/gpu, /load/ram, /info as needed
     public string MonitoringUrl { get; set; }
 
-    // API backend: "dashdot" (default) or "glances"
+    // API backend: "dashdot" (default), "glances", or "prometheus"
     public string ApiMode { get; set; } = "dashdot";
+
+    // Prometheus node-exporter URL (e.g., "http://192.168.1.5:9100")
+    public string NodeExporterUrl { get; set; }
+
+    // Prometheus dcgm-exporter URL (e.g., "http://192.168.1.5:9400"), optional
+    public string DcgmExporterUrl { get; set; }
 
     // Optional SNMP settings for power consumption from UPS
     public string SnmpHost { get; set; }
@@ -107,35 +42,24 @@ class ComputerInfo
     public int ConsecutiveFailures { get; set; }
     public bool IsOffline { get; set; }
     public int TicksSinceLastCheck { get; set; }
-    public ulong TotalRam { get; set; }
 }
 
 class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
 {
     private ComputerStatsBlockConfig _config;
-    private HttpClient _httpClient = new();
     private Dictionary<string, SnmpConnection> _snmpConnections = new();
     private Dictionary<string, ComputerInfo> _computerInfo = new();
     private Dictionary<string, ComputerStats> _lastSuccessfulResults = new();
+    private Dictionary<string, IComputerStatsProvider> _providers = new();
 
     public ComputerStatsBlockServer(IServiceProvider sp, ComputerStatsBlockConfig config)
         : base(sp, config.IntervalMs)
     {
         _config = config;
 
-        _httpClient.Timeout = TimeSpan.FromMilliseconds(750);
-
-        // Initialize SNMP connections and computer info for each computer
         foreach (var computer in config.Computers)
         {
-            // Initialize computer info
-            _computerInfo[computer.Name] = new ComputerInfo
-            {
-                ConsecutiveFailures = 0,
-                IsOffline = false,
-                TicksSinceLastCheck = 0,
-                TotalRam = 0
-            };
+            _computerInfo[computer.Name] = new ComputerInfo();
 
             if (!string.IsNullOrWhiteSpace(computer.SnmpHost))
             {
@@ -149,41 +73,12 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
                 }
             }
 
-            // Fetch and cache total RAM at startup
-            if (!string.IsNullOrWhiteSpace(computer.MonitoringUrl))
+            _providers[computer.Name] = computer.ApiMode switch
             {
-                try
-                {
-                    var baseUrl = computer.MonitoringUrl.TrimEnd('/');
-                    if (computer.ApiMode == "glances")
-                    {
-                        var memResponse = _httpClient.GetStringAsync($"{baseUrl}/api/4/mem").GetAwaiter().GetResult();
-                        var mem = JsonConvert.DeserializeObject<GlancesMem>(memResponse);
-                        if (mem?.Total > 0)
-                        {
-                            _computerInfo[computer.Name].TotalRam = mem.Total;
-                            Logger.LogInformation($"Cached total RAM for '{computer.Name}' (glances): {mem.Total / (1024UL * 1024 * 1024)} GB");
-                        }
-                    }
-                    else
-                    {
-                        var infoResponse = _httpClient.GetStringAsync($"{baseUrl}/info").GetAwaiter().GetResult();
-                        var info = JsonConvert.DeserializeObject<SystemInfo>(infoResponse);
-                        if (info?.Ram?.Size > 0)
-                        {
-                            _computerInfo[computer.Name].TotalRam = info.Ram.Size;
-                            Logger.LogInformation($"Cached total RAM for '{computer.Name}': {info.Ram.Size / (1024 * 1024 * 1024)} GB");
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogWarning($"Failed to fetch initial info for '{computer.Name}': {ex.Message}");
-                    // Mark as offline immediately if initial fetch fails
-                    _computerInfo[computer.Name].IsOffline = true;
-                    _computerInfo[computer.Name].ConsecutiveFailures = 1;
-                }
-            }
+                "glances" => new GlancesStatsProvider(),
+                "prometheus" => new PrometheusStatsProvider(),
+                _ => new DashdotStatsProvider()
+            };
         }
     }
 
@@ -221,168 +116,6 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
         };
     }
 
-    private async Task<ComputerStats> FetchComputerStatsAsync(ComputerConfig config)
-    {
-        var computerStats = new ComputerStats { Name = config.Name };
-
-        if (string.IsNullOrWhiteSpace(config.MonitoringUrl))
-        {
-            throw new Exception("No monitoring URL configured");
-        }
-
-        var baseUrl = config.MonitoringUrl.TrimEnd('/');
-
-        // Fetch CPU data - if this fails, the whole method throws and stops
-        var cpuUrl = $"{baseUrl}/load/cpu";
-        var cpuResponse = await _httpClient.GetStringAsync(cpuUrl);
-        var cpuData = JsonConvert.DeserializeObject<List<CpuCoreInfo>>(cpuResponse);
-        computerStats.CpuCores = cpuData ?? new List<CpuCoreInfo>();
-
-        // Fetch GPU data
-        var gpuUrl = $"{baseUrl}/load/gpu";
-        var gpuResponse = await _httpClient.GetStringAsync(gpuUrl);
-        var gpuData = JsonConvert.DeserializeObject<GpuInfo>(gpuResponse);
-        computerStats.Gpu = gpuData ?? new GpuInfo();
-
-        // Calculate enriched statistics
-        if (computerStats.CpuCores.Any())
-        {
-            computerStats.AvgCpuUtilization = computerStats.CpuCores.Average(c => c.Load);
-            computerStats.MaxCoreUtilization = computerStats.CpuCores.Max(c => c.Load);
-        }
-
-        if (computerStats.Gpu?.Layout != null && computerStats.Gpu.Layout.Any())
-        {
-            computerStats.MaxGpuUtilization = computerStats.Gpu.Layout
-                .SelectMany(g => new[] { g.Load, g.Memory })
-                .Max();
-        }
-
-        // Fetch RAM usage and calculate percentage
-        var info = _computerInfo[config.Name];
-        if (info.TotalRam > 0)
-        {
-            var ramLoadUrl = $"{baseUrl}/load/ram";
-            var ramLoadResponse = await _httpClient.GetStringAsync(ramLoadUrl);
-            var ramLoad = JsonConvert.DeserializeObject<RamLoadInfo>(ramLoadResponse);
-
-            if (ramLoad?.Load > 0 && info.TotalRam > 0)
-            {
-                computerStats.RamUtilization = ((double)ramLoad.Load / info.TotalRam) * 100;
-            }
-        }
-
-        return computerStats;
-    }
-
-    private async Task<ComputerStats> FetchGlancesStatsAsync(ComputerConfig config)
-    {
-        var computerStats = new ComputerStats { Name = config.Name };
-
-        if (string.IsNullOrWhiteSpace(config.MonitoringUrl))
-        {
-            throw new Exception("No monitoring URL configured");
-        }
-
-        var baseUrl = config.MonitoringUrl.TrimEnd('/');
-
-        // Single request to get all plugin data at once (avoids starving the Glances web UI)
-        var allResponse = await _httpClient.GetStringAsync($"{baseUrl}/api/4/all");
-        var allData = JsonConvert.DeserializeObject<Dictionary<string, Newtonsoft.Json.Linq.JToken>>(allResponse);
-
-        // Parse per-CPU data
-        if (allData.TryGetValue("percpu", out var percpuToken))
-        {
-            var cpuData = percpuToken.ToObject<List<GlancesPerCpu>>();
-            computerStats.CpuCores = cpuData?.Select(c => new CpuCoreInfo
-            {
-                Load = c.Total,
-                Core = c.CpuNumber,
-                Temp = 0
-            }).ToList() ?? new List<CpuCoreInfo>();
-        }
-
-        // Parse sensor data for CPU core temps
-        try
-        {
-            if (allData.TryGetValue("sensors", out var sensorsToken))
-            {
-                var sensors = sensorsToken.ToObject<List<GlancesSensor>>();
-                if (sensors != null)
-                {
-                    var tempLookup = new Dictionary<int, double>();
-                    foreach (var sensor in sensors.Where(s => s.Type == "temperature_core" && s.Label.StartsWith("Core ")))
-                    {
-                        if (int.TryParse(sensor.Label.Substring(5), out var coreNum))
-                        {
-                            tempLookup[coreNum] = sensor.Value;
-                        }
-                    }
-                    foreach (var core in computerStats.CpuCores)
-                    {
-                        if (tempLookup.TryGetValue(core.Core, out var temp))
-                        {
-                            core.Temp = temp;
-                        }
-                    }
-                }
-            }
-        }
-        catch { }
-
-        // Parse GPU data
-        computerStats.Gpu = new GpuInfo();
-        try
-        {
-            if (allData.TryGetValue("gpu", out var gpuToken))
-            {
-                var gpuData = gpuToken.ToObject<List<GlancesGpu>>();
-                if (gpuData != null && gpuData.Any())
-                {
-                    computerStats.Gpu = new GpuInfo
-                    {
-                        Layout = gpuData.Select(g => new GpuLayout
-                        {
-                            Load = g.Proc,
-                            Memory = g.Mem
-                        }).ToList()
-                    };
-                }
-            }
-        }
-        catch { }
-
-        // Parse RAM data
-        if (allData.TryGetValue("mem", out var memToken))
-        {
-            var memData = memToken.ToObject<GlancesMem>();
-            if (memData != null)
-            {
-                computerStats.RamUtilization = memData.Percent;
-                if (memData.Total > 0)
-                {
-                    _computerInfo[config.Name].TotalRam = memData.Total;
-                }
-            }
-        }
-
-        // Calculate enriched statistics
-        if (computerStats.CpuCores.Any())
-        {
-            computerStats.AvgCpuUtilization = computerStats.CpuCores.Average(c => c.Load);
-            computerStats.MaxCoreUtilization = computerStats.CpuCores.Max(c => c.Load);
-        }
-
-        if (computerStats.Gpu?.Layout != null && computerStats.Gpu.Layout.Any())
-        {
-            computerStats.MaxGpuUtilization = computerStats.Gpu.Layout
-                .SelectMany(g => new[] { g.Load, g.Memory })
-                .Max();
-        }
-
-        return computerStats;
-    }
-
     private async Task<double?> FetchPowerConsumptionAsync(string computerName)
     {
         if (!_snmpConnections.TryGetValue(computerName, out var snmpConn))
@@ -391,48 +124,6 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
         }
 
         return await Task.Run(() => GetPowerConsumptionSnmp(snmpConn));
-    }
-
-    private async Task<bool> CheckComputerOnlineAsync(ComputerConfig config)
-    {
-        if (string.IsNullOrWhiteSpace(config.MonitoringUrl))
-        {
-            return false;
-        }
-
-        var baseUrl = config.MonitoringUrl.TrimEnd('/');
-
-        if (config.ApiMode == "glances")
-        {
-            // Check Glances health endpoint
-            var statusResponse = await _httpClient.GetAsync($"{baseUrl}/api/4/status");
-            if (!statusResponse.IsSuccessStatusCode)
-                return false;
-
-            // Refresh TotalRam from /mem
-            var memResponse = await _httpClient.GetStringAsync($"{baseUrl}/api/4/mem");
-            var mem = JsonConvert.DeserializeObject<GlancesMem>(memResponse);
-            if (mem?.Total > 0)
-            {
-                _computerInfo[config.Name].TotalRam = mem.Total;
-                return true;
-            }
-
-            return false;
-        }
-        else
-        {
-            var infoResponse = await _httpClient.GetStringAsync($"{baseUrl}/info");
-            var systemInfo = JsonConvert.DeserializeObject<SystemInfo>(infoResponse);
-
-            if (systemInfo?.Ram?.Size > 0)
-            {
-                _computerInfo[config.Name].TotalRam = systemInfo.Ram.Size;
-                return true;
-            }
-
-            return false;
-        }
     }
 
     private ComputerStats CreateOfflineStats(string name)
@@ -451,7 +142,7 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
         var info = _computerInfo[config.Name];
         info.TicksSinceLastCheck++;
 
-        // Only check /info every 10 ticks when offline
+        // Only attempt reconnect every 10 ticks when offline
         if (info.TicksSinceLastCheck < 10)
         {
             return Task.FromResult(CreateOfflineStats(config.Name));
@@ -459,22 +150,20 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
 
         info.TicksSinceLastCheck = 0;
 
-        // Try to bring computer back online
-        return CheckComputerOnlineAsync(config).ContinueWith(task =>
+        // Try to bring computer back online by fetching stats directly
+        return _providers[config.Name].FetchStatsAsync(config).ContinueWith(task =>
         {
-            if (task.IsCompletedSuccessfully && task.Result)
+            if (task.IsCompletedSuccessfully)
             {
                 info.IsOffline = false;
                 info.ConsecutiveFailures = 0;
-                Logger.LogInformation($"Computer '{config.Name}' is back online. Updated total RAM: {info.TotalRam / (1024 * 1024 * 1024)} GB");
-                return config.ApiMode == "glances"
-                    ? FetchGlancesStatsAsync(config)
-                    : FetchComputerStatsAsync(config);
+                Logger.LogInformation($"Computer '{config.Name}' is back online");
+                return task.Result;
             }
 
             Logger.LogDebug($"Computer '{config.Name}' still offline");
-            return Task.FromResult(CreateOfflineStats(config.Name));
-        }).Unwrap();
+            return CreateOfflineStats(config.Name);
+        });
     }
 
     private void ProcessComputerResult(ComputerConfig config, Task<ComputerStats> task, Task<double?> powerTask, List<ComputerStats> computers)
@@ -561,9 +250,7 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
             }
             else
             {
-                computerTasks.Add(computerConfig.ApiMode == "glances"
-                    ? FetchGlancesStatsAsync(computerConfig)
-                    : FetchComputerStatsAsync(computerConfig));
+                computerTasks.Add(_providers[computerConfig.Name].FetchStatsAsync(computerConfig));
             }
 
             // Create power consumption task
@@ -626,17 +313,14 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
             if (reply.Pdu().Variables.Count > 0)
             {
                 var data = reply.Pdu().Variables[0].Data;
-                //Logger.LogInformation($"SNMP raw data: {data} (Type: {data.GetType().Name})");
 
                 // Parse the result as a number (watts)
                 if (int.TryParse(data.ToString(), out var watts))
                 {
-                    //Logger.LogInformation($"Parsed watts as int: {watts}");
                     return watts;
                 }
                 if (double.TryParse(data.ToString(), out var wattsDouble))
                 {
-                    //Logger.LogInformation($"Parsed watts as double: {wattsDouble}");
                     return wattsDouble;
                 }
 
