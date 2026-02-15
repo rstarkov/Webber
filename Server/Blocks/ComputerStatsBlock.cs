@@ -286,78 +286,83 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
 
         var baseUrl = config.MonitoringUrl.TrimEnd('/');
 
-        // Fetch per-CPU data (required)
-        var cpuResponse = await _httpClient.GetStringAsync($"{baseUrl}/api/4/percpu");
-        var cpuData = JsonConvert.DeserializeObject<List<GlancesPerCpu>>(cpuResponse);
-        computerStats.CpuCores = cpuData?.Select(c => new CpuCoreInfo
-        {
-            Load = c.Total,
-            Core = c.CpuNumber,
-            Temp = 0
-        }).ToList() ?? new List<CpuCoreInfo>();
+        // Single request to get all plugin data at once (avoids starving the Glances web UI)
+        var allResponse = await _httpClient.GetStringAsync($"{baseUrl}/api/4/all");
+        var allData = JsonConvert.DeserializeObject<Dictionary<string, Newtonsoft.Json.Linq.JToken>>(allResponse);
 
-        // Fetch sensor data for CPU core temps (optional)
+        // Parse per-CPU data
+        if (allData.TryGetValue("percpu", out var percpuToken))
+        {
+            var cpuData = percpuToken.ToObject<List<GlancesPerCpu>>();
+            computerStats.CpuCores = cpuData?.Select(c => new CpuCoreInfo
+            {
+                Load = c.Total,
+                Core = c.CpuNumber,
+                Temp = 0
+            }).ToList() ?? new List<CpuCoreInfo>();
+        }
+
+        // Parse sensor data for CPU core temps
         try
         {
-            var sensorResponse = await _httpClient.GetStringAsync($"{baseUrl}/api/4/sensors");
-            var sensors = JsonConvert.DeserializeObject<List<GlancesSensor>>(sensorResponse);
-            if (sensors != null)
+            if (allData.TryGetValue("sensors", out var sensorsToken))
             {
-                var tempLookup = new Dictionary<int, double>();
-                foreach (var sensor in sensors.Where(s => s.Type == "temperature_core" && s.Label.StartsWith("Core ")))
+                var sensors = sensorsToken.ToObject<List<GlancesSensor>>();
+                if (sensors != null)
                 {
-                    if (int.TryParse(sensor.Label.Substring(5), out var coreNum))
+                    var tempLookup = new Dictionary<int, double>();
+                    foreach (var sensor in sensors.Where(s => s.Type == "temperature_core" && s.Label.StartsWith("Core ")))
                     {
-                        tempLookup[coreNum] = sensor.Value;
+                        if (int.TryParse(sensor.Label.Substring(5), out var coreNum))
+                        {
+                            tempLookup[coreNum] = sensor.Value;
+                        }
                     }
-                }
-                foreach (var core in computerStats.CpuCores)
-                {
-                    if (tempLookup.TryGetValue(core.Core, out var temp))
+                    foreach (var core in computerStats.CpuCores)
                     {
-                        core.Temp = temp;
+                        if (tempLookup.TryGetValue(core.Core, out var temp))
+                        {
+                            core.Temp = temp;
+                        }
                     }
                 }
             }
         }
         catch { }
 
-        // Fetch GPU data (optional)
+        // Parse GPU data
+        computerStats.Gpu = new GpuInfo();
         try
         {
-            var gpuResponse = await _httpClient.GetStringAsync($"{baseUrl}/api/4/gpu");
-            var gpuData = JsonConvert.DeserializeObject<List<GlancesGpu>>(gpuResponse);
-            if (gpuData != null && gpuData.Any())
+            if (allData.TryGetValue("gpu", out var gpuToken))
             {
-                computerStats.Gpu = new GpuInfo
+                var gpuData = gpuToken.ToObject<List<GlancesGpu>>();
+                if (gpuData != null && gpuData.Any())
                 {
-                    Layout = gpuData.Select(g => new GpuLayout
+                    computerStats.Gpu = new GpuInfo
                     {
-                        Load = g.Proc,
-                        Memory = g.Mem
-                    }).ToList()
-                };
-            }
-            else
-            {
-                computerStats.Gpu = new GpuInfo();
+                        Layout = gpuData.Select(g => new GpuLayout
+                        {
+                            Load = g.Proc,
+                            Memory = g.Mem
+                        }).ToList()
+                    };
+                }
             }
         }
-        catch
-        {
-            computerStats.Gpu = new GpuInfo();
-        }
+        catch { }
 
-        // Fetch RAM data
-        var memResponse = await _httpClient.GetStringAsync($"{baseUrl}/api/4/mem");
-        var memData = JsonConvert.DeserializeObject<GlancesMem>(memResponse);
-        if (memData != null)
+        // Parse RAM data
+        if (allData.TryGetValue("mem", out var memToken))
         {
-            computerStats.RamUtilization = memData.Percent;
-            // Refresh cached TotalRam
-            if (memData.Total > 0)
+            var memData = memToken.ToObject<GlancesMem>();
+            if (memData != null)
             {
-                _computerInfo[config.Name].TotalRam = memData.Total;
+                computerStats.RamUtilization = memData.Percent;
+                if (memData.Total > 0)
+                {
+                    _computerInfo[config.Name].TotalRam = memData.Total;
+                }
             }
         }
 
