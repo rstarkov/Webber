@@ -23,6 +23,61 @@ class RamLoadInfo
     public ulong Load { get; set; }
 }
 
+// Models for Glances API responses
+class GlancesPerCpu
+{
+    [JsonProperty("cpu_number")]
+    public int CpuNumber { get; set; }
+
+    [JsonProperty("total")]
+    public double Total { get; set; }
+}
+
+class GlancesGpu
+{
+    [JsonProperty("gpu_id")]
+    public string GpuId { get; set; }
+
+    [JsonProperty("name")]
+    public string Name { get; set; }
+
+    [JsonProperty("mem")]
+    public double Mem { get; set; }
+
+    [JsonProperty("proc")]
+    public double Proc { get; set; }
+
+    [JsonProperty("temperature")]
+    public double Temperature { get; set; }
+}
+
+class GlancesMem
+{
+    [JsonProperty("total")]
+    public ulong Total { get; set; }
+
+    [JsonProperty("used")]
+    public ulong Used { get; set; }
+
+    [JsonProperty("percent")]
+    public double Percent { get; set; }
+}
+
+class GlancesSensor
+{
+    [JsonProperty("label")]
+    public string Label { get; set; }
+
+    [JsonProperty("unit")]
+    public string Unit { get; set; }
+
+    [JsonProperty("value")]
+    public double Value { get; set; }
+
+    [JsonProperty("type")]
+    public string Type { get; set; }
+}
+
 class ComputerStatsBlockConfig
 {
     public List<ComputerConfig> Computers { get; set; } = new();
@@ -36,6 +91,9 @@ class ComputerConfig
     // Base URL for monitoring endpoints (e.g., "http://192.168.1.6:3001")
     // Will append /load/cpu, /load/gpu, /load/ram, /info as needed
     public string MonitoringUrl { get; set; }
+
+    // API backend: "dashdot" (default) or "glances"
+    public string ApiMode { get; set; } = "dashdot";
 
     // Optional SNMP settings for power consumption from UPS
     public string SnmpHost { get; set; }
@@ -91,24 +149,37 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
                 }
             }
 
-            // Fetch and cache total RAM from /info endpoint
+            // Fetch and cache total RAM at startup
             if (!string.IsNullOrWhiteSpace(computer.MonitoringUrl))
             {
                 try
                 {
-                    var infoUrl = $"{computer.MonitoringUrl.TrimEnd('/')}/info";
-                    var infoResponse = _httpClient.GetStringAsync(infoUrl).GetAwaiter().GetResult();
-                    var info = JsonConvert.DeserializeObject<SystemInfo>(infoResponse);
-                    if (info?.Ram?.Size > 0)
+                    var baseUrl = computer.MonitoringUrl.TrimEnd('/');
+                    if (computer.ApiMode == "glances")
                     {
-                        _computerInfo[computer.Name].TotalRam = info.Ram.Size;
-                        Logger.LogInformation($"Cached total RAM for '{computer.Name}': {info.Ram.Size / (1024 * 1024 * 1024)} GB");
+                        var memResponse = _httpClient.GetStringAsync($"{baseUrl}/api/4/mem").GetAwaiter().GetResult();
+                        var mem = JsonConvert.DeserializeObject<GlancesMem>(memResponse);
+                        if (mem?.Total > 0)
+                        {
+                            _computerInfo[computer.Name].TotalRam = mem.Total;
+                            Logger.LogInformation($"Cached total RAM for '{computer.Name}' (glances): {mem.Total / (1024UL * 1024 * 1024)} GB");
+                        }
+                    }
+                    else
+                    {
+                        var infoResponse = _httpClient.GetStringAsync($"{baseUrl}/info").GetAwaiter().GetResult();
+                        var info = JsonConvert.DeserializeObject<SystemInfo>(infoResponse);
+                        if (info?.Ram?.Size > 0)
+                        {
+                            _computerInfo[computer.Name].TotalRam = info.Ram.Size;
+                            Logger.LogInformation($"Cached total RAM for '{computer.Name}': {info.Ram.Size / (1024 * 1024 * 1024)} GB");
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogWarning($"Failed to fetch initial /info for '{computer.Name}': {ex.Message}");
-                    // Mark as offline immediately if initial /info fails
+                    Logger.LogWarning($"Failed to fetch initial info for '{computer.Name}': {ex.Message}");
+                    // Mark as offline immediately if initial fetch fails
                     _computerInfo[computer.Name].IsOffline = true;
                     _computerInfo[computer.Name].ConsecutiveFailures = 1;
                 }
@@ -204,6 +275,109 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
         return computerStats;
     }
 
+    private async Task<ComputerStats> FetchGlancesStatsAsync(ComputerConfig config)
+    {
+        var computerStats = new ComputerStats { Name = config.Name };
+
+        if (string.IsNullOrWhiteSpace(config.MonitoringUrl))
+        {
+            throw new Exception("No monitoring URL configured");
+        }
+
+        var baseUrl = config.MonitoringUrl.TrimEnd('/');
+
+        // Fetch per-CPU data (required)
+        var cpuResponse = await _httpClient.GetStringAsync($"{baseUrl}/api/4/percpu");
+        var cpuData = JsonConvert.DeserializeObject<List<GlancesPerCpu>>(cpuResponse);
+        computerStats.CpuCores = cpuData?.Select(c => new CpuCoreInfo
+        {
+            Load = c.Total,
+            Core = c.CpuNumber,
+            Temp = 0
+        }).ToList() ?? new List<CpuCoreInfo>();
+
+        // Fetch sensor data for CPU core temps (optional)
+        try
+        {
+            var sensorResponse = await _httpClient.GetStringAsync($"{baseUrl}/api/4/sensors");
+            var sensors = JsonConvert.DeserializeObject<List<GlancesSensor>>(sensorResponse);
+            if (sensors != null)
+            {
+                var tempLookup = new Dictionary<int, double>();
+                foreach (var sensor in sensors.Where(s => s.Type == "temperature_core" && s.Label.StartsWith("Core ")))
+                {
+                    if (int.TryParse(sensor.Label.Substring(5), out var coreNum))
+                    {
+                        tempLookup[coreNum] = sensor.Value;
+                    }
+                }
+                foreach (var core in computerStats.CpuCores)
+                {
+                    if (tempLookup.TryGetValue(core.Core, out var temp))
+                    {
+                        core.Temp = temp;
+                    }
+                }
+            }
+        }
+        catch { }
+
+        // Fetch GPU data (optional)
+        try
+        {
+            var gpuResponse = await _httpClient.GetStringAsync($"{baseUrl}/api/4/gpu");
+            var gpuData = JsonConvert.DeserializeObject<List<GlancesGpu>>(gpuResponse);
+            if (gpuData != null && gpuData.Any())
+            {
+                computerStats.Gpu = new GpuInfo
+                {
+                    Layout = gpuData.Select(g => new GpuLayout
+                    {
+                        Load = g.Proc,
+                        Memory = g.Mem
+                    }).ToList()
+                };
+            }
+            else
+            {
+                computerStats.Gpu = new GpuInfo();
+            }
+        }
+        catch
+        {
+            computerStats.Gpu = new GpuInfo();
+        }
+
+        // Fetch RAM data
+        var memResponse = await _httpClient.GetStringAsync($"{baseUrl}/api/4/mem");
+        var memData = JsonConvert.DeserializeObject<GlancesMem>(memResponse);
+        if (memData != null)
+        {
+            computerStats.RamUtilization = memData.Percent;
+            // Refresh cached TotalRam
+            if (memData.Total > 0)
+            {
+                _computerInfo[config.Name].TotalRam = memData.Total;
+            }
+        }
+
+        // Calculate enriched statistics
+        if (computerStats.CpuCores.Any())
+        {
+            computerStats.AvgCpuUtilization = computerStats.CpuCores.Average(c => c.Load);
+            computerStats.MaxCoreUtilization = computerStats.CpuCores.Max(c => c.Load);
+        }
+
+        if (computerStats.Gpu?.Layout != null && computerStats.Gpu.Layout.Any())
+        {
+            computerStats.MaxGpuUtilization = computerStats.Gpu.Layout
+                .SelectMany(g => new[] { g.Load, g.Memory })
+                .Max();
+        }
+
+        return computerStats;
+    }
+
     private async Task<double?> FetchPowerConsumptionAsync(string computerName)
     {
         if (!_snmpConnections.TryGetValue(computerName, out var snmpConn))
@@ -221,18 +395,39 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
             return false;
         }
 
-        var infoUrl = $"{config.MonitoringUrl.TrimEnd('/')}/info";
-        var infoResponse = await _httpClient.GetStringAsync(infoUrl);
-        var systemInfo = JsonConvert.DeserializeObject<SystemInfo>(infoResponse);
+        var baseUrl = config.MonitoringUrl.TrimEnd('/');
 
-        if (systemInfo?.Ram?.Size > 0)
+        if (config.ApiMode == "glances")
         {
-            var info = _computerInfo[config.Name];
-            info.TotalRam = systemInfo.Ram.Size;
-            return true;
-        }
+            // Check Glances health endpoint
+            var statusResponse = await _httpClient.GetAsync($"{baseUrl}/api/4/status");
+            if (!statusResponse.IsSuccessStatusCode)
+                return false;
 
-        return false;
+            // Refresh TotalRam from /mem
+            var memResponse = await _httpClient.GetStringAsync($"{baseUrl}/api/4/mem");
+            var mem = JsonConvert.DeserializeObject<GlancesMem>(memResponse);
+            if (mem?.Total > 0)
+            {
+                _computerInfo[config.Name].TotalRam = mem.Total;
+                return true;
+            }
+
+            return false;
+        }
+        else
+        {
+            var infoResponse = await _httpClient.GetStringAsync($"{baseUrl}/info");
+            var systemInfo = JsonConvert.DeserializeObject<SystemInfo>(infoResponse);
+
+            if (systemInfo?.Ram?.Size > 0)
+            {
+                _computerInfo[config.Name].TotalRam = systemInfo.Ram.Size;
+                return true;
+            }
+
+            return false;
+        }
     }
 
     private ComputerStats CreateOfflineStats(string name)
@@ -267,7 +462,9 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
                 info.IsOffline = false;
                 info.ConsecutiveFailures = 0;
                 Logger.LogInformation($"Computer '{config.Name}' is back online. Updated total RAM: {info.TotalRam / (1024 * 1024 * 1024)} GB");
-                return FetchComputerStatsAsync(config);
+                return config.ApiMode == "glances"
+                    ? FetchGlancesStatsAsync(config)
+                    : FetchComputerStatsAsync(config);
             }
 
             Logger.LogDebug($"Computer '{config.Name}' still offline");
@@ -353,9 +550,16 @@ class ComputerStatsBlockServer : SimpleBlockServerBase<ComputerStatsBlockDto>
             var info = _computerInfo[computerConfig.Name];
 
             // Create computer stats task
-            computerTasks.Add(info.IsOffline
-                ? HandleOfflineComputerAsync(computerConfig)
-                : FetchComputerStatsAsync(computerConfig));
+            if (info.IsOffline)
+            {
+                computerTasks.Add(HandleOfflineComputerAsync(computerConfig));
+            }
+            else
+            {
+                computerTasks.Add(computerConfig.ApiMode == "glances"
+                    ? FetchGlancesStatsAsync(computerConfig)
+                    : FetchComputerStatsAsync(computerConfig));
+            }
 
             // Create power consumption task
             powerTasks.Add(_snmpConnections.ContainsKey(computerConfig.Name)
