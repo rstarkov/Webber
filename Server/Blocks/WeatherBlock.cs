@@ -9,7 +9,7 @@ namespace Webber.Server.Blocks;
 
 class WeatherBlockConfig
 {
-    public double? PollIntervalMinutes { get; set; } = 1; // null to disable
+    public double? PollIntervalMinutes { get; set; } // null to disable
     public double Longitude { get; set; } // degrees, east is positive
     public double Latitude { get; set; } // degrees, north is positive
 }
