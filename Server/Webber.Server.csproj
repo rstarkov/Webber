@@ -6,27 +6,11 @@
     <AssemblyName>Webber</AssemblyName>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <ContainerGenerateLabels>false</ContainerGenerateLabels>
-    <ContainerRegistry>registry.hub.docker.com</ContainerRegistry>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <ContainerEnvironmentVariable Include="ASPNETCORE_ENVIRONMENT" Value="Production" />
-    <ContainerEnvironmentVariable Include="ASPNETCORE_URLS" Value="http://+:5669" />
-    <ContainerEnvironmentVariable Include="WEBBER_DOCKER" Value="True" />
-    <ContainerPort Include="5669" Type="tcp" />
-  </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
     <PackageReference Include="Google.Apis.Calendar.v3" Version="1.69.0.3746" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.10" />
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.7.115">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="RT.Serialization.Xml" Version="2.0.1813" />
     <PackageReference Include="RT.Util.Core" Version="2.0.1813" />
     <PackageReference Include="SkiaSharp" Version="3.119.1" />
