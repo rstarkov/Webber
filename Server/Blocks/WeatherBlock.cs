@@ -9,6 +9,7 @@ namespace Webber.Server.Blocks;
 
 class WeatherBlockConfig
 {
+    public double? PollIntervalMinutes { get; set; } = 1; // null to disable
     public double Longitude { get; set; } // degrees, east is positive
     public double Latitude { get; set; } // degrees, north is positive
 }
@@ -21,7 +22,7 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
     private HttpClient _httpClient = new();
 
     public WeatherBlockServer(IServiceProvider sp, WeatherBlockConfig config, IDbService db)
-        : base(sp, TimeSpan.FromMinutes(1))
+        : base(sp, TimeSpan.FromMinutes(config.PollIntervalMinutes ?? 1))
     {
         _config = config;
         _db = db;
@@ -42,11 +43,19 @@ class WeatherBlockServer : SimpleBlockServerBase<WeatherBlockDto>
         base.Start();
     }
 
-    protected override bool ShouldTick() => true;
+    protected override bool ShouldTick() => _config.PollIntervalMinutes != null;
 
     protected override WeatherBlockDto Tick()
     {
-        var result = _httpClient.GetAsync("https://www.cl.cam.ac.uk/research/dtg/weather/current-obs.txt").GetAwaiter().GetResult();
+        HttpResponseMessage result;
+        try
+        {
+            result = _httpClient.GetAsync("https://www.cl.cam.ac.uk/research/dtg/weather/current-obs.txt").GetAwaiter().GetResult();
+        }
+        catch (Exception e)
+        {
+            throw new TellUserException($"Weather server is down ({e.GetType().Name}, {e.Message})");
+        }
         if (!result.IsSuccessStatusCode)
             throw new TellUserException($"Weather server is down ({(int)result.StatusCode})");
         var content = result.Content.ReadAsStringAsync().GetAwaiter().GetResult();
