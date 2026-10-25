@@ -90,16 +90,27 @@ export const holidays: Holiday[] = [
     holiday(list("Early May BH", 15, 40, ["2025-05-05", "2026-05-04", "2027-05-03", "2028-05-01", "2029-05-07", "2030-05-06"])),
     holiday(list("Spring BH", 15, 40, ["2025-05-26", "2026-05-25", "2027-05-31", "2028-05-29", "2029-05-28", "2030-05-27"])),
     holiday(list("Summer BH", 15, 40, ["2025-08-25", "2026-08-31", "2027-08-30", "2028-08-28", "2029-08-27", "2030-08-26"])),
-    holiday(code("Clocks change", 15, 40, (from) => {
+    holiday(code("Clocks change (sleep less)", 15, 40, (from) => {
         function lastSunday(year: number, month: number): Temporal.PlainDate {
             const d = Temporal.PlainDate.from({ year, month, day: 1 });
             const lastDayOfWeek = d.with({ day: d.daysInMonth }).dayOfWeek;
             return d.with({ day: d.daysInMonth - (lastDayOfWeek % 7) });
         }
-        const date1 = lastSunday(from.year, 3);
-        const date2 = lastSunday(from.year, 10);
-        const date3 = lastSunday(from.year + 1, 3);
-        const candidates = [date1, date2, date3].filter(d => from.until(d).total("days") >= 0);
+        // BST begins: last Sunday of March, 01:00 GMT -> 02:00 BST
+        const candidates = [lastSunday(from.year, 3), lastSunday(from.year + 1, 3)]
+            .filter(d => from.until(d).total("days") >= 0);
+        return candidates[0];
+    }, "#237c20")),
+
+    holiday(code("Clocks change (sleep more)", 15, 40, (from) => {
+        function lastSunday(year: number, month: number): Temporal.PlainDate {
+            const d = Temporal.PlainDate.from({ year, month, day: 1 });
+            const lastDayOfWeek = d.with({ day: d.daysInMonth }).dayOfWeek;
+            return d.with({ day: d.daysInMonth - (lastDayOfWeek % 7) });
+        }
+        // BST ends: last Sunday of October, 02:00 BST -> 01:00 GMT
+        const candidates = [lastSunday(from.year, 10), lastSunday(from.year + 1, 10)]
+            .filter(d => from.until(d).total("days") >= 0);
         return candidates[0];
     }, "#237c20")),
 ];
